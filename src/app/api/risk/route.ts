@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { DEFAULT_RADIUS_METERS, MAX_RADIUS_METERS, RECENCY_WINDOW_DAYS } from '@/features/risk/config';
 import { assessRisk } from '@/features/risk/engine';
 import { buildRiskMessage } from '@/features/risk/message';
+import { queryNearbyBans } from '@/shared/lib/geo/queries/nearby-bans';
 import { buildPointContext, queryPointContext } from '@/shared/lib/geo/queries/point-context';
 import { queryReportsInRadius } from '@/shared/lib/geo/queries/reports-in-radius';
 import { prisma } from '@/shared/lib/prisma';
@@ -33,9 +34,10 @@ export async function GET(request: NextRequest) {
   const { lat, lng, radius } = parsed.data;
 
   try {
-    const [nearbyReports, contextRow, banSync] = await Promise.all([
+    const [nearbyReports, contextRow, nearbyBans, banSync] = await Promise.all([
       queryReportsInRadius(prisma, lng, lat, radius, RECENCY_WINDOW_DAYS),
       queryPointContext(prisma, lng, lat),
+      queryNearbyBans(prisma, lng, lat, radius),
       prisma.bdlSync.findUnique({ where: { dataset: 'bans' } }),
     ]);
     const context = buildPointContext(contextRow, lng, lat);
@@ -65,7 +67,13 @@ export async function GET(request: NextRequest) {
       ? new Date(Math.min(...freshnessTimes.map((date) => date.getTime()))).toISOString()
       : null;
 
-    return Response.json({ ...result, message, dataAsOf });
+    // Why the area is closed (shown in the assistant), when there's an active ban.
+    const ban =
+      context.entryBan.status === 'BAN'
+        ? { reason: context.entryBan.reason ?? null, until: context.entryBan.until ?? null }
+        : null;
+
+    return Response.json({ ...result, message, dataAsOf, ban, nearbyBans });
   } catch (error) {
     console.error('[GET /api/risk] assessment failed', error);
     return Response.json({ error: 'Nie udało się ocenić ryzyka' }, { status: 500 });

@@ -27,6 +27,10 @@ function fireLabel(degree: 0 | 1 | 2 | 3 | null): string {
 
 const IN_FOREST_LABEL = { IN: 'Tak', OUT: 'Nie', UNKNOWN: 'Nie wiadomo' } as const;
 
+function formatDistance(meters: number): string {
+  return meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`;
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 border-border/60 border-b py-2 text-sm last:border-0">
@@ -37,9 +41,10 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
-  const { level, message, signals, dataAsOf } = assessment;
+  const { level, message, signals, dataAsOf, ban, nearbyBans } = assessment;
   const style = LEVEL_STYLES[level];
   const updatedAt = dataAsOf ? new Date(dataAsOf).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' }) : null;
+  const banUntil = ban?.until ? new Date(ban.until).toLocaleDateString('pl-PL', { dateStyle: 'medium' }) : null;
 
   return (
     <div className="space-y-4">
@@ -56,6 +61,22 @@ export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
         <Row label="Zakaz wstępu" value={signals.entryBan.active ? 'Tak' : 'Nie'} />
         <Row label="W lesie" value={IN_FOREST_LABEL[signals.inForest]} />
       </div>
+
+      {ban ? (
+        <div className="space-y-1 rounded-lg bg-red-50 p-3 text-red-800 text-sm dark:bg-red-950 dark:text-red-200">
+          <p className="font-medium">Obowiązuje zakaz wstępu do lasu</p>
+          <p>Powód: {ban.reason ?? 'nie podano'}</p>
+          {banUntil ? <p>Obowiązuje do: {banUntil}</p> : null}
+        </div>
+      ) : null}
+
+      {nearbyBans.count > 0 ? (
+        <div className="rounded-lg bg-amber-50 p-3 text-amber-800 text-sm dark:bg-amber-950 dark:text-amber-200">
+          W pobliżu obowiązują zakazy wstępu do lasu
+          {nearbyBans.nearestMeters !== null ? ` (najbliższy ~${formatDistance(nearbyBans.nearestMeters)})` : ''}. Sprawdź
+          czerwone obszary na mapie.
+        </div>
+      ) : null}
 
       <p className="text-muted-foreground text-xs">
         {updatedAt ? `Dane o zagrożeniach z: ${updatedAt}. ` : 'Aktualność danych nieznana — zachowaj ostrożność. '}

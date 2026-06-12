@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated forest-tiles artifacts (large, rebuildable)
+forest_dissolved.geojsonl
+poland_forests.pmtiles
+public/poland_forests.pmtiles

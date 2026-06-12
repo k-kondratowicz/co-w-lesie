@@ -1,54 +1,40 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import maplibregl from 'maplibre-gl';
-import * as pmtiles from 'pmtiles';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
-import { useGeolocation } from '@/shared/hooks/use-geolocation';
-import { circlePolygon } from '@/shared/lib/geo/circle';
-import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
-
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-const RISK_COLORS = { GREEN: '#16a34a', YELLOW: '#f59e0b', RED: '#dc2626' } as const;
+import { Map as MapGL, type MapRef } from '@vis.gl/react-maplibre';
+import maplibregl from 'maplibre-gl';
+import { Protocol } from 'pmtiles';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BANS_MIN_ZOOM, MapLayers } from '@/features/map/components/map-layers';
+import { useMapInteraction } from '@/features/map/hooks/use-map-interaction';
+import { useViewportFeatures } from '@/features/map/hooks/use-viewport-features';
+import { boundsToBbox } from '@/features/map/utils/bounds-to-bbox';
+import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
+import { useGeolocation } from '@/shared/hooks/use-geolocation';
+import { useMapPickStore } from '@/shared/store/use-map-pick-store';
+import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
 
-type Props = {
-  pmtilesUrl: string;
-};
+const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+const REPORT_LAYERS = ['report-clusters', 'report-point'];
 
-const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+type ForestMapProps = { pmtilesUrl: string };
 
-function boundsToBbox(map: maplibregl.Map): string {
-  const b = map.getBounds();
-  return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
-}
-
-async function fetchReports(bbox: string) {
-  const res = await fetch(`/api/reports?bbox=${encodeURIComponent(bbox)}`);
-  if (!res.ok) {
-    throw new Error(`Reports request failed with status ${res.status}`);
-  }
-  return res.json();
-}
-
-export function ForestMap({ pmtilesUrl }: Props) {
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const markerRef = useRef<maplibregl.Marker | null>(null);
+export function ForestMap({ pmtilesUrl }: ForestMapProps) {
+  const mapRef = useRef<MapRef | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [bbox, setBbox] = useState<string | null>(null);
-  const [mapReady, setMapReady] = useState(false);
+  const [zoom, setZoom] = useState(6);
+
+  const reports = useViewportFeatures('/api/reports', 'reports', bbox);
+  const bans = useViewportFeatures('/api/bans', 'bans', bbox, zoom >= BANS_MIN_ZOOM);
   const riskOverlay = useRiskOverlayStore((state) => state.overlay);
+  const isPicking = useMapPickStore((state) => state.isPicking);
+  const pickConstraint = useMapPickStore((state) => state.constraint);
+  const pickPurpose = useMapPickStore((state) => state.purpose);
   const { position: userPosition, status: locationStatus, error: locationError, getCurrentPosition } = useGeolocation();
 
-  // Reports for the current viewport. Re-fetches on pan/zoom (bbox changes) and whenever a
-  // new report is added (the create mutation invalidates the ['reports'] query).
-  const { data: reports } = useQuery({
-    queryKey: ['reports', bbox],
-    // biome-ignore lint/style/noNonNullAssertion: We check bbox !== null in enabled, so it's safe to assert here.
-    queryFn: () => fetchReports(bbox!),
-    enabled: bbox !== null,
-  });
+  const { popup, closePopup, handleClick } = useMapInteraction(mapRef);
 
   const requestLocation = useCallback(async () => {
     try {
@@ -59,227 +45,25 @@ export function ForestMap({ pmtilesUrl }: Props) {
     }
   }, [getCurrentPosition]);
 
-  const permissionDialog = useActionDialog({
-    onConfirm: requestLocation,
-  });
+  const permissionDialog = useActionDialog({ onConfirm: requestLocation });
+
+  // Register the PMTiles protocol (client-only) and reveal the map after mount — <Map> needs the DOM.
+  useEffect(() => {
+    maplibregl.addProtocol('pmtiles', new Protocol().tile);
+    setMounted(true);
+  }, []);
+
+  // Fly to the assessed point / the user's location when they change.
+  useEffect(() => {
+    if (riskOverlay) {
+      mapRef.current?.flyTo({ center: [riskOverlay.lng, riskOverlay.lat], zoom: 12 });
+    }
+  }, [riskOverlay]);
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) {
-      return;
+    if (userPosition) {
+      mapRef.current?.flyTo({ center: [userPosition.longitude, userPosition.latitude], zoom: 14 });
     }
-
-    const protocol = new pmtiles.Protocol();
-    maplibregl.addProtocol('pmtiles', protocol.tile);
-
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-      center: [19.23, 52.1], // Polska
-      zoom: 6,
-      minZoom: 5,
-      maxZoom: 16,
-      attributionControl: { compact: true },
-    });
-
-    mapRef.current = map;
-
-    // Resolve a same-origin relative path (e.g. "/poland_forests.pmtiles") to an absolute URL
-    // so it loads from whatever dev port we're on — no CORS, and the PMTiles lib gets a full URL.
-    const resolvedUrl = pmtilesUrl.startsWith('/') ? `${window.location.origin}${pmtilesUrl}` : pmtilesUrl;
-
-    map.on('load', async () => {
-      // Read PMTiles metadata so we don't guess the source-layer name.
-      const p = new pmtiles.PMTiles(resolvedUrl);
-      const metadata = await p.getMetadata();
-      const sourceLayer = (metadata as { vector_layers?: Array<{ id: string }> }).vector_layers?.[0]?.id;
-
-      if (sourceLayer) {
-        map.addSource('forests', { type: 'vector', url: `pmtiles://${resolvedUrl}` });
-        // Defer forests to higher zooms: the low-zoom (country/regional) tiles are heavy, so
-        // not fetching them until you zoom into a region keeps the initial view fast.
-        map.addLayer({
-          id: 'forest-fill',
-          type: 'fill',
-          source: 'forests',
-          'source-layer': sourceLayer,
-          minzoom: 8,
-          paint: { 'fill-color': '#2e7d32', 'fill-opacity': 0.1 },
-        });
-        map.addLayer({
-          id: 'forest-outline',
-          type: 'line',
-          source: 'forests',
-          'source-layer': sourceLayer,
-          minzoom: 11,
-          paint: { 'line-color': '#1b5e20', 'line-width': 1, 'line-opacity': 0.1 },
-        });
-      }
-
-      // Risk circle: drawn beneath the reports, fed by the safety-assistant overlay store.
-      map.addSource('risk-circle', { type: 'geojson', data: EMPTY_FC });
-      map.addLayer({
-        id: 'risk-circle-fill',
-        type: 'fill',
-        source: 'risk-circle',
-        paint: { 'fill-color': RISK_COLORS.GREEN, 'fill-opacity': 0.15 },
-      });
-      map.addLayer({
-        id: 'risk-circle-line',
-        type: 'line',
-        source: 'risk-circle',
-        paint: { 'line-color': RISK_COLORS.GREEN, 'line-width': 2 },
-      });
-
-      // Reports: clustered GeoJSON source fed from /api/reports.
-      map.addSource('reports', {
-        type: 'geojson',
-        data: EMPTY_FC,
-        cluster: true,
-        clusterRadius: 50,
-        clusterMaxZoom: 14,
-      });
-      map.addLayer({
-        id: 'report-clusters',
-        type: 'circle',
-        source: 'reports',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': ['step', ['get', 'point_count'], '#f59e0b', 10, '#f97316', 30, '#ef4444'],
-          'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 30, 28],
-          'circle-opacity': 0.85,
-        },
-      });
-      map.addLayer({
-        id: 'report-cluster-count',
-        type: 'symbol',
-        source: 'reports',
-        filter: ['has', 'point_count'],
-        layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 },
-        paint: { 'text-color': '#ffffff' },
-      });
-      map.addLayer({
-        id: 'report-point',
-        type: 'circle',
-        source: 'reports',
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-color': '#ef4444',
-          'circle-radius': 7,
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff',
-        },
-      });
-
-      // Clicking a cluster zooms in to expand it.
-      map.on('click', 'report-clusters', async (e) => {
-        const feature = e.features?.[0];
-        if (!feature) {
-          return;
-        }
-        const clusterId = feature.properties?.cluster_id;
-        if (clusterId === undefined) {
-          return;
-        }
-        const source = map.getSource('reports') as maplibregl.GeoJSONSource;
-        const zoom = await source.getClusterExpansionZoom(clusterId);
-        map.easeTo({ center: (feature.geometry as GeoJSON.Point).coordinates as [number, number], zoom });
-      });
-
-      // Clicking a single report shows its details.
-      map.on('click', 'report-point', (e) => {
-        const feature = e.features?.[0];
-        if (!feature) {
-          return;
-        }
-        const props = feature.properties ?? {};
-        const description = props.description ? `<p style="margin:4px 0 0">${props.description}</p>` : '';
-        new maplibregl.Popup()
-          .setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number])
-          .setHTML(`<div style="min-width:160px"><strong>${props.type}</strong>${description}</div>`)
-          .addTo(map);
-      });
-
-      for (const layer of ['report-clusters', 'report-point']) {
-        map.on('mouseenter', layer, () => {
-          map.getCanvas().style.cursor = 'pointer';
-        });
-        map.on('mouseleave', layer, () => {
-          map.getCanvas().style.cursor = '';
-        });
-      }
-
-      // Load reports for the initial view, then on every pan/zoom.
-      setBbox(boundsToBbox(map));
-      map.on('moveend', () => setBbox(boundsToBbox(map)));
-
-      setMapReady(true);
-    });
-
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
-  }, [pmtilesUrl]);
-
-  // Draw (or clear) the risk circle when the safety assistant updates the overlay.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !mapReady) {
-      return;
-    }
-    const source = map.getSource('risk-circle') as maplibregl.GeoJSONSource | undefined;
-    if (!source) {
-      return;
-    }
-    if (!riskOverlay) {
-      source.setData(EMPTY_FC);
-      return;
-    }
-    const color = RISK_COLORS[riskOverlay.level];
-    map.setPaintProperty('risk-circle-fill', 'fill-color', color);
-    map.setPaintProperty('risk-circle-line', 'line-color', color);
-    source.setData(circlePolygon(riskOverlay.lng, riskOverlay.lat, riskOverlay.radiusMeters));
-    map.flyTo({ center: [riskOverlay.lng, riskOverlay.lat], zoom: 12 });
-  }, [riskOverlay, mapReady]);
-
-  // Push fetched reports into the map source whenever they change.
-  useEffect(() => {
-    const source = mapRef.current?.getSource('reports') as maplibregl.GeoJSONSource | undefined;
-    if (source && reports) {
-      source.setData(reports);
-    }
-  }, [reports]);
-
-  useEffect(() => {
-    if (!userPosition || !mapRef.current) {
-      return;
-    }
-
-    const map = mapRef.current;
-    const { latitude, longitude } = userPosition;
-
-    map.flyTo({ center: [longitude, latitude], zoom: 14 });
-
-    if (markerRef.current) {
-      markerRef.current.setLngLat([longitude, latitude]).addTo(map);
-      return;
-    }
-
-    const el = document.createElement('div');
-    el.style.width = '18px';
-    el.style.height = '18px';
-    el.style.background = '#4285F4';
-    el.style.border = '2px solid white';
-    el.style.borderRadius = '50%';
-    el.style.boxShadow = '0 0 0 6px rgba(66,133,244,0.15), 0 2px 6px rgba(0,0,0,0.3)';
-    el.style.transform = 'translate(-50%, -50%)';
-
-    markerRef.current = new maplibregl.Marker({ element: el }).setLngLat([longitude, latitude]).addTo(map);
-
-    return () => {
-      markerRef.current?.remove();
-      markerRef.current = null;
-    };
   }, [userPosition]);
 
   useEffect(() => {
@@ -288,9 +72,60 @@ export function ForestMap({ pmtilesUrl }: Props) {
     }
   }, [userPosition, permissionDialog, locationStatus]);
 
+  if (!mounted) {
+    return <div className="h-screen w-full" />;
+  }
+
+  const syncViewport = (map: maplibregl.Map) => {
+    setBbox(boundsToBbox(map));
+    setZoom(map.getZoom());
+  };
+
   return (
     <>
-      <div ref={containerRef} className="h-screen w-full" />
+      <MapGL
+        ref={mapRef}
+        initialViewState={{ longitude: 19.23, latitude: 52.1, zoom: 6 }}
+        minZoom={5}
+        maxZoom={16}
+        mapStyle={MAP_STYLE}
+        cursor={isPicking ? 'crosshair' : 'auto'}
+        interactiveLayerIds={REPORT_LAYERS}
+        attributionControl={{ compact: true }}
+        style={{ width: '100%', height: '100vh' }}
+        onLoad={(event) => syncViewport(event.target)}
+        onMoveEnd={(event) => syncViewport(event.target)}
+        onClick={handleClick}
+      >
+        <MapLayers
+          pmtilesUrl={pmtilesUrl}
+          reports={reports}
+          bans={bans}
+          riskOverlay={riskOverlay}
+          pickConstraint={pickConstraint}
+          userPosition={userPosition}
+          popup={popup}
+          onPopupClose={closePopup}
+        />
+      </MapGL>
+
+      {isPicking ? (
+        <div className="absolute top-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-background/95 px-4 py-2 shadow-lg ring-1 ring-border">
+          <span className="text-sm">
+            {pickPurpose === 'report'
+              ? 'Wskaż miejsce zgłoszenia w niebieskim okręgu'
+              : 'Kliknij punkt na mapie, aby sprawdzić to miejsce'}
+          </span>
+          <button
+            type="button"
+            onClick={() => useMapPickStore.getState().cancelPicking()}
+            className="font-medium text-muted-foreground text-sm hover:text-foreground"
+          >
+            Anuluj
+          </button>
+        </div>
+      ) : null}
+
       <ActionDialog
         open={permissionDialog.open}
         loading={permissionDialog.loading}

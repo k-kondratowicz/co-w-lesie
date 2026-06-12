@@ -47,7 +47,7 @@ export function ActionDialog({
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
-        {children}
+        <div className="max-w-full">{children}</div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>

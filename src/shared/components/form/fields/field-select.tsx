@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
+import type { PropsWithChildren } from 'react';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '../../ui/select';
 import { useFieldContext } from '../form-hooks';
 import { FieldBase, type FieldControlProps } from './field-base';
 
-export function FieldSelect({ children, ...props }: FieldControlProps & { children: ReactNode }) {
+export function FieldSelect({ children, ...props }: FieldControlProps & Required<PropsWithChildren>) {
   const field = useFieldContext<string>();
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
@@ -13,7 +13,9 @@ export function FieldSelect({ children, ...props }: FieldControlProps & { childr
         <SelectTrigger aria-invalid={isInvalid} id={field.name} onBlur={field.handleBlur}>
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>{children}</SelectContent>
+        <SelectContent position="popper" className="max-h-50">
+          {children}
+        </SelectContent>
       </Select>
     </FieldBase>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { UseConfirmDialogOptions } from '../types';
 
 export function useActionDialog(options?: UseConfirmDialogOptions) {
@@ -38,10 +38,13 @@ export function useActionDialog(options?: UseConfirmDialogOptions) {
     }
   }, [options?.onConfirm, loading, setOpenSafe]);
 
-  return {
-    open,
-    loading,
-    setOpen: setOpenSafe,
-    confirm,
-  };
+  return useMemo(
+    () => ({
+      open,
+      loading,
+      setOpen: setOpenSafe,
+      confirm,
+    }),
+    [open, loading, setOpenSafe, confirm],
+  );
 }

@@ -46,6 +46,9 @@ output has real-world consequences. The caution rule (below) overrides convenien
   (deploy applies without re-diffing). Also drop scratch tables (e.g. `forest_dissolved`,
   rebuildable via `npm run dissolve:forest`) before migrating so they aren't flagged as drift.
 - Validate every external (BDL) and client input with zod; BDL fields may change without notice.
+- API routes should orchestrate, not contain business rules.
+- Database access belongs in repositories/services.
+- Business logic must not live inside React components.
 
 ## Safety rule (overrides everything except correctness)
 - Missing data ≠ safe. If a signal is unknown (sync failed, point outside imported coverage,
@@ -62,6 +65,29 @@ output has real-world consequences. The caution rule (below) overrides convenien
    safety rule.
 4. No `any`; no `console.log` in production code; pass Biome.
 5. DB changes via a Prisma migration (incl. manual SQL for PostGIS) — never edit the DB by hand.
+
+### Code changes
+- Prefer modifying existing code over introducing new abstractions; avoid premature
+  abstractions and speculative generalization.
+- Don't add files or extract a helper/hook/component for *hypothetical* reuse, or to split a
+  small, cohesive unit.
+- Do extract a single-use piece when it clarifies a *large or multi-concern* unit — split along
+  a real seam (e.g. presentational vs. interaction vs. orchestration), for readability, not reuse.
+
+## Coding style
+- Prefer `type` for application code.
+- Use `interface` only when declaration merging or extensible public contracts are required.
+- Use `import type` for type-only imports.
+- Prefer early returns over nested conditionals.
+- Avoid unnecessary `else` blocks after `return`.
+- Keep functions focused on a single responsibility.
+- Prefer descriptive names over abbreviations.
+- Prefer composition over large functions.
+- Optimize for readability before cleverness.
+- Minimize mutable state.
+- Use blank lines to separate logical sections.
+- Explain intent, constraints, or business rules in comments; do not comment obvious code.
+- Use Prisma `select` to fetch only required fields.
 
 ## Do NOT without asking
 - Change the DB schema "in passing" — schema change = a deliberate, separate migration.

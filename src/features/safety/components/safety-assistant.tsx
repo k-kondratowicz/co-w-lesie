@@ -1,7 +1,7 @@
 'use client';
 
 import { ShieldQuestion } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRiskAssessment } from '@/features/safety/hooks/use-risk-assessment';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -14,36 +14,46 @@ import {
 } from '@/shared/components/ui/dialog';
 import { Spinner } from '@/shared/components/ui/spinner';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
+import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { RiskResult } from './risk-result';
 
 export function SafetyAssistant() {
   const [open, setOpen] = useState(false);
   const { target, setTarget, data, isFetching, isError, refetch } = useRiskAssessment(open);
   const { position, getCurrentPosition, isFetching: locating, error: locationError } = useGeolocation();
+  const startPicking = useMapPickStore((state) => state.startPicking);
+  const pickedPoint = useMapPickStore((state) => state.pickedPoint);
+  const clearPicked = useMapPickStore((state) => state.clearPicked);
 
-  const useMyLocation = async () => {
+  // A point picked on the map (for safety) becomes the target, reopening the dialog with its result.
+  useEffect(() => {
+    if (pickedPoint?.purpose !== 'safety') {
+      return;
+    }
+
+    setTarget({ lat: pickedPoint.lat, lng: pickedPoint.lng });
+    setOpen(true);
+    clearPicked();
+  }, [pickedPoint, setTarget, clearPicked]);
+
+  const chooseMyLocation = async () => {
     try {
-      const coords = position ?? (await getCurrentPosition());
+      const coords = await getCurrentPosition({ force: true });
       setTarget({ lat: coords.latitude, lng: coords.longitude });
     } catch {
       // error is surfaced via locationError from the store
     }
   };
 
-  // Re-acquire location and re-assess. The circle on the map stays until the next assessment.
-  const refresh = async () => {
-    try {
-      const coords = await getCurrentPosition();
-      setTarget({ lat: coords.latitude, lng: coords.longitude });
-    } catch {
-      // error is surfaced via locationError from the store
-    }
-    await refetch();
+  // Hand control to the map: close the dialog so the user can click a point.
+  const chooseOnMap = () => {
+    startPicking('safety');
+    setOpen(false);
   };
 
   const onOpenChange = (next: boolean) => {
     setOpen(next);
-    // Keep the last target and the map circle; assess location on first open.
+    // Keep the last target and the map circle; assess current location on first open.
     if (next && !target && position) {
       setTarget({ lat: position.latitude, lng: position.longitude });
     }
@@ -53,9 +63,13 @@ export function SafetyAssistant() {
     if (!target) {
       return (
         <div className="space-y-3">
-          <Button onClick={useMyLocation} disabled={locating} className="w-full">
+          <p className="text-muted-foreground text-sm">Wybierz lokalizację do sprawdzenia:</p>
+          <Button onClick={chooseMyLocation} disabled={locating} className="w-full">
             {locating && <Spinner />}
-            Sprawdź moją lokalizację
+            Użyj mojej lokalizacji
+          </Button>
+          <Button variant="outline" onClick={chooseOnMap} className="w-full">
+            Wskaż punkt na mapie
           </Button>
           {locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
         </div>
@@ -74,7 +88,7 @@ export function SafetyAssistant() {
       return (
         <div className="space-y-3">
           <p className="text-destructive text-sm">Nie udało się pobrać oceny. Spróbuj ponownie.</p>
-          <Button variant="outline" onClick={refresh} className="w-full">
+          <Button variant="outline" onClick={() => refetch()} className="w-full">
             Spróbuj ponownie
           </Button>
         </div>
@@ -84,10 +98,15 @@ export function SafetyAssistant() {
       return (
         <div className="space-y-4">
           <RiskResult assessment={data} />
-          <Button variant="outline" onClick={refresh} disabled={locating || isFetching} className="w-full">
-            {(locating || isFetching) && <Spinner />}
-            Odśwież ocenę
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={chooseMyLocation} disabled={locating || isFetching} className="flex-1">
+              {(locating || isFetching) && <Spinner />}
+              Moja lokalizacja
+            </Button>
+            <Button variant="outline" onClick={chooseOnMap} className="flex-1">
+              Wskaż na mapie
+            </Button>
+          </div>
         </div>
       );
     }
@@ -110,9 +129,7 @@ export function SafetyAssistant() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Czy mogę dziś bezpiecznie iść do lasu?</DialogTitle>
-          <DialogDescription>
-            Sprawdzimy zgłoszenia, zagrożenie pożarowe i zakazy wstępu w pobliżu Twojej lokalizacji.
-          </DialogDescription>
+          <DialogDescription>Sprawdź swoją lokalizację GPS albo wskaż dowolny punkt na mapie.</DialogDescription>
         </DialogHeader>
         {renderContent()}
       </DialogContent>

@@ -70,8 +70,15 @@ export async function GET(request: NextRequest) {
     bbox: params.get('bbox') ?? undefined,
     since: params.get('since') ?? undefined,
   });
+
   if (!parsed.success) {
-    return Response.json({ error: 'Nieprawidłowe parametry zapytania', issues: z.flattenError(parsed.error) }, { status: 400 });
+    return Response.json(
+      {
+        error: 'Nieprawidłowe parametry zapytania',
+        issues: z.flattenError(parsed.error),
+      },
+      { status: 400 },
+    );
   }
 
   const [minLng, minLat, maxLng, maxLat] = parsed.data.bbox;
@@ -90,7 +97,10 @@ export async function GET(request: NextRequest) {
     type: 'FeatureCollection',
     features: rows.map((report) => ({
       type: 'Feature',
-      geometry: { type: 'Point', coordinates: [report.lng, report.lat] },
+      geometry: {
+        type: 'Point',
+        coordinates: [report.lng, report.lat],
+      },
       properties: {
         id: report.id,
         type: report.type,

@@ -1,0 +1,28 @@
+model Report {
+  id          String    @id @default(cuid())
+  type        ReportType
+  lat         Float
+  lng         Float
+  description String?
+  createdAt   DateTime  @default(now())
+
+  /// Generated geography point (lng/lat, EPSG:4326). Managed by raw SQL migration,
+  /// queried via $queryRaw. Declared here only so migrate does not treat it as drift.
+  geog Unsupported("geography(Point, 4326)")?
+
+  @@index([geog], type: Gist)
+}
+
+enum ReportType {
+  BLOOD
+  FIRE
+  HUNTING
+  SHOTS
+  VACCINATION
+  DEAD_ANIMAL
+  AGGRESSIVE_ANIMAL
+  BLOCKED_PATH
+  ILLEGAL_DUMP
+  SHOTS_HEARD
+  OTHER
+}

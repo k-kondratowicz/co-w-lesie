@@ -1,0 +1,6 @@
+/// Records when each BDL dataset was last synced, so the app can show honest data freshness
+/// (bans/forest have no inherent timestamp of their own).
+model BdlSync {
+  dataset  String   @id // 'fire' | 'bans' | 'forest'
+  syncedAt DateTime @default(now()) @updatedAt
+}

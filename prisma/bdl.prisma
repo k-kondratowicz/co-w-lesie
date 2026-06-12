@@ -1,0 +1,31 @@
+// Spatial tables populated only by the background BDL sync job and read via $queryRaw.
+// They are declared here (with @@ignore) solely so `prisma migrate dev` does not treat
+// the raw-SQL-managed tables as drift. Do NOT use these via Prisma CRUD.
+
+model fire_hazard_zone {
+  id         String                                   @id
+  degree     Int                                      @db.SmallInt
+  updated_at DateTime                                 @db.Timestamptz(6)
+  geom       Unsupported("geometry(MultiPolygon, 4326)")
+
+  @@index([geom], type: Gist, map: "fire_hazard_geom_idx")
+  @@ignore
+}
+
+model forest_entry_ban {
+  id     String                                       @id
+  reason String?
+  until  DateTime?                                    @db.Timestamptz(6)
+  geom   Unsupported("geometry(MultiPolygon, 4326)")
+
+  @@index([geom], type: Gist, map: "forest_entry_ban_geom_idx")
+  @@ignore
+}
+
+model forest_area {
+  id   BigInt                                         @id @default(autoincrement())
+  geom Unsupported("geometry(MultiPolygon, 4326)")
+
+  @@index([geom], type: Gist, map: "forest_area_geom_idx")
+  @@ignore
+}

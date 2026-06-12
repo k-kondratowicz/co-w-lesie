@@ -4,14 +4,32 @@ import { z } from 'zod';
 import { createReportSchema } from '@/features/reports/schemas/create-report.schema';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
 import { prisma } from '@/shared/lib/prisma';
+import { rateLimit } from '@/shared/lib/rate-limit';
 
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
 export const dynamic = 'force-dynamic'; // GET reads live data; never cache.
 
+const RATE_LIMIT = 2; // reports per IP
+const RATE_WINDOW_MS = 60_000; // per minute
+
+function clientIp(request: Request): string {
+  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+}
+
 // POST /api/reports — create a community report.
 // Body: { type: ReportType, description?: string, location: [lng, lat] }  (GeoJSON order)
 export async function POST(request: Request) {
+  const limit = rateLimit(`report:${clientIp(request)}`, RATE_LIMIT, RATE_WINDOW_MS);
+
+  if (!limit.ok) {
+    return Response.json(
+      { error: 'Zbyt wiele zgłoszeń. Spróbuj ponownie za chwilę.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } },
+    );
+  }
+
   let body: unknown;
+
   try {
     body = await request.json();
   } catch {

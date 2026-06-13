@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createReportSchema } from '@/features/reports/schemas/create-report.schema';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
 import { prisma } from '@/shared/lib/prisma';
-import { rateLimit } from '@/shared/lib/rate-limit';
+import { checkRateLimit } from '@/shared/lib/rate-limit';
 
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
 export const dynamic = 'force-dynamic'; // GET reads live data; never cache.
@@ -19,7 +19,7 @@ function clientIp(request: Request): string {
 // POST /api/reports — create a community report.
 // Body: { type: ReportType, description?: string, location: [lng, lat] }  (GeoJSON order)
 export async function POST(request: Request) {
-  const limit = rateLimit(`report:${clientIp(request)}`, RATE_LIMIT, RATE_WINDOW_MS);
+  const limit = await checkRateLimit(`report:${clientIp(request)}`, RATE_LIMIT, RATE_WINDOW_MS);
 
   if (!limit.ok) {
     return Response.json(

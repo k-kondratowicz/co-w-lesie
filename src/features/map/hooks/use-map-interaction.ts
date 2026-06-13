@@ -2,7 +2,7 @@
 
 import type { MapLayerMouseEvent, MapRef } from '@vis.gl/react-maplibre';
 import type { GeoJSONSource } from 'maplibre-gl';
-import { type RefObject, useCallback, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useState } from 'react';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 
 export type PopupReport = { id: string; type: string; description: string | null };
@@ -62,6 +62,28 @@ export function useMapInteraction(mapRef: RefObject<MapRef | null>) {
   );
 
   const closePopup = useCallback(() => setPopup(null), []);
+
+  // Close the popup on any interaction outside it — the map canvas, a FAB, the banner, etc.
+  // (MapLibre's closeOnClick only covers the canvas, not the overlay UI elements.)
+  useEffect(() => {
+    if (!popup) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+
+      if (target?.closest('.maplibregl-popup')) {
+        return;
+      }
+
+      setPopup(null);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [popup]);
 
   return { popup, closePopup, handleClick };
 }

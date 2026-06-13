@@ -128,3 +128,15 @@
     @apply font-sans;
   }
 }
+
+/* MapLibre popups: strip the default chrome so the shadcn card inside is the whole popup. */
+.forest-popup .maplibregl-popup-content {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.forest-popup .maplibregl-popup-tip {
+  display: none;
+}

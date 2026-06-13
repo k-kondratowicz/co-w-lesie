@@ -45,6 +45,7 @@ export function CreateReportAction() {
   const startPicking = useMapPickStore((state) => state.startPicking);
   const pickedPoint = useMapPickStore((state) => state.pickedPoint);
   const clearPicked = useMapPickStore((state) => state.clearPicked);
+
   // The GPS position the report offset is measured from, captured when picking starts.
   const anchorRef = useRef<{ lng: number; lat: number } | null>(null);
 
@@ -92,6 +93,7 @@ export function CreateReportAction() {
         return; // no location → can't constrain the offset
       }
     }
+
     anchorRef.current = { lng: anchor.longitude, lat: anchor.latitude };
     startPicking('report', { lng: anchor.longitude, lat: anchor.latitude, radiusMeters: REPORT_MAX_OFFSET_METERS });
     dialog.setOpen(false);
@@ -102,17 +104,21 @@ export function CreateReportAction() {
     if (pickedPoint?.purpose !== 'report') {
       return;
     }
+
     const anchor = anchorRef.current;
     const point = pickedPoint;
     clearPicked();
     dialog.setOpen(true);
+
     if (!anchor) {
       return;
     }
+
     if (distanceMeters(anchor.lng, anchor.lat, point.lng, point.lat) > REPORT_MAX_OFFSET_METERS) {
       toast.error(`Wybierz miejsce maksymalnie ${REPORT_MAX_OFFSET_METERS / 1000} km od swojej lokalizacji.`);
       return;
     }
+
     // The near-forest rule is enforced on submit by POST /api/reports.
     form.setFieldValue('location', [point.lng, point.lat]);
   }, [pickedPoint, clearPicked, form, dialog]);

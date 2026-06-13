@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next';
 import { Noto_Sans, Noto_Sans_Mono } from 'next/font/google';
 import { Toaster } from '@/shared/components/ui';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
+import { SITE_URL } from '@/shared/lib/site';
 import { cn } from '@/shared/lib/utils';
 import { QueryClientProvider } from '@/shared/providers/query-client.provider';
 import { ServiceWorkerRegister } from './service-worker-register';
@@ -11,12 +12,11 @@ import { ServiceWorkerRegister } from './service-worker-register';
 const notoSans = Noto_Sans({ subsets: ['latin', 'latin-ext'], variable: '--font-sans' });
 const notoSansMono = Noto_Sans_Mono({ subsets: ['latin', 'latin-ext'], variable: '--font-sans-mono' });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://co-w-lesie.pl';
 const description =
   'Mapa zgłoszeń i bezpieczeństwa w polskich lasach. Sprawdź zagrożenie pożarowe i zakazy wstępu, zanim wejdziesz do lasu.';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   applicationName: 'Co w lesie',
   title: { default: 'Co w lesie', template: '%s · Co w lesie' },
   description,

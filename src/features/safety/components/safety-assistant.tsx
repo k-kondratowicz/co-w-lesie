@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -24,6 +25,7 @@ export function SafetyAssistant() {
   const startPicking = useMapPickStore((state) => state.startPicking);
   const pickedPoint = useMapPickStore((state) => state.pickedPoint);
   const clearPicked = useMapPickStore((state) => state.clearPicked);
+  const cancelPicking = useMapPickStore((state) => state.cancelPicking);
 
   // A point picked on the map (for safety) becomes the target, reopening the dialog with its result.
   useEffect(() => {
@@ -52,6 +54,10 @@ export function SafetyAssistant() {
   };
 
   const onOpenChange = (next: boolean) => {
+    if (open) {
+      cancelPicking();
+    }
+
     setOpen(next);
     // Keep the last target and the map circle; assess current location on first open.
     if (next && !target && position) {
@@ -62,13 +68,13 @@ export function SafetyAssistant() {
   function renderContent() {
     if (!target) {
       return (
-        <div className="space-y-3">
+        <div className="space-y-2">
           <p className="text-muted-foreground text-sm">Wybierz lokalizację do sprawdzenia:</p>
-          <Button onClick={chooseMyLocation} disabled={locating} className="w-full">
+          <Button onClick={chooseMyLocation} disabled={locating} className="w-full" size="sm">
             {locating && <Spinner />}
             Użyj mojej lokalizacji
           </Button>
-          <Button variant="outline" onClick={chooseOnMap} className="w-full">
+          <Button variant="outline" onClick={chooseOnMap} className="w-full" size="sm">
             Wskaż punkt na mapie
           </Button>
           {locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
@@ -76,14 +82,14 @@ export function SafetyAssistant() {
       );
     }
 
-    // Keep the result visible during a background refetch; only block on the first load.
     if (isFetching && !data) {
       return (
-        <div className="flex items-center gap-2 py-6 text-muted-foreground text-sm">
-          <Spinner /> Sprawdzam warunki w okolicy…
+        <div className="flex items-center gap-2 py-2 text-muted-foreground text-sm">
+          <Spinner /> Sprawdzam warunki w okolicy...
         </div>
       );
     }
+
     if (isError) {
       return (
         <div className="space-y-3">
@@ -94,22 +100,15 @@ export function SafetyAssistant() {
         </div>
       );
     }
+
     if (data) {
       return (
         <div className="space-y-4">
           <RiskResult assessment={data} />
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={chooseMyLocation} disabled={locating || isFetching} className="flex-1">
-              {(locating || isFetching) && <Spinner />}
-              Moja lokalizacja
-            </Button>
-            <Button variant="outline" onClick={chooseOnMap} className="flex-1">
-              Wskaż na mapie
-            </Button>
-          </div>
         </div>
       );
     }
+
     return null;
   }
 
@@ -128,10 +127,24 @@ export function SafetyAssistant() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Czy mogę dziś bezpiecznie iść do lasu?</DialogTitle>
+          <DialogTitle className="pr-4">Czy mogę dziś bezpiecznie iść do lasu?</DialogTitle>
           <DialogDescription>Sprawdź swoją lokalizację GPS albo wskaż dowolny punkt na mapie.</DialogDescription>
         </DialogHeader>
+
         {renderContent()}
+
+        {data && (
+          <DialogFooter>
+            <Button variant="outline" onClick={chooseMyLocation} disabled={locating || isFetching} className="sm:flex-1">
+              {locating && <Spinner />}
+              Moja lokalizacja
+            </Button>
+            <Button disabled={locating || isFetching} variant="outline" onClick={chooseOnMap} className="sm:flex-1">
+              Wskaż na mapie
+            </Button>
+            {/* </div> */}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

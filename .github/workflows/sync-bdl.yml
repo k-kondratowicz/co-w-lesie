@@ -1,0 +1,24 @@
+name: Sync BDL
+
+# Triggers the deployed /api/cron/sync-bdl endpoint on a schedule (free alternative to
+# Vercel Cron, which is daily-only on Hobby). Scheduled runs are best-effort timing.
+# Requires repo variable APP_URL and repo secret CRON_SECRET.
+on:
+  schedule:
+    - cron: '0 */3 * * *' # fire-hazard zones, every 3h (UTC)
+    - cron: '30 3 * * *' # entry bans, daily 03:30 (UTC)
+  workflow_dispatch: {} # manual "run now" → syncs everything
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger BDL sync
+        run: |
+          dataset=fire
+          case "${{ github.event.schedule }}" in
+            "30 3 * * *") dataset=bans ;;
+            "") dataset=all ;;
+          esac
+          curl -fsS "${{ vars.APP_URL }}/api/cron/sync-bdl?dataset=${dataset}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

@@ -59,19 +59,23 @@ export function CreateReportAction() {
       type: 'OTHER',
       location: [],
     } as unknown as CreateReportInput,
-  });
-  const dialog = useActionDialog({
-    onConfirm: async () => {
-      await form.handleSubmit();
-      if (!form.state.isValid) {
-        return false;
-      }
+    onSubmit: async ({ value }) => {
       try {
-        await mutation.mutateAsync(form.state.values);
+        await mutation.mutateAsync(value);
         toast.success('Dziękujemy! Zgłoszenie zostało dodane.');
         return true;
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Nie udało się dodać zgłoszenia. Spróbuj ponownie.');
+        return false;
+      }
+    },
+  });
+
+  const dialog = useActionDialog({
+    onConfirm: async () => {
+      await form.handleSubmit();
+
+      if (!form.state.isValid) {
         return false;
       }
     },

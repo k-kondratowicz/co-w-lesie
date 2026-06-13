@@ -11,12 +11,12 @@ function PineMark() {
 
 export function AppLogoBox() {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border bg-background/80 px-3 py-2 shadow-sm backdrop-blur">
+    <div className="flex items-center gap-3 rounded-2xl bg-background/80 p-2 shadow-sm backdrop-blur">
       <span className="grid size-10 place-items-center rounded-xl bg-[#15803d] text-white">
         <PineMark />
       </span>
 
-      <div className="leading-tight">
+      <div className="pr-1 leading-tight max-sm:sr-only">
         <p className="font-semibold">Co w lesie</p>
         <p className="text-muted-foreground text-xs">Zgłoszenia i bezpieczeństwo w lesie</p>
       </div>

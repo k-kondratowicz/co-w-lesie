@@ -51,13 +51,13 @@ export function ActionDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            {cancelLabel ?? 'Cancel'}
+            {cancelLabel ?? 'Anuluj'}
           </Button>
 
           {!isSaveHidden && (
             <Button onClick={onConfirm} disabled={isDisabled || isSaveDisabled || loading}>
               {!!loading && <Spinner />}
-              {confirmLabel ?? 'Save'}
+              {confirmLabel ?? 'Zapisz'}
             </Button>
           )}
         </DialogFooter>

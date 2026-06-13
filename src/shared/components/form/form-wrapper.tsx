@@ -8,7 +8,7 @@ export function FormWrapper({ className, ...props }: Omit<React.ComponentProps<'
 
   return (
     <form
-      className={cn('flex flex-col gap-4', className)}
+      className={cn('flex flex-col gap-3 sm:gap-4', className)}
       onSubmit={(event) => {
         event.stopPropagation();
         event.preventDefault();

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import { Spinner } from '@/shared/components/ui';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { Button } from '../../ui/button';
@@ -6,7 +6,7 @@ import { Input } from '../../ui/input';
 import { useFieldContext } from '../form-hooks';
 import { FieldBase, type FieldControlProps } from './field-base';
 
-export function FieldLocation(props: FieldControlProps) {
+export function FieldLocation(props: FieldControlProps & PropsWithChildren) {
   const field = useFieldContext<number[] | undefined>();
   const [error, setError] = useState<string | null>(null);
   const { position: userPosition, isFetching, error: locationError, getCurrentPosition, clearError } = useGeolocation();
@@ -35,7 +35,7 @@ export function FieldLocation(props: FieldControlProps) {
 
   return (
     <FieldBase {...props}>
-      <div className="grid gap-3">
+      <div className="grid gap-2">
         <div className="flex gap-2">
           <Input
             id={`${field.name}-lat`}
@@ -59,6 +59,9 @@ export function FieldLocation(props: FieldControlProps) {
 
           {!lat || !lng ? 'Pobierz lokalizację' : 'Odśwież lokalizację'}
         </Button>
+
+        {props.children}
+
         {error ? <p className="text-destructive text-sm">{error}</p> : null}
       </div>
     </FieldBase>

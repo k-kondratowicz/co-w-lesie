@@ -40,7 +40,7 @@ export function DataInfoButton() {
           <DialogDescription>Zanim podejmiesz decyzję, weź pod uwagę poniższe ograniczenia.</DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[60vh] space-y-4 overflow-y-auto">
+        <div className="space-y-3 sm:space-y-4">
           <InfoItem title="Dane o lasach mogą być nieaktualne">
             Granice lasów pochodzą z Banku Danych o Lasach i są aktualizowane okresowo. Zmieniają się powoli, ale mogą nie
             odzwierciedlać najnowszego stanu.

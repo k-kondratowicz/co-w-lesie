@@ -45,6 +45,7 @@ export function CreateReportAction() {
   const startPicking = useMapPickStore((state) => state.startPicking);
   const pickedPoint = useMapPickStore((state) => state.pickedPoint);
   const clearPicked = useMapPickStore((state) => state.clearPicked);
+  const cancelPicking = useMapPickStore((state) => state.cancelPicking);
 
   // The GPS position the report offset is measured from, captured when picking starts.
   const anchorRef = useRef<{ lng: number; lat: number } | null>(null);
@@ -75,6 +76,10 @@ export function CreateReportAction() {
       }
     },
     onOpenChange: (open) => {
+      if (open) {
+        cancelPicking();
+      }
+
       // Don't wipe the form when we close the dialog just to let the user pick a point on the map.
       if (!open && !useMapPickStore.getState().isPicking) {
         form.reset();
@@ -142,13 +147,14 @@ export function CreateReportAction() {
           <form.AppField name="description">{(field) => <field.Input label="Opis sytuacji" />}</form.AppField>
           <form.AppField name="location">
             {(field) => (
-              <field.Location label="Lokalizacja" description="Pobierz swoje współrzędne GPS i odśwież je w razie potrzeby." />
+              <field.Location label="Lokalizacja" description="Pobierz swoje współrzędne GPS i odśwież je w razie potrzeby.">
+                <Button type="button" variant="outline" size="sm" onClick={pickReportLocation} className="w-full">
+                  <MapPin className="size-4" />
+                  Wskaż miejsce na mapie (do {REPORT_MAX_OFFSET_METERS / 1000} km)
+                </Button>
+              </field.Location>
             )}
           </form.AppField>
-          <Button type="button" variant="outline" size="sm" onClick={pickReportLocation} className="w-full">
-            <MapPin className="size-4" />
-            Wskaż miejsce na mapie (do {REPORT_MAX_OFFSET_METERS / 1000} km)
-          </Button>
           <form.AppField name="type">
             {(field) => (
               <field.Select label="Typ sytuacji">

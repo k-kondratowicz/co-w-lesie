@@ -36,7 +36,7 @@ const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   // The safety check needs geolocation; everything else stays off.
-  { key: 'Permissions-Policy', value: 'geolocation=(self), camera=(), microphone=(), browsing-topics=()' },
+  { key: 'Permissions-Policy', value: 'geolocation=(self), camera=(), microphone=()' },
 ];
 
 const nextConfig: NextConfig = {

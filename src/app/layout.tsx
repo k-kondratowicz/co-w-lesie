@@ -11,8 +11,8 @@ const notoSans = Noto_Sans({ subsets: ['latin'], variable: '--font-sans' });
 const notoSansMono = Noto_Sans_Mono({ subsets: ['latin'], variable: '--font-sans-mono' });
 
 export const metadata: Metadata = {
-  title: 'Co W Lesie',
-  description: 'Realtime forest events map with community reports and safety alerts.',
+  title: 'Co w lesie',
+  description: 'Mapa zgłoszeń i bezpieczeństwa w polskich lasach.',
 };
 
 export default function RootLayout({

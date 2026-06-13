@@ -33,7 +33,6 @@ export function useRiskAssessment(enabled: boolean) {
       return fetchRiskAssessment(target.lat, target.lng);
     },
     enabled: enabled && target !== null,
-    placeholderData: (previous) => previous,
   });
 
   useEffect(() => {

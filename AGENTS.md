@@ -86,6 +86,8 @@ output has real-world consequences. The caution rule (below) overrides convenien
 - Optimize for readability before cleverness.
 - Minimize mutable state.
 - Use blank lines to separate logical sections.
+- Give `return` breathing room: a blank line before it, and format returned object literals
+  multiline (one property per line, trailing comma) — even short ones.
 - Explain intent, constraints, or business rules in comments; do not comment obvious code.
 - Use Prisma `select` to fetch only required fields.
 

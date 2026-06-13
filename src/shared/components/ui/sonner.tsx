@@ -29,7 +29,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           toast: 'cn-toast',
         },
       }}
-      position="top-center"
+      position="bottom-center"
       {...props}
     />
   );

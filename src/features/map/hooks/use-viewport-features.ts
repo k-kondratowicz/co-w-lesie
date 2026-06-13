@@ -12,7 +12,7 @@ async function fetchFeatures(path: string, bbox: string): Promise<GeoJSON.Featur
 
 /**
  * GeoJSON features for the current map viewport. Re-fetches when the bbox changes (the map owns
- * the bbox and updates it on load/moveend) and whenever something invalidates [`queryKey`, …].
+ * the bbox and updates it on load/moveend) and whenever something invalidates [`queryKey`, ...].
  * Keeps the previous result while refetching so the layer doesn't flicker on pan. `enabled` lets
  * callers skip the fetch (e.g. hide a heavy layer below a zoom threshold).
  */

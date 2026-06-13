@@ -130,6 +130,14 @@
 }
 
 /* MapLibre popups: strip the default chrome so the shadcn card inside is the whole popup. */
+.maplibregl-map {
+  @apply font-sans!;
+}
+
+.maplibregl-map .maplibregl-ctrl-attrib-inner {
+  font-size: 10px !important;
+}
+
 .forest-popup .maplibregl-popup-content {
   padding: 0;
   background: transparent;

@@ -13,6 +13,7 @@
     "dissolve:forest": "tsx scripts/dissolve-forest.ts",
     "export:forest": "tsx scripts/export-forest-geojson.ts",
     "build:forest-pmtiles": "bash scripts/build-forest-pmtiles.sh",
+    "generate:icons": "tsx scripts/generate-icons.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "prisma generate"

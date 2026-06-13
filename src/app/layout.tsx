@@ -1,6 +1,7 @@
+import './globals.css';
+
 import type { Metadata } from 'next';
 import { Noto_Sans, Noto_Sans_Mono } from 'next/font/google';
-import './globals.css';
 import { Toaster } from 'sonner';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
 import { cn } from '@/shared/lib/utils';

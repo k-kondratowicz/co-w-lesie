@@ -20,7 +20,7 @@ function fireLabel(degree: 0 | 1 | 2 | 3 | null): string {
     return 'Brak danych';
   }
   if (degree === 0) {
-    return 'Brak zagrożenia';
+    return 'Brak';
   }
   return `Stopień ${fireDegreeRoman(degree)}`;
 }

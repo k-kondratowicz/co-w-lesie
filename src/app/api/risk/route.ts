@@ -59,13 +59,10 @@ export async function GET(request: NextRequest) {
       banKnown: context.entryBan.status !== 'UNKNOWN',
     });
 
-    // Honest freshness: oldest of the time-sensitive signals — the fire forecast time of the
-    // intersecting zone and the entry-ban sync time. (Reports are individually timed; the
-    // forest layer is effectively static.) Null when neither is known.
-    const freshnessTimes = [contextRow.fire_updated_at, banSync?.syncedAt ?? null].filter((date): date is Date => date != null);
-    const dataAsOf = freshnessTimes.length
-      ? new Date(Math.min(...freshnessTimes.map((date) => date.getTime()))).toISOString()
-      : null;
+    // Honest freshness, reported per signal: fire and bans refresh on different cadences, so we
+    // surface each separately instead of collapsing to the oldest (which hid fresh fire data).
+    const fireAsOf = contextRow.fire_updated_at ? contextRow.fire_updated_at.toISOString() : null;
+    const bansAsOf = banSync?.syncedAt ? banSync.syncedAt.toISOString() : null;
 
     // Why the area is closed (shown in the assistant), when there's an active ban.
     const ban =
@@ -73,7 +70,7 @@ export async function GET(request: NextRequest) {
         ? { reason: context.entryBan.reason ?? null, until: context.entryBan.until ?? null }
         : null;
 
-    return Response.json({ ...result, message, dataAsOf, ban, nearbyBans });
+    return Response.json({ ...result, message, fireAsOf, bansAsOf, ban, nearbyBans });
   } catch (error) {
     console.error('[GET /api/risk] assessment failed', error);
     return Response.json({ error: 'Nie udało się ocenić ryzyka' }, { status: 500 });

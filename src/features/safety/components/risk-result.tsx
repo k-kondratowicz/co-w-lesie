@@ -41,9 +41,11 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
-  const { level, message, signals, dataAsOf, ban, nearbyBans } = assessment;
+  const { level, message, signals, fireAsOf, bansAsOf, ban, nearbyBans } = assessment;
   const style = LEVEL_STYLES[level];
-  const updatedAt = dataAsOf ? new Date(dataAsOf).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' }) : null;
+  const formatStamp = (iso: string) => new Date(iso).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' });
+  const fireUpdatedAt = fireAsOf ? formatStamp(fireAsOf) : null;
+  const bansUpdatedAt = bansAsOf ? formatStamp(bansAsOf) : null;
   const banUntil = ban?.until ? new Date(ban.until).toLocaleDateString('pl-PL', { dateStyle: 'medium' }) : null;
 
   return (
@@ -79,7 +81,9 @@ export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
       ) : null}
 
       <p className="text-muted-foreground text-xs">
-        {updatedAt ? `Dane o zagrożeniach z: ${updatedAt}. ` : 'Aktualność danych nieznana — zachowaj ostrożność. '}
+        {fireUpdatedAt ? `Zagrożenie pożarowe - dane z: ${fireUpdatedAt}. ` : ''}
+        {bansUpdatedAt ? `Zakazy wstępu - dane z: ${bansUpdatedAt}. ` : ''}
+        {!fireUpdatedAt && !bansUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
         To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.
       </p>
     </div>

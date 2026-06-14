@@ -1,10 +1,8 @@
 import { ImageResponse } from 'next/og';
+import { SITE_BRAND_COLOR } from '@/shared/lib/site';
 
 // Shared brand mark for generated images (favicons, PWA icons, OG card).
 // The pine matches src/app/icon.svg so every surface stays visually consistent.
-// BRAND_COLOR should track --primary in globals.css; re-run `npm run generate:icons` after changing it.
-
-export const BRAND_COLOR = '#00786f';
 
 export function pineDataUri(color = '#ffffff'): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M16 4.5 L10 14.5 L22 14.5 Z" fill="${color}"/><path d="M16 10.5 L7 23 L25 23 Z" fill="${color}"/><rect x="14.5" y="22" width="3" height="5" rx="0.5" fill="${color}"/></svg>`;
@@ -24,7 +22,7 @@ export function renderIcon(size: number, maskable = false): ImageResponse {
         display: 'flex',
         width: '100%',
         height: '100%',
-        background: BRAND_COLOR,
+        background: SITE_BRAND_COLOR,
         borderRadius: radius,
         alignItems: 'center',
         justifyContent: 'center',
@@ -45,7 +43,7 @@ export function renderOgImage(): ImageResponse {
         display: 'flex',
         width: '100%',
         height: '100%',
-        background: BRAND_COLOR,
+        background: SITE_BRAND_COLOR,
         alignItems: 'center',
         justifyContent: 'center',
       }}

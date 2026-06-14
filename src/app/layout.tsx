@@ -6,7 +6,7 @@ import type { Metadata, Viewport } from 'next';
 import { Noto_Sans, Noto_Sans_Mono } from 'next/font/google';
 import { Toaster } from '@/shared/components/ui';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
-import { SITE_URL } from '@/shared/lib/site';
+import { SITE_BRAND_COLOR, SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from '@/shared/lib/site';
 import { cn } from '@/shared/lib/utils';
 import { QueryClientProvider } from '@/shared/providers/query-client.provider';
 import { ServiceWorkerRegister } from './service-worker-register';
@@ -14,36 +14,33 @@ import { ServiceWorkerRegister } from './service-worker-register';
 const notoSans = Noto_Sans({ subsets: ['latin', 'latin-ext'], variable: '--font-sans' });
 const notoSansMono = Noto_Sans_Mono({ subsets: ['latin', 'latin-ext'], variable: '--font-sans-mono' });
 
-const description =
-  'Mapa zgłoszeń i bezpieczeństwa w polskich lasach. Sprawdź zagrożenie pożarowe i zakazy wstępu, zanim wejdziesz do lasu.';
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  applicationName: 'Co w lesie',
-  title: { default: 'Co w lesie', template: '%s · Co w lesie' },
-  description,
+  applicationName: SITE_TITLE,
+  title: { default: SITE_TITLE, template: `%s · ${SITE_TITLE}` },
+  description: SITE_DESCRIPTION,
   alternates: { canonical: '/' },
-  appleWebApp: { capable: true, title: 'Co w lesie', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: SITE_TITLE, statusBarStyle: 'default' },
   openGraph: {
     type: 'website',
     locale: 'pl_PL',
-    siteName: 'Co w lesie',
-    title: 'Co w lesie',
-    description,
+    siteName: SITE_TITLE,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     url: '/',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Co w lesie',
-    description,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
   verification: {
-    google: 'cbtVoIvaO98gp1VhJ6A596GeOVulm1qzKXpPjKGXnJQ',
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? '',
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#00786f',
+  themeColor: SITE_BRAND_COLOR,
 };
 
 export default function RootLayout({

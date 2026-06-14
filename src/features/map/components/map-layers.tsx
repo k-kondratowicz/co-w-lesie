@@ -1,9 +1,6 @@
 'use client';
 
-import { Layer, Marker, Popup, Source } from '@vis.gl/react-maplibre';
-import { X } from 'lucide-react';
-import type { PopupInfo } from '@/features/map/hooks/use-map-interaction';
-import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
+import { Layer, Marker, Source } from '@vis.gl/react-maplibre';
 import { circlePolygon } from '@/shared/lib/geo/circle';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import type { PickConstraint } from '@/shared/store/use-map-pick-store';
@@ -21,8 +18,8 @@ interface MapLayersProps {
   riskOverlay: RiskOverlay | null;
   pickConstraint: PickConstraint | null;
   userPosition: GeolocationPosition['coords'] | null;
-  popup: PopupInfo | null;
-  onPopupClose: () => void;
+  // The tapped report location — highlighted while its details overlay is open.
+  selectedPoint: { lng: number; lat: number } | null;
 }
 
 export function MapLayers({
@@ -32,8 +29,7 @@ export function MapLayers({
   riskOverlay,
   pickConstraint,
   userPosition,
-  popup,
-  onPopupClose,
+  selectedPoint,
 }: MapLayersProps) {
   // Resolve a same-origin relative path to an absolute URL (no CORS, full URL for the PMTiles lib).
   const resolvedUrl = pmtilesUrl.startsWith('/') ? `${window.location.origin}${pmtilesUrl}` : pmtilesUrl;
@@ -101,11 +97,25 @@ export function MapLayers({
       </Source>
 
       {/* Reports: clustered GeoJSON from /api/reports. */}
-      <Source id="reports" type="geojson" data={reports ?? EMPTY_FC} cluster clusterRadius={50} clusterMaxZoom={14}>
+      {/* clusterMaxZoom = map maxZoom so close points always merge (never fuzzy stacked dots).
+          Zoomed out: count bubbles. Zoomed in (≥ z14): clusters render as a single red dot like
+          a lone report — tapping it lists the few reports there. */}
+      <Source
+        id="reports"
+        type="geojson"
+        data={reports ?? EMPTY_FC}
+        cluster
+        clusterRadius={40}
+        clusterMaxZoom={16}
+        // Sum members' age-opacity so the merged dot can fade like the reports it represents
+        // (avg = sum / point_count). Computed once per cluster in the worker — cheap.
+        clusterProperties={{ opacitySum: ['+', ['get', 'opacity']] }}
+      >
         <Layer
           id="report-clusters"
           type="circle"
           filter={['has', 'point_count']}
+          maxzoom={14}
           paint={{
             'circle-color': ['step', ['get', 'point_count'], '#f59e0b', 10, '#f97316', 30, '#ef4444'],
             'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 30, 28],
@@ -116,14 +126,50 @@ export function MapLayers({
           id="report-cluster-count"
           type="symbol"
           filter={['has', 'point_count']}
+          maxzoom={14}
           layout={{ 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 }}
+          paint={{ 'text-color': '#ffffff' }}
+        />
+        <Layer
+          id="report-cluster-dot"
+          type="circle"
+          filter={['has', 'point_count']}
+          minzoom={14}
+          paint={{
+            'circle-color': '#ef4444',
+            'circle-radius': 12, // bigger than a lone report (7) to read as "several here"
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+            // Average member opacity → the merged dot fades with age like single reports do.
+            'circle-opacity': ['/', ['get', 'opacitySum'], ['get', 'point_count']],
+            'circle-stroke-opacity': ['/', ['get', 'opacitySum'], ['get', 'point_count']],
+          }}
+        />
+        <Layer
+          id="report-cluster-dot-count"
+          type="symbol"
+          filter={['has', 'point_count']}
+          minzoom={14}
+          layout={{
+            // Cap at "9+" so the count stays legible inside the dot.
+            'text-field': ['case', ['>', ['get', 'point_count'], 9], '9+', ['to-string', ['get', 'point_count']]],
+            'text-size': 11,
+          }}
           paint={{ 'text-color': '#ffffff' }}
         />
         <Layer
           id="report-point"
           type="circle"
           filter={['!', ['has', 'point_count']]}
-          paint={{ 'circle-color': '#ef4444', 'circle-radius': 7, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' }}
+          paint={{
+            'circle-color': '#ef4444',
+            'circle-radius': 7,
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+            // Older reports fade (opacity computed server-side from age); fresh ones stay solid.
+            'circle-opacity': ['coalesce', ['get', 'opacity'], 0.9],
+            'circle-stroke-opacity': ['coalesce', ['get', 'opacity'], 0.9],
+          }}
         />
       </Source>
 
@@ -140,41 +186,11 @@ export function MapLayers({
         </Marker>
       ) : null}
 
-      {popup ? (
-        <Popup
-          longitude={popup.lng}
-          latitude={popup.lat}
-          onClose={onPopupClose}
-          closeButton={false}
-          closeOnClick={false}
-          closeOnMove
-          offset={14}
-          className="forest-popup font-normal font-sans"
-        >
-          <div className="relative min-w-44 rounded-lg border bg-popover p-3 pr-8 text-popover-foreground shadow-md">
-            <button
-              type="button"
-              onClick={onPopupClose}
-              aria-label="Zamknij"
-              className="absolute top-2 right-2 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-
-            <div className="space-y-2">
-              {popup.reports.length > 1 ? (
-                <p className="font-medium text-muted-foreground text-xs">{popup.reports.length} zgłoszenia w tym miejscu</p>
-              ) : null}
-
-              {popup.reports.map((report) => (
-                <div key={report.id} className="border-border/60 border-b pb-2 last:border-0 last:pb-0">
-                  <p className="font-medium">{reportTypeLabel(report.type)}</p>
-                  {report.description ? <p className="mt-0.5 text-sm">{report.description}</p> : null}
-                </div>
-              ))}
-            </div>
-          </div>
-        </Popup>
+      {/* Highlight the tapped report location while its details overlay is open. */}
+      {selectedPoint ? (
+        <Marker longitude={selectedPoint.lng} latitude={selectedPoint.lat}>
+          <div className="size-5 rounded-full border-2 border-primary bg-primary/25" />
+        </Marker>
       ) : null}
     </>
   );

@@ -137,14 +137,3 @@
 .maplibregl-map .maplibregl-ctrl-attrib-inner {
   font-size: 10px !important;
 }
-
-.forest-popup .maplibregl-popup-content {
-  padding: 0;
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.forest-popup .maplibregl-popup-tip {
-  display: none;
-}

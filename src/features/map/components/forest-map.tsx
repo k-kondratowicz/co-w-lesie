@@ -10,6 +10,7 @@ import { BANS_MIN_ZOOM, MapLayers } from '@/features/map/components/map-layers';
 import { useMapInteraction } from '@/features/map/hooks/use-map-interaction';
 import { useViewportFeatures } from '@/features/map/hooks/use-viewport-features';
 import { boundsToBbox } from '@/features/map/utils/bounds-to-bbox';
+import { ReportDetailsOverlay } from '@/features/reports/components/report-details-overlay';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
@@ -17,7 +18,7 @@ import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
 
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
-const REPORT_LAYERS = ['report-clusters', 'report-point'];
+const REPORT_LAYERS = ['report-clusters', 'report-cluster-dot', 'report-point'];
 
 type ForestMapProps = { pmtilesUrl: string };
 
@@ -128,10 +129,11 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
           riskOverlay={riskOverlay}
           pickConstraint={pickConstraint}
           userPosition={userPosition}
-          popup={popup}
-          onPopupClose={closePopup}
+          selectedPoint={popup ? { lng: popup.lng, lat: popup.lat } : null}
         />
       </MapGL>
+
+      <ReportDetailsOverlay info={popup} onClose={closePopup} />
 
       {isPicking ? (
         <div className="absolute top-20 left-1/2 z-40 w-[calc(100%-32px)] -translate-x-1/2 rounded-lg bg-background px-4 py-2 text-center shadow-lg ring-1 ring-border sm:top-4 sm:w-auto sm:rounded-full">

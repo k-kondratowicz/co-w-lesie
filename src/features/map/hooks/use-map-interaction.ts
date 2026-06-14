@@ -2,15 +2,39 @@
 
 import type { MapLayerMouseEvent, MapRef } from '@vis.gl/react-maplibre';
 import type { GeoJSONSource } from 'maplibre-gl';
-import { type RefObject, useCallback, useEffect, useState } from 'react';
+import { type RefObject, useCallback, useState } from 'react';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 
-export type PopupReport = { id: string; type: string; description: string | null };
+export type PopupReport = {
+  id: string;
+  type: string;
+  description: string | null;
+  createdAt: string;
+  expiresAt: string | null;
+  confirmations: number;
+  flags: number;
+};
 export type PopupInfo = { lng: number; lat: number; reports: PopupReport[] };
 
+type FeatureLike = { id?: string | number; properties: Record<string, unknown> | null };
+
+function featureToReport(feature: FeatureLike): PopupReport {
+  const props = feature.properties ?? {};
+
+  return {
+    id: String(props.id ?? feature.id),
+    type: String(props.type),
+    description: (props.description as string | null) ?? null,
+    createdAt: String(props.createdAt ?? ''),
+    expiresAt: props.expiresAt ? String(props.expiresAt) : null,
+    confirmations: Number(props.confirmations ?? 0),
+    flags: Number(props.flags ?? 0),
+  };
+}
+
 /**
- * Map click handling: capture a point while picking, expand a clicked cluster, or open a popup
- * listing every report under the click (so stacked/overlapping points are all reachable).
+ * Map click handling: capture a point while picking, expand a clicked cluster (or list its
+ * reports when it can't zoom in further), or open the overlay for the report(s) under the click.
  */
 export function useMapInteraction(mapRef: RefObject<MapRef | null>) {
   const [popup, setPopup] = useState<PopupInfo | null>(null);
@@ -22,18 +46,39 @@ export function useMapInteraction(mapRef: RefObject<MapRef | null>) {
         pickPoint(event.lngLat.lng, event.lngLat.lat);
         return;
       }
+
       const feature = event.features?.[0];
       if (!feature) {
         return;
       }
+
       const [lng, lat] = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
 
-      if (feature.layer.id === 'report-clusters') {
+      if (feature.layer.id === 'report-clusters' || feature.layer.id === 'report-cluster-dot') {
+        const map = mapRef.current;
+        const source = map?.getSource('reports') as GeoJSONSource | undefined;
+        if (!map || !source) {
+          return;
+        }
+
         const clusterId = feature.properties?.cluster_id;
-        const source = mapRef.current?.getSource('reports') as GeoJSONSource | undefined;
-        source?.getClusterExpansionZoom(clusterId).then((zoom) => mapRef.current?.easeTo({ center: [lng, lat], zoom }));
+
+        source.getClusterExpansionZoom(clusterId).then((zoom) => {
+          // Split by zooming in only when that's actually possible; otherwise the points are
+          // coincident (or we're at max zoom), so list them in the overlay.
+          if (zoom > map.getZoom() && zoom <= map.getMaxZoom()) {
+            map.easeTo({ center: [lng, lat], zoom });
+            return;
+          }
+
+          source.getClusterLeaves(clusterId, 100, 0).then((leaves) => {
+            setPopup({ lng, lat, reports: leaves.map(featureToReport) });
+          });
+        });
+
         return;
       }
+
       if (feature.layer.id === 'report-point') {
         // Gather every report within a few pixels so stacked/overlapping points all show.
         const { x, y } = event.point;
@@ -45,16 +90,20 @@ export function useMapInteraction(mapRef: RefObject<MapRef | null>) {
             ],
             { layers: ['report-point'] },
           ) ?? [];
-        const seen = new Set<unknown>();
+
+        const seen = new Set<string>();
         const reportsAtPoint: PopupReport[] = [];
+
         for (const found of nearby) {
-          const id = String(found.properties?.id ?? found.id);
-          if (seen.has(id)) {
+          const report = featureToReport(found);
+          if (seen.has(report.id)) {
             continue;
           }
-          seen.add(id);
-          reportsAtPoint.push({ id, type: String(found.properties?.type), description: found.properties?.description ?? null });
+
+          seen.add(report.id);
+          reportsAtPoint.push(report);
         }
+
         setPopup({ lng, lat, reports: reportsAtPoint });
       }
     },
@@ -62,28 +111,6 @@ export function useMapInteraction(mapRef: RefObject<MapRef | null>) {
   );
 
   const closePopup = useCallback(() => setPopup(null), []);
-
-  // Close the popup on any interaction outside it — the map canvas, a FAB, the banner, etc.
-  // (MapLibre's closeOnClick only covers the canvas, not the overlay UI elements.)
-  useEffect(() => {
-    if (!popup) {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Element | null;
-
-      if (target?.closest('.maplibregl-popup')) {
-        return;
-      }
-
-      setPopup(null);
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [popup]);
 
   return { popup, closePopup, handleClick };
 }

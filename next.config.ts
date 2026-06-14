@@ -1,3 +1,4 @@
+import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -52,4 +53,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  // Route browser events through a same-origin path → no CSP change, dodges ad-blockers.
+  tunnelRoute: '/monitoring',
+});

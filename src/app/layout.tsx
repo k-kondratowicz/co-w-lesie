@@ -1,5 +1,7 @@
 import './globals.css';
 
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Noto_Sans, Noto_Sans_Mono } from 'next/font/google';
 import { Toaster } from '@/shared/components/ui';
@@ -20,6 +22,7 @@ export const metadata: Metadata = {
   applicationName: 'Co w lesie',
   title: { default: 'Co w lesie', template: '%s · Co w lesie' },
   description,
+  alternates: { canonical: '/' },
   appleWebApp: { capable: true, title: 'Co w lesie', statusBarStyle: 'default' },
   openGraph: {
     type: 'website',
@@ -53,6 +56,8 @@ export default function RootLayout({
         </QueryClientProvider>
         <Toaster />
         <ServiceWorkerRegister />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

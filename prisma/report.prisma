@@ -6,11 +6,39 @@ model Report {
   description String?
   createdAt   DateTime  @default(now())
 
+  // Lifecycle & integrity. `expiresAt` is set per-type on create and pushed out on confirm;
+  // the crowd curates accuracy via confirm/flag votes (see ReportVote).
+  confirmations   Int       @default(0)
+  flags           Int       @default(0)
+  lastConfirmedAt DateTime?
+  expiresAt       DateTime?
+
+  votes ReportVote[]
+
   /// Generated geography point (lng/lat, EPSG:4326). Managed by raw SQL migration,
   /// queried via $queryRaw. Declared here only so migrate does not treat it as drift.
   geog Unsupported("geography(Point, 4326)")?
 
   @@index([geog], type: Gist)
+}
+
+/// One vote per IP per report (unique constraint) — prevents counter-stuffing.
+/// ipHash is a salted SHA-256 of the client IP, so the raw address is never stored.
+model ReportVote {
+  id        String   @id @default(cuid())
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId  String
+  kind      VoteKind
+  ipHash    String
+  createdAt DateTime @default(now())
+
+  @@unique([reportId, ipHash])
+  @@index([reportId])
+}
+
+enum VoteKind {
+  CONFIRM
+  FLAG
 }
 
 enum ReportType {

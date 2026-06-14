@@ -1,6 +1,7 @@
 import type { ReportType } from '@prisma/client';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { ageOpacity, expiryFrom, FLAG_DISPUTE_THRESHOLD } from '@/features/reports/lifecycle';
 import { createReportSchema } from '@/features/reports/schemas/create-report.schema';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
 import { prisma } from '@/shared/lib/prisma';
@@ -9,7 +10,7 @@ import { checkRateLimit } from '@/shared/lib/rate-limit';
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
 export const dynamic = 'force-dynamic'; // GET reads live data; never cache.
 
-const RATE_LIMIT = 2; // reports per IP
+const RATE_LIMIT = 5; // reports per IP
 const RATE_WINDOW_MS = 60_000; // per minute
 
 function clientIp(request: Request): string {
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     const report = await prisma.report.create({
-      data: { type, lat, lng, description: description?.trim() || null },
+      data: { type, lat, lng, description: description?.trim() || null, expiresAt: expiryFrom(type) },
       select: { id: true },
     });
     return Response.json({ id: report.id }, { status: 201 });
@@ -78,6 +79,10 @@ type ReportRow = {
   type: ReportType;
   description: string | null;
   createdAt: Date;
+  lastConfirmedAt: Date | null;
+  expiresAt: Date | null;
+  confirmations: number;
+  flags: number;
   lng: number;
   lat: number;
 };
@@ -103,9 +108,11 @@ export async function GET(request: NextRequest) {
   const since = parsed.data.since ? new Date(parsed.data.since) : null;
 
   const rows = await prisma.$queryRaw<ReportRow[]>`
-    SELECT "id", "type", "description", "createdAt", "lng", "lat"
+    SELECT "id", "type", "description", "createdAt", "lastConfirmedAt", "expiresAt", "confirmations", "flags", "lng", "lat"
     FROM "Report"
     WHERE ST_Intersects("geog", ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)::geography)
+      AND ("expiresAt" IS NULL OR "expiresAt" > now())
+      AND ("flags" - "confirmations") < ${FLAG_DISPUTE_THRESHOLD}
       AND (${since}::timestamptz IS NULL OR "createdAt" > ${since}::timestamptz)
     ORDER BY "createdAt" DESC
     LIMIT 2000
@@ -124,6 +131,11 @@ export async function GET(request: NextRequest) {
         type: report.type,
         description: report.description,
         createdAt: report.createdAt.toISOString(),
+        expiresAt: report.expiresAt ? report.expiresAt.toISOString() : null,
+        confirmations: report.confirmations,
+        flags: report.flags,
+        // Faded as the report ages; confirmations refresh the anchor (lastConfirmedAt).
+        opacity: ageOpacity(report.type, report.lastConfirmedAt ?? report.createdAt),
       },
     })),
   });

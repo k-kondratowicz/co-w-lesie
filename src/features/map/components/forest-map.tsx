@@ -11,6 +11,7 @@ import { useMapInteraction } from '@/features/map/hooks/use-map-interaction';
 import { useViewportFeatures } from '@/features/map/hooks/use-viewport-features';
 import { boundsToBbox } from '@/features/map/utils/bounds-to-bbox';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
+import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
@@ -32,7 +33,14 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const isPicking = useMapPickStore((state) => state.isPicking);
   const pickConstraint = useMapPickStore((state) => state.constraint);
   const pickPurpose = useMapPickStore((state) => state.purpose);
-  const { position: userPosition, status: locationStatus, error: locationError, getCurrentPosition } = useGeolocation();
+  const {
+    position: userPosition,
+    status: locationStatus,
+    permission: locationPermission,
+    permissionDenied,
+    error: locationError,
+    getCurrentPosition,
+  } = useGeolocation();
 
   const { popup, closePopup, handleClick } = useMapInteraction(mapRef);
 
@@ -46,6 +54,9 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   }, [getCurrentPosition]);
 
   const permissionDialog = useActionDialog({ onConfirm: requestLocation });
+  // Ensures the location prompt is handled at most once per mount — without this, the effect
+  // re-runs every render (new dialog object) and re-opens right after "Nie teraz".
+  const locationPromptHandled = useRef(false);
 
   // Register the PMTiles protocol (client-only) and reveal the map after mount — <Map> needs the DOM.
   useEffect(() => {
@@ -66,11 +77,24 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
     }
   }, [userPosition]);
 
+  // Ask for location once on first load, tailored to the current permission:
+  //   granted   → fetch silently, no dialog;
+  //   prompt    → show the explainer dialog (its button triggers the browser prompt);
+  //   denied    → don't nag (the map works without it; map-pick + help cover the rest);
+  //   unknown   → wait for the Permissions API to resolve.
   useEffect(() => {
-    if (!userPosition && locationStatus === 'idle') {
+    if (locationPromptHandled.current || userPosition || locationStatus !== 'idle') {
+      return;
+    }
+
+    if (locationPermission === 'granted') {
+      locationPromptHandled.current = true;
+      void requestLocation();
+    } else if (locationPermission === 'prompt' || locationPermission === 'unsupported') {
+      locationPromptHandled.current = true;
       permissionDialog.setOpen(true);
     }
-  }, [userPosition, permissionDialog, locationStatus]);
+  }, [userPosition, locationStatus, locationPermission, requestLocation, permissionDialog]);
 
   if (!mounted) {
     return <div className="h-screen w-full" />;
@@ -134,16 +158,21 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
         description="Aplikacja potrzebuje Twojej lokalizacji, aby pokazać pobliskie obszary leśne i działać poprawnie. Bez tej zgody część funkcji może być niedostępna."
         onOpenChange={permissionDialog.setOpen}
         onConfirm={permissionDialog.confirm}
+        isSaveHidden={permissionDenied}
         cancelLabel="Nie teraz"
         confirmLabel="Włącz lokalizację"
       >
-        <div className="space-y-3">
-          <p className="text-muted-foreground text-sm">
-            Kliknij przycisk, aby zezwolić na lokalizację w przeglądarce. Jeśli odrzucisz zgodę, aplikacja nie będzie w pełni
-            funkcjonalna.
-          </p>
-          {locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
-        </div>
+        {permissionDenied ? (
+          <LocationPermissionHelp message={locationError ?? undefined} />
+        ) : (
+          <div className="space-y-3">
+            <p className="text-muted-foreground text-sm">
+              Kliknij przycisk, aby zezwolić na lokalizację w przeglądarce. Jeśli odrzucisz zgodę, aplikacja nie będzie w pełni
+              funkcjonalna.
+            </p>
+            {locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
+          </div>
+        )}
       </ActionDialog>
     </>
   );

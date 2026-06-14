@@ -1,4 +1,5 @@
-import { type PropsWithChildren, useCallback, useEffect, useState } from 'react';
+import { type PropsWithChildren, useCallback, useEffect } from 'react';
+import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Spinner } from '@/shared/components/ui';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { Button } from '../../ui/button';
@@ -8,11 +9,16 @@ import { FieldBase, type FieldControlProps } from './field-base';
 
 export function FieldLocation(props: FieldControlProps & PropsWithChildren) {
   const field = useFieldContext<number[] | undefined>();
-  const [error, setError] = useState<string | null>(null);
-  const { position: userPosition, isFetching, error: locationError, getCurrentPosition, clearError } = useGeolocation();
+  const {
+    position: userPosition,
+    isFetching,
+    error: locationError,
+    permissionDenied,
+    getCurrentPosition,
+    clearError,
+  } = useGeolocation();
 
   const fetchLocation = useCallback(() => {
-    setError(null);
     clearError();
 
     getCurrentPosition()
@@ -20,10 +26,10 @@ export function FieldLocation(props: FieldControlProps & PropsWithChildren) {
         // Stored as [lng, lat] (GeoJSON order), consistent across the app.
         field.handleChange([coords.longitude, coords.latitude]);
       })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : String(err ?? locationError ?? 'Nie udało się pobrać lokalizacji.'));
+      .catch(() => {
+        // The Polish, code-aware message is set on the location store (shown below).
       });
-  }, [field, getCurrentPosition, locationError, clearError]);
+  }, [field, getCurrentPosition, clearError]);
 
   useEffect(() => {
     if (userPosition && (!field.state.value || field.state.value.length === 0)) {
@@ -54,15 +60,21 @@ export function FieldLocation(props: FieldControlProps & PropsWithChildren) {
             disabled
           />
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={fetchLocation} disabled={isFetching}>
-          {isFetching && <Spinner />}
+        {!permissionDenied ? (
+          <Button type="button" variant="outline" size="sm" onClick={fetchLocation} disabled={isFetching}>
+            {isFetching && <Spinner />}
 
-          {!lat || !lng ? 'Pobierz lokalizację' : 'Odśwież lokalizację'}
-        </Button>
+            {!lat || !lng ? 'Pobierz lokalizację' : 'Odśwież lokalizację'}
+          </Button>
+        ) : null}
 
         {props.children}
 
-        {error ? <p className="text-destructive text-sm">{error}</p> : null}
+        {permissionDenied ? (
+          <LocationPermissionHelp message={locationError ?? undefined} />
+        ) : locationError ? (
+          <p className="text-destructive text-sm">{locationError}</p>
+        ) : null}
       </div>
     </FieldBase>
   );

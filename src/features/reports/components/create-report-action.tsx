@@ -152,7 +152,14 @@ export function CreateReportAction() {
           <form.AppField name="location">
             {(field) => (
               <field.Location label="Lokalizacja" description="Pobierz swoje współrzędne GPS i odśwież je w razie potrzeby.">
-                <Button type="button" variant="outline" size="sm" onClick={pickReportLocation} className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={pickReportLocation}
+                  className="w-full"
+                  disabled={form.state.values.location.length !== 2}
+                >
                   <MapPin className="size-4" />
                   Wskaż miejsce na mapie (do {REPORT_MAX_OFFSET_METERS / 1000} km)
                 </Button>

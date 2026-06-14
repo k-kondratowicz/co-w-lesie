@@ -3,6 +3,7 @@
 import { ShieldQuestion } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRiskAssessment } from '@/features/safety/hooks/use-risk-assessment';
+import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Button } from '@/shared/components/ui/button';
 import {
   Dialog,
@@ -21,7 +22,7 @@ import { RiskResult } from './risk-result';
 export function SafetyAssistant() {
   const [open, setOpen] = useState(false);
   const { target, setTarget, data, isFetching, isError, refetch } = useRiskAssessment(open);
-  const { position, getCurrentPosition, isFetching: locating, error: locationError } = useGeolocation();
+  const { position, getCurrentPosition, isFetching: locating, error: locationError, permissionDenied } = useGeolocation();
   const startPicking = useMapPickStore((state) => state.startPicking);
   const pickedPoint = useMapPickStore((state) => state.pickedPoint);
   const clearPicked = useMapPickStore((state) => state.clearPicked);
@@ -70,14 +71,18 @@ export function SafetyAssistant() {
       return (
         <div className="space-y-2">
           <p className="text-muted-foreground text-sm">Wybierz lokalizację do sprawdzenia:</p>
-          <Button onClick={chooseMyLocation} disabled={locating} className="w-full" size="sm">
-            {locating && <Spinner />}
-            Użyj mojej lokalizacji
-          </Button>
+          {permissionDenied ? (
+            <LocationPermissionHelp message={locationError ?? undefined} />
+          ) : (
+            <Button onClick={chooseMyLocation} disabled={locating} className="w-full" size="sm">
+              {locating && <Spinner />}
+              Użyj mojej lokalizacji
+            </Button>
+          )}
           <Button variant="outline" onClick={chooseOnMap} className="w-full" size="sm">
             Wskaż punkt na mapie
           </Button>
-          {locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
+          {!permissionDenied && locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
         </div>
       );
     }

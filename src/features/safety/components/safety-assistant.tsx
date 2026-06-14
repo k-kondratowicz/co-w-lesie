@@ -55,7 +55,7 @@ export function SafetyAssistant() {
   };
 
   const onOpenChange = (next: boolean) => {
-    if (open) {
+    if (next) {
       cancelPicking();
     }
 

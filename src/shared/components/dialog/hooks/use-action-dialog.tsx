@@ -43,6 +43,7 @@ export function useActionDialog(options?: UseConfirmDialogOptions) {
       open,
       loading,
       setOpen: setOpenSafe,
+      setOpenUnsafe: setOpen,
       confirm,
     }),
     [open, loading, setOpenSafe, confirm],

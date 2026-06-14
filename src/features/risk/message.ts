@@ -37,15 +37,15 @@ export function buildRiskMessage(result: RiskResult, context: RiskMessageContext
   const degree = signals.fire.degree;
 
   if (signals.entryBan.active) {
-    return 'Obowiązuje zakaz wstępu do lasu w tym rejonie — odradzamy wyjście.';
+    return 'Obowiązuje zakaz wstępu do lasu w tym rejonie - odradzamy wyjście.';
   }
   if (degree === 3) {
-    return 'Ekstremalne zagrożenie pożarowe (III stopień) — odradzamy wyjście do lasu.';
+    return 'Ekstremalne zagrożenie pożarowe (III stopień) - odradzamy wyjście do lasu.';
   }
 
   // Safety rule: never imply "safe" when we could not confirm the nationwide signals.
   if (level !== 'RED' && (!context.fireKnown || !context.banKnown)) {
-    return `Nie udało się potwierdzić wszystkich warunków w tym miejscu — zachowaj ostrożność. ${DISCLAIMER}`;
+    return `Nie udało się potwierdzić wszystkich warunków w tym miejscu - zachowaj ostrożność. ${DISCLAIMER}`;
   }
 
   if (level === 'RED') {

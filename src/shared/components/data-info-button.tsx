@@ -46,7 +46,7 @@ export function DataInfoButton() {
             odzwierciedlać najnowszego stanu.
           </InfoItem>
           <InfoItem title="Dokładność lokalizacji zależy od urządzenia">
-            Pozycja GPS może być obarczona błędem od kilku do kilkudziesięciu metrów — zależnie od urządzenia, pogody i otoczenia.
+            Pozycja GPS może być obarczona błędem od kilku do kilkudziesięciu metrów - zależnie od urządzenia, pogody i otoczenia.
             Twoja faktyczna lokalizacja może nieznacznie różnić się od pokazanej.
           </InfoItem>
           <InfoItem title="Obszar lasu jest uproszczony">

@@ -37,6 +37,9 @@ export const metadata: Metadata = {
     title: 'Co w lesie',
     description,
   },
+  verification: {
+    google: 'cbtVoIvaO98gp1VhJ6A596GeOVulm1qzKXpPjKGXnJQ',
+  },
 };
 
 export const viewport: Viewport = {

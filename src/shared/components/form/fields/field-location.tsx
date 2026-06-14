@@ -44,7 +44,8 @@ export function FieldLocation(props: FieldControlProps & PropsWithChildren) {
       <div className="grid gap-2">
         <div className="flex gap-2">
           <Input
-            id={`${field.name}-lat`}
+            id={`${field.name}`}
+            name={`${field.name}-lat`}
             value={lat ?? ''}
             readOnly
             placeholder="Szerokość"
@@ -53,6 +54,7 @@ export function FieldLocation(props: FieldControlProps & PropsWithChildren) {
           />
           <Input
             id={`${field.name}-lng`}
+            name={`${field.name}-lng`}
             value={lng ?? ''}
             readOnly
             placeholder="Długość"

@@ -21,6 +21,11 @@ export const createReportSchema = z.object({
     .trim()
     .max(MAX_DESCRIPTION_LENGTH, `Opis może mieć maksymalnie ${MAX_DESCRIPTION_LENGTH} znaków`)
     .optional(),
+  // R2 object key of an already-uploaded photo, in our reports/ namespace (always re-encoded to webp).
+  imageKey: z
+    .string()
+    .regex(/^reports\/[a-f0-9-]+\.webp$/, 'Nieprawidłowy klucz zdjęcia')
+    .optional(),
 });
 
 export type CreateReportInput = z.infer<typeof createReportSchema>;

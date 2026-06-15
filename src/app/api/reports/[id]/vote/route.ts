@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { expiryFrom } from '@/features/reports/lifecycle';
+import { clientIp } from '@/shared/lib/client-ip';
 import { prisma } from '@/shared/lib/prisma';
 import { checkRateLimit } from '@/shared/lib/rate-limit';
 
@@ -12,10 +13,6 @@ const VOTE_LIMIT = 20; // votes per IP
 const VOTE_WINDOW_MS = 60_000; // per minute
 
 const voteSchema = z.object({ kind: z.enum(['CONFIRM', 'FLAG']) });
-
-function clientIp(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-}
 
 // Salted hash so we can dedupe votes per IP without ever storing the raw address.
 function hashIp(ip: string): string {

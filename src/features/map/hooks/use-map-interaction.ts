@@ -13,6 +13,7 @@ export type PopupReport = {
   expiresAt: string | null;
   confirmations: number;
   flags: number;
+  imageUrl: string | null;
 };
 export type PopupInfo = { lng: number; lat: number; reports: PopupReport[] };
 
@@ -29,6 +30,7 @@ function featureToReport(feature: FeatureLike): PopupReport {
     expiresAt: props.expiresAt ? String(props.expiresAt) : null,
     confirmations: Number(props.confirmations ?? 0),
     flags: Number(props.flags ?? 0),
+    imageUrl: props.imageUrl ? String(props.imageUrl) : null,
   };
 }
 

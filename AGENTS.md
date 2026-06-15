@@ -60,7 +60,9 @@ output has real-world consequences. The caution rule (below) overrides convenien
 
 ## Definition of done
 1. Input validated with zod; user-facing errors in Polish, technical logs separate.
-2. Domain logic (`risk`, `geo`) has unit tests (Vitest).
+2. A new feature is fully tested before it is done: pure domain logic (`risk`, `geo`, lifecycle,
+   formatters) with Vitest unit tests, and DB-backed route behaviour with integration tests
+   (`*.integration.test.ts` via `npm run test:integration`). Both suites must pass.
 3. External-failure paths (BDL/sync down, no GPS, point outside coverage) handled per the
    safety rule.
 4. No `any`; no `console.log` in production code; pass Biome.
@@ -97,6 +99,14 @@ output has real-world consequences. The caution rule (below) overrides convenien
 - Do not narrate code execution.
 - Avoid block comments inside function bodies.
 - If a business rule requires more than two lines of explanation, document it in `docs/` and reference the document.
+- Write comments like a human, not an AI. Avoid the AI fingerprints:
+  - **Uniform density** - don't comment every block evenly. Comments cluster around genuinely
+    complex, surprising, or non-obvious code; most code needs none.
+  - **Generic phrasing** - say something specific to *this* app's domain/constraints, not a line
+    that would fit any code of that type ("Hash the password with bcrypt").
+  - **Section-header comments** - no `// ===== X =====` banners.
+  - Prefer the *reason/constraint*: "Run even when offline so the mutation can queue (default
+    'online' would pause it)" - not "set networkMode to always".
 
 ## Documentation
 - Business rules belong in feature documentation (`docs/` or feature README), not inline comments.

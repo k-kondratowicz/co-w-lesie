@@ -5,11 +5,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, PlusIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import {
   type CreateReportInput,
   createReportSchema,
   REPORT_MAX_OFFSET_METERS,
 } from '@/features/reports/schemas/create-report.schema';
+import { uploadReportPhoto } from '@/features/reports/upload-photo';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
 import { useAppForm } from '@/shared/components/form/form-hooks';
@@ -49,6 +51,10 @@ async function createReport(input: CreateReportInput): Promise<CreateReportResul
   return { queued: false, id };
 }
 
+// Form-only schema: the API fields plus the in-progress photo File (uploaded on submit, not sent).
+const createReportFormSchema = createReportSchema.extend({ photo: z.custom<File>().nullable().optional() });
+type CreateReportFormValues = z.infer<typeof createReportFormSchema>;
+
 export function CreateReportAction() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -72,16 +78,35 @@ export function CreateReportAction() {
 
   const form = useAppForm({
     validators: {
-      onChange: createReportSchema,
+      onChange: createReportFormSchema,
     },
     defaultValues: {
       description: '',
       type: 'OTHER',
       location: [],
-    } as unknown as CreateReportInput,
+      photo: null,
+    } as unknown as CreateReportFormValues,
     onSubmit: async ({ value }) => {
+      const { photo, ...report } = value;
+      let imageKey: string | undefined;
+
+      // Upload the photo first (online only - the presigned PUT needs a connection). Offline
+      // reports are queued without a photo.
+      if (photo) {
+        if (navigator.onLine) {
+          try {
+            imageKey = await uploadReportPhoto(photo);
+          } catch {
+            toast.error('Nie udało się przesłać zdjęcia. Spróbuj ponownie.');
+            return false;
+          }
+        } else {
+          toast.info('Brak internetu - zgłoszenie zapiszemy bez zdjęcia.');
+        }
+      }
+
       try {
-        const result = await mutation.mutateAsync(value);
+        const result = await mutation.mutateAsync({ ...report, imageKey });
         toast.success(
           result.queued
             ? 'Brak internetu - zgłoszenie wyślemy automatycznie, gdy wróci połączenie.'
@@ -202,6 +227,8 @@ export function CreateReportAction() {
               </field.Select>
             )}
           </form.AppField>
+
+          <form.AppField name="photo">{(field) => <field.Photo label="Zdjęcie (opcjonalnie)" />}</form.AppField>
         </form.Form>
       </form.AppForm>
     </ActionDialog>

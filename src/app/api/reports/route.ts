@@ -3,8 +3,10 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { ageOpacity, expiryFrom, FLAG_DISPUTE_THRESHOLD } from '@/features/reports/lifecycle';
 import { createReportSchema } from '@/features/reports/schemas/create-report.schema';
+import { clientIp } from '@/shared/lib/client-ip';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
 import { prisma } from '@/shared/lib/prisma';
+import { reportImageUrl } from '@/shared/lib/r2';
 import { checkRateLimit } from '@/shared/lib/rate-limit';
 
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
@@ -12,10 +14,6 @@ export const dynamic = 'force-dynamic'; // GET reads live data; never cache.
 
 const RATE_LIMIT = 5; // reports per IP
 const RATE_WINDOW_MS = 60_000; // per minute
-
-function clientIp(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-}
 
 // POST /api/reports - create a community report.
 // Body: { type: ReportType, description?: string, location: [lng, lat] }  (GeoJSON order)
@@ -42,7 +40,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Nieprawidłowe dane zgłoszenia', issues: z.flattenError(parsed.error) }, { status: 400 });
   }
 
-  const { type, description, location } = parsed.data;
+  const { type, description, location, imageKey } = parsed.data;
   const [lng, lat] = location;
 
   try {
@@ -51,7 +49,7 @@ export async function POST(request: Request) {
     }
 
     const report = await prisma.report.create({
-      data: { type, lat, lng, description: description?.trim() || null, expiresAt: expiryFrom(type) },
+      data: { type, lat, lng, description: description?.trim() || null, imageKey: imageKey ?? null, expiresAt: expiryFrom(type) },
       select: { id: true },
     });
     return Response.json({ id: report.id }, { status: 201 });
@@ -83,6 +81,7 @@ type ReportRow = {
   expiresAt: Date | null;
   confirmations: number;
   flags: number;
+  imageKey: string | null;
   lng: number;
   lat: number;
 };
@@ -108,7 +107,7 @@ export async function GET(request: NextRequest) {
   const since = parsed.data.since ? new Date(parsed.data.since) : null;
 
   const rows = await prisma.$queryRaw<ReportRow[]>`
-    SELECT "id", "type", "description", "createdAt", "lastConfirmedAt", "expiresAt", "confirmations", "flags", "lng", "lat"
+    SELECT "id", "type", "description", "createdAt", "lastConfirmedAt", "expiresAt", "confirmations", "flags", "imageKey", "lng", "lat"
     FROM "Report"
     WHERE ST_Intersects("geog", ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)::geography)
       AND ("expiresAt" IS NULL OR "expiresAt" > now())
@@ -134,6 +133,7 @@ export async function GET(request: NextRequest) {
         expiresAt: report.expiresAt ? report.expiresAt.toISOString() : null,
         confirmations: report.confirmations,
         flags: report.flags,
+        imageUrl: reportImageUrl(report.imageKey),
         // Faded as the report ages; confirmations refresh the anchor (lastConfirmedAt).
         opacity: ageOpacity(report.type, report.lastConfirmedAt ?? report.createdAt),
       },

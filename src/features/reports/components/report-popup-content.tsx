@@ -2,11 +2,39 @@
 
 import type { ReportType } from '@prisma/client';
 import { CheckCircle2, ThumbsDown } from 'lucide-react';
+import { useState } from 'react';
 import type { PopupReport } from '@/features/map/hooks/use-map-interaction';
 import { useReportVote } from '@/features/reports/hooks/use-report-vote';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
 import { Button } from '@/shared/components/ui/button';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatRelativeTime } from '@/shared/lib/format-relative-time';
+
+function ReportImage({ url }: { url: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return null;
+  }
+
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+      <div className="relative h-48 w-full overflow-hidden rounded-md border">
+        {!loaded ? <Skeleton className="absolute inset-0 rounded-none" /> : null}
+        {/* biome-ignore lint/performance/noImgElement: user-uploaded R2 photo, not a bundled/optimizable asset */}
+        <img
+          src={url}
+          alt="Zdjęcie zgłoszenia"
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+          className={`h-48 w-full object-cover transition-opacity ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        />
+      </div>
+    </a>
+  );
+}
 
 const personPluralRules = new Intl.PluralRules('pl');
 
@@ -42,6 +70,8 @@ export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
             </div>
 
             {report.description ? <p className="text-sm">{report.description}</p> : null}
+
+            {report.imageUrl ? <ReportImage url={report.imageUrl} /> : null}
 
             {report.confirmations > 0 ? (
               <p className="text-muted-foreground text-xs">{confirmationsLabel(report.confirmations)}</p>

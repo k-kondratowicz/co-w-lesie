@@ -3,15 +3,18 @@ import type { NextConfig } from 'next';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-// Origin that serves the forest PMTiles (R2), needed in img/connect CSP so map tiles load.
-let pmtilesOrigin = 'https://*.r2.dev';
-try {
-  if (process.env.NEXT_PUBLIC_FOREST_PMTILES_URL) {
-    pmtilesOrigin = new URL(process.env.NEXT_PUBLIC_FOREST_PMTILES_URL).origin;
+function originOf(url: string | undefined, fallback: string): string {
+  try {
+    return url ? new URL(url).origin : fallback;
+  } catch {
+    return fallback;
   }
-} catch {
-  // keep the wildcard fallback
 }
+
+// Origin that serves the forest PMTiles (R2), needed in img/connect CSP so map tiles load.
+const pmtilesOrigin = originOf(process.env.NEXT_PUBLIC_FOREST_PMTILES_URL, 'https://*.r2.dev');
+// Origin that serves report photos (R2 public bucket), needed in img-src to display them.
+const photosOrigin = originOf(process.env.NEXT_PUBLIC_R2_PUBLIC_URL, 'https://*.r2.dev');
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -22,8 +25,9 @@ const contentSecurityPolicy = [
   // Next injects inline bootstrap/RSC scripts; dev also needs eval for HMR.
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
-  // *.cartocdn.com serves the basemap style, glyphs, sprite and vector tiles.
-  `img-src 'self' data: blob: ${pmtilesOrigin} https://*.cartocdn.com`,
+  // *.cartocdn.com serves the basemap style, glyphs, sprite and vector tiles; photos load from R2.
+  `img-src 'self' data: blob: ${pmtilesOrigin} ${photosOrigin} https://*.cartocdn.com`,
+  // Photo uploads go to our own /api (same-origin), so R2 needs no connect-src entry here.
   `connect-src 'self' ${pmtilesOrigin} https://*.cartocdn.com`,
   "worker-src 'self' blob:", // MapLibre runs its renderer in a blob worker
   "font-src 'self' data:",

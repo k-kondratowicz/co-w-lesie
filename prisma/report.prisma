@@ -13,6 +13,9 @@ model Report {
   lastConfirmedAt DateTime?
   expiresAt       DateTime?
 
+  // R2 object key of an optional photo (resized + EXIF-stripped client-side before upload).
+  imageKey String?
+
   votes ReportVote[]
 
   /// Generated geography point (lng/lat, EPSG:4326). Managed by raw SQL migration,

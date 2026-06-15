@@ -189,6 +189,7 @@ export function CreateReportAction() {
       open={dialog.open}
       onOpenChange={dialog.setOpen}
       onConfirm={dialog.confirm}
+      loading={form.state.isSubmitting}
       trigger={
         <Button size="icon-xxl" className="rounded-full">
           <PlusIcon className="size-5" />

@@ -1,9 +1,11 @@
 import { ForestMap } from '@/features/map/components/forest-map';
 import { CreateReportAction } from '@/features/reports/components/create-report-action';
 import { LocationRefreshAction } from '@/features/reports/components/location-refresh-action';
+import { OfflineReportSync } from '@/features/reports/components/offline-report-sync';
 import { SafetyAssistant } from '@/features/safety/components/safety-assistant';
 import { AppLogoBox } from '@/shared/components/app-logo-box';
 import { DataInfoButton } from '@/shared/components/data-info-button';
+import { OfflineIndicator } from '@/shared/components/offline-indicator';
 
 export default function Home() {
   return (
@@ -17,6 +19,9 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      <OfflineIndicator />
+      <OfflineReportSync />
 
       <ForestMap
         pmtilesUrl={

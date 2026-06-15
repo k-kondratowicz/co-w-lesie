@@ -18,24 +18,44 @@ import { Button } from '@/shared/components/ui/button';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
+import { useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 
-async function createReport(input: CreateReportInput): Promise<{ id: string }> {
-  const res = await fetch('/api/reports', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
+type CreateReportResult = { queued: true } | { queued: false; id: string };
+
+async function createReport(input: CreateReportInput): Promise<CreateReportResult> {
+  let res: Response;
+
+  try {
+    res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    // Network failure (offline): queue it. GPS coordinates captured offline are still valid,
+    // so the report is sent — and validated — once connectivity returns.
+    useOfflineReportStore.getState().enqueue(input);
+
+    return { queued: true };
+  }
+
   if (!res.ok) {
     const data = (await res.json().catch(() => null)) as { error?: string } | null;
     throw new Error(data?.error ?? 'Nie udało się dodać zgłoszenia. Spróbuj ponownie.');
   }
-  return res.json();
+
+  const { id } = (await res.json()) as { id: string };
+
+  return { queued: false, id };
 }
 
 export function CreateReportAction() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: createReport,
+    // Run even when offline so createReport can catch the failure and queue the report
+    // (default 'online' would pause the mutation instead of calling it).
+    networkMode: 'always',
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
     },
@@ -61,8 +81,13 @@ export function CreateReportAction() {
     } as unknown as CreateReportInput,
     onSubmit: async ({ value }) => {
       try {
-        await mutation.mutateAsync(value);
-        toast.success('Dziękujemy! Zgłoszenie zostało dodane.');
+        const result = await mutation.mutateAsync(value);
+        toast.success(
+          result.queued
+            ? 'Brak internetu - zgłoszenie wyślemy automatycznie, gdy wróci połączenie.'
+            : 'Dziękujemy! Zgłoszenie zostało dodane.',
+        );
+
         return true;
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Nie udało się dodać zgłoszenia. Spróbuj ponownie.');

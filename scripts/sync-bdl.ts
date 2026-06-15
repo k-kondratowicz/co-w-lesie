@@ -6,11 +6,11 @@ import { prisma } from '@/shared/lib/prisma';
 // Usage: npm run sync:bdl
 
 async function main() {
-  console.log('Syncing fire-hazard zones…');
+  console.log('Syncing fire-hazard zones...');
   const fire = await syncFireHazard(prisma);
   console.log('  fire-hazard:', fire);
 
-  console.log('Syncing forest entry bans…');
+  console.log('Syncing forest entry bans...');
   const bans = await syncEntryBans(prisma);
   console.log('  entry-bans:', bans);
 }

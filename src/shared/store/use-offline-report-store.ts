@@ -15,7 +15,7 @@ type OfflineReportState = {
 };
 
 // crypto.randomUUID only exists in secure contexts (https/localhost), not over plain http on a
-// LAN IP — so fall back to a good-enough local id for the queue.
+// LAN IP - so fall back to a good-enough local id for the queue.
 function createId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }

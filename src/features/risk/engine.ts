@@ -10,7 +10,7 @@ import {
 } from './config';
 import type { RiskInput, RiskLevel, RiskResult } from './types';
 
-// Pure risk scoring. No I/O, no Date.now() — the caller precomputes report ages, so the same
+// Pure risk scoring. No I/O, no Date.now() - the caller precomputes report ages, so the same
 // input always yields the same output. This is the heart of the app and is unit-tested.
 
 export function typeWeight(type: ReportType): number {
@@ -44,7 +44,7 @@ function levelFromScore(score01: number): RiskLevel {
 
 /**
  * Combines signals into a level. Safety rule: an active entry ban or fire-hazard degree III
- * is a hard RED regardless of everything else — we never average those away.
+ * is a hard RED regardless of everything else - we never average those away.
  */
 export function assessRisk(input: RiskInput): RiskResult {
   const reportScore = reportDensityScore(input.reports);

@@ -55,11 +55,11 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   }, [getCurrentPosition]);
 
   const permissionDialog = useActionDialog({ onConfirm: requestLocation });
-  // Ensures the location prompt is handled at most once per mount — without this, the effect
+  // Ensures the location prompt is handled at most once per mount - without this, the effect
   // re-runs every render (new dialog object) and re-opens right after "Nie teraz".
   const locationPromptHandled = useRef(false);
 
-  // Register the PMTiles protocol (client-only) and reveal the map after mount — <Map> needs the DOM.
+  // Register the PMTiles protocol (client-only) and reveal the map after mount - <Map> needs the DOM.
   useEffect(() => {
     maplibregl.addProtocol('pmtiles', new Protocol().tile);
     setMounted(true);

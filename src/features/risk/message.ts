@@ -1,7 +1,7 @@
 import { fireDegreeRoman } from './format';
 import type { RiskResult } from './types';
 
-// Deterministic Polish assistant message. Pure and template-based — no model, no randomness —
+// Deterministic Polish assistant message. Pure and template-based - no model, no randomness -
 // so it is fully testable and never says something the score doesn't support.
 
 const DISCLAIMER = 'To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.';
@@ -54,7 +54,7 @@ export function buildRiskMessage(result: RiskResult, context: RiskMessageContext
   if (level === 'YELLOW') {
     return `Zachowaj ostrożność: ${n} ${reportsWord(n)} w promieniu ${km} km${fireClause(degree)}.`;
   }
-  // GREEN. Never imply "nothing here" when there are nearby reports — acknowledge them.
+  // GREEN. Never imply "nothing here" when there are nearby reports - acknowledge them.
   if (n > 0) {
     return `W pobliżu odnotowano ${n} ${reportsWord(n)} w promieniu ${km} km, ale poziom ryzyka jest niski. Zachowaj zwykłą ostrożność. ${DISCLAIMER}`;
   }

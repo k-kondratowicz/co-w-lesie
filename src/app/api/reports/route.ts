@@ -17,7 +17,7 @@ function clientIp(request: Request): string {
   return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
 }
 
-// POST /api/reports — create a community report.
+// POST /api/reports - create a community report.
 // Body: { type: ReportType, description?: string, location: [lng, lat] }  (GeoJSON order)
 export async function POST(request: Request) {
   const limit = await checkRateLimit(`report:${clientIp(request)}`, RATE_LIMIT, RATE_WINDOW_MS);
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 }
 
 // GET /api/reports?bbox=minLng,minLat,maxLng,maxLat&since=ISO
-// Returns a GeoJSON FeatureCollection — the source for the clustered map layer.
+// Returns a GeoJSON FeatureCollection - the source for the clustered map layer.
 const bboxSchema = z
   .string()
   .transform((value) => value.split(',').map(Number))

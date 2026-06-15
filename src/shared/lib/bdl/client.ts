@@ -87,7 +87,7 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
   }
 }
 
-/** Collects every matching feature into an array (for small layers — fire, bans). */
+/** Collects every matching feature into an array (for small layers - fire, bans). */
 export async function fetchAllFeatures<T extends z.ZodTypeAny>(
   layerUrl: string,
   propsSchema: T,

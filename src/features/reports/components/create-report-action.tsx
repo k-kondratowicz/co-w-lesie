@@ -33,7 +33,7 @@ async function createReport(input: CreateReportInput): Promise<CreateReportResul
     });
   } catch {
     // Network failure (offline): queue it. GPS coordinates captured offline are still valid,
-    // so the report is sent — and validated — once connectivity returns.
+    // so the report is sent - and validated - once connectivity returns.
     useOfflineReportStore.getState().enqueue(input);
 
     return { queued: true };

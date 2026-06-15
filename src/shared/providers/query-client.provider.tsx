@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
 });
 
 // Persist the query cache to localStorage so the last-seen reports/bans render offline. Guarded
-// so it no-ops during SSR (no window) — the provider itself is a client component.
+// so it no-ops during SSR (no window) - the provider itself is a client component.
 const persister = createAsyncStoragePersister({
   storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   key: 'cwl-query-cache',

@@ -16,6 +16,7 @@
     "generate:icons": "tsx scripts/generate-icons.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

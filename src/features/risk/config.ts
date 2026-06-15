@@ -1,6 +1,6 @@
 import type { ReportType } from '@prisma/client';
 
-// Risk-engine tunables — the product "knobs". Keep all magic numbers here, never inline in
+// Risk-engine tunables - the product "knobs". Keep all magic numbers here, never inline in
 // the scoring logic, so they can be adjusted (and reasoned about) in one place.
 
 /** Per-type severity (0..1). Gunfire/hunting highest; informational/littering lowest. */

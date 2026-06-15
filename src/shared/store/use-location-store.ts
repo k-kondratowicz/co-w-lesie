@@ -6,8 +6,8 @@ type LocationStatus = 'idle' | 'pending' | 'granted' | 'denied';
 // 'unknown' until queried; 'unsupported' when the Permissions API isn't available.
 type PermissionState = 'unknown' | 'unsupported' | 'granted' | 'prompt' | 'denied';
 
-// Minimum real movement (metres). A new fix closer than this — and within the reading's own
-// accuracy — is treated as GPS jitter, so we keep the previous position (stable reference,
+// Minimum real movement (metres). A new fix closer than this - and within the reading's own
+// accuracy - is treated as GPS jitter, so we keep the previous position (stable reference,
 // no needless re-renders / re-assessments for everyone reading the store).
 const MOVE_THRESHOLD_METERS = 50;
 
@@ -20,7 +20,7 @@ function hasMovedBeyondJitter(prev: GeoPos | null, next: GeoPos): boolean {
 }
 
 // Maps a GeolocationPositionError to a Polish message and whether it's a hard permission block
-// (code 1) — which the UI surfaces as "enable it in browser settings" instead of a dead retry.
+// (code 1) - which the UI surfaces as "enable it in browser settings" instead of a dead retry.
 function describeGeolocationError(err: unknown): { message: string; denied: boolean } {
   const code = err && typeof err === 'object' && 'code' in err ? (err as GeolocationPositionError).code : undefined;
 
@@ -43,7 +43,7 @@ interface LocationState {
   permission: PermissionState;
   error: string | null;
   isFetching: boolean;
-  // `force: true` bypasses the jitter deadband — always returns a fresh position object so
+  // `force: true` bypasses the jitter deadband - always returns a fresh position object so
   // consumers (e.g. the map re-centering) react even when you haven't really moved.
   getCurrentPosition: (opts?: { force?: boolean }) => Promise<GeoPos>;
   // Idempotently start tracking the geolocation permission so the UI can react to it and
@@ -104,7 +104,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
         try {
           const coords = await attempt(positionOptions);
-          // Ignore sub-threshold jitter unless forced — a fresh reference is what makes
+          // Ignore sub-threshold jitter unless forced - a fresh reference is what makes
           // consumers (map recenter, refresh button) react even when you didn't really move.
           const stable = force || hasMovedBeyondJitter(get().position, coords) ? coords : (get().position ?? coords);
           set({ position: stable, status: 'granted', permission: 'granted', isFetching: false, error: null });
@@ -112,7 +112,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         } catch (err) {
           lastError = err;
 
-          // A permission block (code 1) won't change on retry — fail fast with guidance.
+          // A permission block (code 1) won't change on retry - fail fast with guidance.
           const { message, denied } = describeGeolocationError(err);
           if (denied || attemptIdx === RETRIES) {
             set({

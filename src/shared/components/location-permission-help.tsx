@@ -1,7 +1,7 @@
 import { MapPinOff } from 'lucide-react';
 
 // Shown when geolocation is hard-blocked in the browser. We can't re-prompt programmatically,
-// so we explain how to re-enable it — the store auto-recovers the moment they do.
+// so we explain how to re-enable it - the store auto-recovers the moment they do.
 export function LocationPermissionHelp({ message }: { message?: string }) {
   return (
     <div className="flex gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">

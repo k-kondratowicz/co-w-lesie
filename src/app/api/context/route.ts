@@ -6,7 +6,7 @@ import { prisma } from '@/shared/lib/prisma';
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
 export const dynamic = 'force-dynamic'; // reads live data; never cache.
 
-// GET /api/context?lat=&lng= — forest / fire-hazard / entry-ban status for a point.
+// GET /api/context?lat=&lng= - forest / fire-hazard / entry-ban status for a point.
 const querySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),

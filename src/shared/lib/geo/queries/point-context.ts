@@ -2,7 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import { FOREST_COVERAGE_BBOX, isWithinBbox, POLAND_BBOX } from '../bbox';
 
 // Point context: combines in-forest, fire-hazard and entry-ban checks. The spatial work is
-// sub-millisecond, so all three run in ONE query (one DB round-trip — the real cost in prod).
+// sub-millisecond, so all three run in ONE query (one DB round-trip - the real cost in prod).
 
 export type PointContextRow = {
   in_forest: boolean;

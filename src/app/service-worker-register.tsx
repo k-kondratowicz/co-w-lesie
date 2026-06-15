@@ -10,7 +10,7 @@ export function ServiceWorkerRegister() {
     }
 
     navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Registration failures are non-fatal — the app works without offline support.
+      // Registration failures are non-fatal - the app works without offline support.
     });
   }, []);
 

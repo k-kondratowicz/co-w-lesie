@@ -1,4 +1,4 @@
-// Pure transforms from raw BDL attribute strings to our domain shapes. No I/O — unit-testable.
+// Pure transforms from raw BDL attribute strings to our domain shapes. No I/O - unit-testable.
 
 /**
  * Fire-hazard degree lives in the layer's `kod` field as a string:
@@ -44,7 +44,7 @@ export function parseBdlDateTime(value: string | null | undefined): Date | null 
 function makeUtcDate(year: number, month: number, day: number, hours: number, minutes: number, seconds: number): Date | null {
   const date = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
   // Date.UTC normalizes overflow (e.g. month 13 -> next year), so reject inputs whose
-  // components don't round-trip — "2025-13-40 99:99:99" must be null, not a valid date.
+  // components don't round-trip - "2025-13-40 99:99:99" must be null, not a valid date.
   const roundTrips =
     date.getUTCFullYear() === year &&
     date.getUTCMonth() === month - 1 &&

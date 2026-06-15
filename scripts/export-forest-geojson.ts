@@ -3,7 +3,7 @@ import { once } from 'node:events';
 import { createWriteStream } from 'node:fs';
 import { prisma } from '@/shared/lib/prisma';
 
-// Streams forest_dissolved to newline-delimited GeoJSON (GeoJSONSeq) — the input for
+// Streams forest_dissolved to newline-delimited GeoJSON (GeoJSONSeq) - the input for
 // tippecanoe. Keyset pagination keeps memory bounded regardless of table size; no GDAL needed.
 // Usage: npm run export:forest  (writes forest_dissolved.geojsonl)
 
@@ -38,7 +38,7 @@ async function main() {
 
     written += rows.length;
     lastId = Number(rows[rows.length - 1].id);
-    process.stdout.write(`\r  exported ${written.toLocaleString()} features…`);
+    process.stdout.write(`\r  exported ${written.toLocaleString()} features...`);
   }
 
   output.end();

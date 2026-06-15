@@ -6,7 +6,7 @@ import { banReason, fireKodToDegree, fireUpdatedAt, parseBdlDateTime } from './m
 import { entryBanProps, fireHazardProps, forestCompartmentProps } from './schemas';
 
 // Background sync: pull from BDL, validate, and refresh our local PostGIS tables.
-// Strategy is truncate+insert in a transaction — both layers are small, so the table
+// Strategy is truncate+insert in a transaction - both layers are small, so the table
 // always mirrors BDL's currently-published set with no stale rows left behind.
 
 export type SyncResult = { fetched: number; inserted: number; skipped: number };

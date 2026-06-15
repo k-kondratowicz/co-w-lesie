@@ -10,7 +10,7 @@ import { formatRelativeTime } from '@/shared/lib/format-relative-time';
 
 const personPluralRules = new Intl.PluralRules('pl');
 
-// "1 osobę" / "2 osoby" / "5 osób" — Polish plural via Intl.PluralRules (one/few/many).
+// "1 osobę" / "2 osoby" / "5 osób" - Polish plural via Intl.PluralRules (one/few/many).
 function confirmationsLabel(count: number): string {
   const form = personPluralRules.select(count);
   const noun = form === 'one' ? 'osobę' : form === 'few' ? 'osoby' : 'osób';

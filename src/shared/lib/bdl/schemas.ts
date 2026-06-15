@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // BDL fields can change without notice, so every response is validated before it touches the DB.
 
-/** Minimal GeoJSON geometry check — coordinates are passed verbatim to ST_GeomFromGeoJSON. */
+/** Minimal GeoJSON geometry check - coordinates are passed verbatim to ST_GeomFromGeoJSON. */
 const geometrySchema = z
   .object({
     type: z.string(),

@@ -17,7 +17,7 @@ async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | '
       return 'sent';
     }
 
-    // 4xx is permanent (validation / rate limit) — drop it; 5xx is transient — keep and retry.
+    // 4xx is permanent (validation / rate limit) - drop it; 5xx is transient - keep and retry.
     return res.status >= 400 && res.status < 500 ? 'rejected' : 'retry';
   } catch {
     return 'retry'; // still offline
@@ -25,7 +25,7 @@ async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | '
 }
 
 // Drains the offline report queue when connectivity returns (and on mount / tab focus). Renders
-// nothing — it's the background sender for reports created without a connection.
+// nothing - it's the background sender for reports created without a connection.
 export function OfflineReportSync() {
   const queryClient = useQueryClient();
   const flushing = useRef(false);
@@ -43,7 +43,7 @@ export function OfflineReportSync() {
       for (const report of useOfflineReportStore.getState().pending) {
         const outcome = await sendQueued(report);
         if (outcome === 'retry') {
-          break; // network/transient — leave the rest queued for next time
+          break; // network/transient - leave the rest queued for next time
         }
 
         useOfflineReportStore.getState().remove(report.id);

@@ -9,7 +9,7 @@ export function LocationRefreshAction() {
   const { getCurrentPosition, isFetching, permissionDenied } = useGeolocation();
 
   const refreshLocation = async () => {
-    // Blocked permission can't be re-prompted — point the user to browser settings instead.
+    // Blocked permission can't be re-prompted - point the user to browser settings instead.
     if (permissionDenied) {
       toast.error('Dostęp do lokalizacji jest zablokowany. Włącz go w ustawieniach przeglądarki (ikona kłódki obok adresu).');
       return;

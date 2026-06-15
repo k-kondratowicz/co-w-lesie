@@ -17,7 +17,7 @@ const TTL_HOURS: Record<ReportType, number> = {
   OTHER: 72,
 };
 
-// Hidden once flags outweigh confirmations by this much — the crowd marking it gone/wrong.
+// Hidden once flags outweigh confirmations by this much - the crowd marking it gone/wrong.
 export const FLAG_DISPUTE_THRESHOLD = 2;
 
 export function reportTtlMs(type: ReportType): number {

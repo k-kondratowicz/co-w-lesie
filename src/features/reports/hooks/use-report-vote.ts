@@ -24,7 +24,7 @@ function writeVoted(voted: Record<string, VoteKind>) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(voted));
   } catch {
-    // storage unavailable (e.g. private mode) — the server-side IP dedupe still guards integrity
+    // storage unavailable (e.g. private mode) - the server-side IP dedupe still guards integrity
   }
 }
 

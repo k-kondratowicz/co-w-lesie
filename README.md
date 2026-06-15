@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Co w lesie
 
-## Getting Started
+> 🇵🇱 [Wersja polska](./README.pl.md)
 
-First, run the development server:
+A safety app for Polish forests: report incidents you see (gunshots, dead/aggressive animals,
+traps, illegal logging, dumping) and check whether it's currently safe to enter a given spot -
+combining community reports with the State Forests' fire-hazard zones and entry bans.
+
+**This is a safety application** - see the [safety rule](./docs/business-rules.md#safety-rule):
+missing data is never reported as "safe".
+
+## Tech stack
+
+- **Next.js 16** (App Router, React 19, React Compiler) on Vercel
+- **PostgreSQL + PostGIS** (Neon in production), **Prisma 7** with `@prisma/adapter-pg`
+- **MapLibre GL + PMTiles** for the map and the country-wide forest layer (tiles on Cloudflare R2)
+- **zod** validation, **TanStack Query/Form**, **Zustand**, **Biome**, **Vitest**
+
+## Local development
+
+Prerequisites: Node 22+, Docker (for PostGIS).
 
 ```bash
+# 1. Start PostGIS
+docker compose up -d
+
+# 2. Configure env (see "Environment variables" below)
+cp .env.example .env   # if present; otherwise create .env
+
+# 3. Apply migrations
+npx prisma migrate deploy
+
+# 4. Seed the forest layer (~455k polygons, several minutes) and pull BDL data
+npm run seed:forest
+npm run sync:bdl
+
+# 5. Run the app
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Required | Purpose |
+|---|---|---|
+| `DATABASE_URL` | yes | PostgreSQL/PostGIS connection (pooled URL in prod; **direct** URL for migrations) |
+| `CRON_SECRET` | yes | Bearer secret for `/api/cron/*` |
+| `NEXT_PUBLIC_FOREST_PMTILES_URL` | yes | URL of the forest PMTiles file (R2 in prod) |
+| `NEXT_PUBLIC_SITE_URL` | prod | Canonical site URL (metadata, sitemap, robots) |
+| `NEXT_PUBLIC_SENTRY_DSN` | optional | Enables Sentry error monitoring |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | optional | Durable rate limiting (else in-memory) |
+| `VOTE_SALT` | optional | Salt for the per-IP report-vote hash |
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Script | Purpose |
+|---|---|
+| `npm run dev` / `build` / `start` | Next.js dev / build / serve |
+| `npm test` | Vitest unit tests |
+| `npm run test:integration` | DB-backed route tests (needs PostGIS running; uses a `cowlesie_test` database) |
+| `npm run lint` / `format` | Biome |
+| `npm run seed:forest` | Seed `forest_area` from BDL (all of Poland) |
+| `npm run sync:bdl` | Sync fire-hazard zones + entry bans from BDL |
+| `npm run dissolve:forest` | Rebuild the dissolved forest geometry |
+| `npm run export:forest` / `build:forest-pmtiles` | Export GeoJSON and build the PMTiles layer |
+| `npm run generate:icons` | Re-render app icons + OG image from the brand mark |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Architecture](./docs/architecture.md) - structure, spatial data flow, conventions
+- [Business rules](./docs/business-rules.md) - risk model, report lifecycle, safety rule
+- [Deployment](./docs/deployment.md) - topology, env, migrations, cron
+- [Decisions (ADRs)](./docs/adr/) - load-bearing technical choices
+- [AGENTS.md](./AGENTS.md) - rules for AI/contributors working in this repo

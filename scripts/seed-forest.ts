@@ -22,10 +22,10 @@ function parseBbox(arg: string | undefined): Bbox {
 async function main() {
   const bbox = parseBbox(process.argv[2]);
   const startedAt = Date.now();
-  console.log('Seeding forest_area for bbox', bbox, '…');
+  console.log('Seeding forest_area for bbox', bbox, '...');
 
   const result = await syncForestArea(prisma, bbox, (inserted) => {
-    process.stdout.write(`\r  inserted ${inserted.toLocaleString()} compartments…`);
+    process.stdout.write(`\r  inserted ${inserted.toLocaleString()} compartments...`);
   });
 
   const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);

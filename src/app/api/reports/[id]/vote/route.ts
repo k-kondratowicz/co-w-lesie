@@ -24,7 +24,7 @@ function hashIp(ip: string): string {
     .digest('hex');
 }
 
-// POST /api/reports/:id/vote — confirm ("still there") or flag ("gone/wrong") a report.
+// POST /api/reports/:id/vote - confirm ("still there") or flag ("gone/wrong") a report.
 // One vote per IP per report (enforced by the ReportVote unique constraint).
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -75,7 +75,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return Response.json(counts);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Already voted from this IP — idempotent: return the current tally.
+      // Already voted from this IP - idempotent: return the current tally.
       if (error.code === 'P2002') {
         const counts = await prisma.report.findUnique({ where: { id }, select: { confirmations: true, flags: true } });
 

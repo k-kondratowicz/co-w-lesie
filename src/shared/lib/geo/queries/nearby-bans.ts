@@ -3,7 +3,7 @@ import type { PrismaClient } from '@prisma/client';
 export type NearbyBans = { count: number; nearestMeters: number | null };
 
 /**
- * Active entry bans within `radiusMeters` of the point that do NOT contain it — i.e. bans that
+ * Active entry bans within `radiusMeters` of the point that do NOT contain it - i.e. bans that
  * are nearby but not where you're standing. Used to warn even when the point itself is allowed.
  */
 export async function queryNearbyBans(prisma: PrismaClient, lng: number, lat: number, radiusMeters: number): Promise<NearbyBans> {

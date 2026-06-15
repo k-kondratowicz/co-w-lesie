@@ -18,7 +18,7 @@ interface MapLayersProps {
   riskOverlay: RiskOverlay | null;
   pickConstraint: PickConstraint | null;
   userPosition: GeolocationPosition['coords'] | null;
-  // The tapped report location — highlighted while its details overlay is open.
+  // The tapped report location - highlighted while its details overlay is open.
   selectedPoint: { lng: number; lat: number } | null;
 }
 
@@ -37,7 +37,7 @@ export function MapLayers({
   const circleColor = riskOverlay ? RISK_COLORS[riskOverlay.level] : RISK_COLORS.GREEN;
 
   // The center pin only adds info when the assessed point isn't the user's own location (where
-  // the blue location dot already sits) — e.g. when they picked a different point on the map.
+  // the blue location dot already sits) - e.g. when they picked a different point on the map.
   const showRiskCenter =
     riskOverlay !== null &&
     (userPosition === null ||
@@ -63,7 +63,7 @@ export function MapLayers({
         />
       </Source>
 
-      {/* Active forest-entry bans (live GeoJSON from /api/bans) — the actual closed areas. */}
+      {/* Active forest-entry bans (live GeoJSON from /api/bans) - the actual closed areas. */}
       <Source id="bans" type="geojson" data={bans ?? EMPTY_FC}>
         <Layer id="ban-fill" type="fill" minzoom={BANS_MIN_ZOOM} paint={{ 'fill-color': '#dc2626', 'fill-opacity': 0.18 }} />
         <Layer
@@ -99,7 +99,7 @@ export function MapLayers({
       {/* Reports: clustered GeoJSON from /api/reports. */}
       {/* clusterMaxZoom = map maxZoom so close points always merge (never fuzzy stacked dots).
           Zoomed out: count bubbles. Zoomed in (≥ z14): clusters render as a single red dot like
-          a lone report — tapping it lists the few reports there. */}
+          a lone report - tapping it lists the few reports there. */}
       <Source
         id="reports"
         type="geojson"
@@ -108,7 +108,7 @@ export function MapLayers({
         clusterRadius={40}
         clusterMaxZoom={16}
         // Sum members' age-opacity so the merged dot can fade like the reports it represents
-        // (avg = sum / point_count). Computed once per cluster in the worker — cheap.
+        // (avg = sum / point_count). Computed once per cluster in the worker - cheap.
         clusterProperties={{ opacitySum: ['+', ['get', 'opacity']] }}
       >
         <Layer
@@ -179,7 +179,7 @@ export function MapLayers({
         </Marker>
       ) : null}
 
-      {/* Center pin of the assessed point — only when it differs from the user's own location. */}
+      {/* Center pin of the assessed point - only when it differs from the user's own location. */}
       {showRiskCenter && riskOverlay ? (
         <Marker longitude={riskOverlay.lng} latitude={riskOverlay.lat}>
           <div className="size-3.5 rounded-full border-2 border-white" style={{ backgroundColor: circleColor }} />

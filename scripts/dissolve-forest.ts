@@ -1,14 +1,14 @@
 import 'dotenv/config';
 import { prisma } from '@/shared/lib/prisma';
 
-// Builds forest_dissolved — the merged/exploded forest geometry used as tippecanoe input.
+// Builds forest_dissolved - the merged/exploded forest geometry used as tippecanoe input.
 // Grid-bucketed ST_Union (by centroid cell) bounds memory and avoids duplication; the only
 // seams are at ~0.5° cell edges, irrelevant for a forest mask. Scratch table, safe to drop.
 // Usage: npm run dissolve:forest  (run before export:forest when forest_area changes)
 
 async function main() {
   const startedAt = Date.now();
-  console.log('Dissolving forest_area → forest_dissolved…');
+  console.log('Dissolving forest_area → forest_dissolved...');
 
   await prisma.$executeRawUnsafe('DROP TABLE IF EXISTS forest_dissolved');
   await prisma.$executeRawUnsafe(`

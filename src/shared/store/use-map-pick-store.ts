@@ -19,7 +19,7 @@ interface MapPickState {
   pickedPoint: PickedPoint | null;
   startPicking: (purpose: PickPurpose, constraint?: PickConstraint) => void;
   cancelPicking: () => void;
-  /** Called by the map on click while picking — records the point and exits picking. */
+  /** Called by the map on click while picking - records the point and exits picking. */
   pickPoint: (lng: number, lat: number) => void;
   clearPicked: () => void;
 }

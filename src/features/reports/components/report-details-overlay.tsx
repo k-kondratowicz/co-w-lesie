@@ -4,7 +4,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { useIsDesktop } from '@/shared/hooks/use-is-desktop';
 import { ReportPopupContent } from './report-popup-content';
 
-// Details for the report(s) under a map tap. Dialog on desktop, bottom Drawer on mobile —
+// Details for the report(s) under a map tap. Dialog on desktop, bottom Drawer on mobile -
 // roomy enough for long descriptions, multiple stacked reports and the confirm/flag actions.
 export function ReportDetailsOverlay({ info, onClose }: { info: PopupInfo | null; onClose: () => void }) {
   const isDesktop = useIsDesktop();

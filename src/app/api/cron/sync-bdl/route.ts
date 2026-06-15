@@ -5,7 +5,7 @@ import { prisma } from '@/shared/lib/prisma';
 
 // Background BDL sync, triggered by a scheduler (e.g. Vercel Cron). Never hit on a user
 // request. Forest areas are a one-off seed (npm run seed:forest), so they are not synced
-// here — only the frequently-changing fire-hazard zones and entry bans.
+// here - only the frequently-changing fire-hazard zones and entry bans.
 //
 // Cadence (configured in the scheduler, not here): fire ~every 3h, bans ~daily. The
 // `dataset` query param lets one schedule target a subset.

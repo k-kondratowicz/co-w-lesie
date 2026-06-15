@@ -52,6 +52,11 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000,
   },
   compress: true,
+  // sharp loads libvips via dlopen, which file tracing misses - force the linux binaries into the
+  // upload route's function bundle. The globs no-op locally (those platform packages aren't installed).
+  outputFileTracingIncludes: {
+    '/api/reports/upload': ['./node_modules/@img/sharp-linux-x64/**/*', './node_modules/@img/sharp-libvips-linux-x64/**/*'],
+  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

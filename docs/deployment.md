@@ -80,3 +80,16 @@ The forest PMTiles file is served from R2 via HTTP **Range** requests. It is **n
 offline use - the browser Cache API can't store partial (206) responses. Offline support covers
 the app shell, basemap tiles, cached report/ban data, and the offline report queue
 ([ADR-0004](./adr/0004-offline-support.md)).
+
+## Report photos (sharp on Vercel)
+
+`/api/reports/upload` re-encodes uploads with `sharp` (native libvips). Two things are needed for
+it to run on Vercel's linux runtime, both already in place - **keep them in sync when bumping `sharp`**:
+
+1. `optionalDependencies["@img/sharp-linux-x64"]` in `package.json`, pinned to the **same version**
+   as `sharp`. It's skipped on macOS (platform mismatch) but recorded in the lockfile, so Vercel
+   installs the linux binary + its bundled libvips.
+2. `outputFileTracingIncludes` for `/api/reports/upload` in `next.config.ts` - sharp `dlopen`s
+   libvips at runtime, which file tracing misses, so the `.so` must be force-included in the function.
+
+Symptom if either is missing: `ERR_DLOPEN_FAILED: libvips-cpp.so... cannot open shared object file`.

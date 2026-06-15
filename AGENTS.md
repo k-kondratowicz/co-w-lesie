@@ -1,14 +1,14 @@
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes - APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
 <!-- BEGIN:project-rules -->
 # Project: "Co w lesie"
 
 App for reporting forest incidents (gunshots, dead animals, traps, illegal logging, dumping)
-and assessing whether it is safe to enter the forest. **This is a safety application** — wrong
+and assessing whether it is safe to enter the forest. **This is a safety application** - wrong
 output has real-world consequences. The caution rule (below) overrides convenience.
 
 ## Stack (do not assume; this repo pins specific versions)
@@ -27,20 +27,20 @@ output has real-world consequences. The caution rule (below) overrides convenien
 
 ## Architecture rules
 - Feature-based: domain code under `src/features/<feature>/`, cross-cutting under `src/shared/`.
-- **Pure domain logic** (`features/risk`, `shared/lib/geo` helpers) does NO I/O — no `fetch`,
+- **Pure domain logic** (`features/risk`, `shared/lib/geo` helpers) does NO I/O - no `fetch`,
   no DB calls. It takes data and returns a result, so it is unit-testable. I/O lives in
   `shared/lib/bdl`, `shared/lib/prisma`, and route handlers.
 - **Spatial data flow:** the USER only ever queries our local PostGIS. External BDL/Lasy
   Państwowe services are touched ONLY by the background sync job, never on a user request.
 - Spatial conventions: everything internal is EPSG:4326 (lng/lat, degrees). PostGIS distances
-  in METERS via `geography` (`ST_DWithin`, `ST_Distance`). BDL services are EPSG:2180 — when
+  in METERS via `geography` (`ST_DWithin`, `ST_Distance`). BDL services are EPSG:2180 - when
   querying their REST API pass `inSR=4326`/`outSR=4326` and let the server reproject; never
   reproject by hand. Name variables `lng`/`lat` explicitly; GeoJSON order is `[lng, lat]`.
 - PostGIS geometry is added via raw SQL migrations and queried with `prisma.$queryRaw`
   (parameterized). It does not need to live in the Prisma schema.
 - **Migration gotcha (generated columns):** Prisma cannot model the `Report.geog` generated
   column, so `prisma migrate dev` regenerates a spurious `ALTER COLUMN "geog" DROP DEFAULT`
-  (which fails — it's `GENERATED`) plus a `report_geog_idx` → `Report_geog_idx` rename. When
+  (which fails - it's `GENERATED`) plus a `report_geog_idx` → `Report_geog_idx` rename. When
   adding an unrelated migration: hand-edit the generated `migration.sql` to delete those two
   statements, then `prisma migrate resolve --rolled-back <name>` and `prisma migrate deploy`
   (deploy applies without re-diffing). Also drop scratch tables (e.g. `forest_dissolved`,
@@ -52,7 +52,7 @@ output has real-world consequences. The caution rule (below) overrides convenien
 
 ## Safety rule (overrides everything except correctness)
 - Missing data ≠ safe. If a signal is unknown (sync failed, point outside imported coverage,
-  BDL down) return status `UNKNOWN` and tell the user to stay cautious — never imply "safe".
+  BDL down) return status `UNKNOWN` and tell the user to stay cautious - never imply "safe".
 - The safety assistant never states categorically that it is safe. Best case: "no known
   hazards nearby" plus an always-visible disclaimer that it does not replace official LP notices.
 - Entry ban present or fire-hazard degree III → result is always RED, regardless of other signals.
@@ -64,14 +64,14 @@ output has real-world consequences. The caution rule (below) overrides convenien
 3. External-failure paths (BDL/sync down, no GPS, point outside coverage) handled per the
    safety rule.
 4. No `any`; no `console.log` in production code; pass Biome.
-5. DB changes via a Prisma migration (incl. manual SQL for PostGIS) — never edit the DB by hand.
+5. DB changes via a Prisma migration (incl. manual SQL for PostGIS) - never edit the DB by hand.
 
 ### Code changes
 - Prefer modifying existing code over introducing new abstractions; avoid premature
   abstractions and speculative generalization.
 - Don't add files or extract a helper/hook/component for *hypothetical* reuse, or to split a
   small, cohesive unit.
-- Do extract a single-use piece when it clarifies a *large or multi-concern* unit — split along
+- Do extract a single-use piece when it clarifies a *large or multi-concern* unit - split along
   a real seam (e.g. presentational vs. interaction vs. orchestration), for readability, not reuse.
 
 ## Coding style
@@ -87,14 +87,27 @@ output has real-world consequences. The caution rule (below) overrides convenien
 - Minimize mutable state.
 - Use blank lines to separate logical sections.
 - Give `return` breathing room: a blank line before it, and format returned object literals
-  multiline (one property per line, trailing comma) — even short ones.
-- Explain intent, constraints, or business rules in comments; do not comment obvious code.
+  multiline (one property per line, trailing comma) - even short ones.
 - Use Prisma `select` to fetch only required fields.
 
+## Comments
+- Comments are a last resort.
+- Prefer expressive names and small functions over comments.
+- Comments must explain *why*, never *what*.
+- Do not narrate code execution.
+- Avoid block comments inside function bodies.
+- If a business rule requires more than two lines of explanation, document it in `docs/` and reference the document.
+
+## Documentation
+- Business rules belong in feature documentation (`docs/` or feature README), not inline comments.
+- Architectural decisions belong in ADRs or project documentation.
+- Route-specific constraints may be documented at the route handler level.
+- Comments should only exist when the rationale cannot be expressed through code.
+
 ## Do NOT without asking
-- Change the DB schema "in passing" — schema change = a deliberate, separate migration.
+- Change the DB schema "in passing" - schema change = a deliberate, separate migration.
 - Add dependencies without justification (every map/GIS lib has weight).
-- Hardcode secrets — env vars only.
+- Hardcode secrets - env vars only.
 - Emit content that reassures about safety in violation of the safety rule.
-- Guess at Next 16 APIs — read the bundled docs first.
+- Guess at Next 16 APIs - read the bundled docs first.
 <!-- END:project-rules -->

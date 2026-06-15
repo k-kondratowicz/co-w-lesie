@@ -5,7 +5,9 @@ name: Sync BDL
 # Requires repo variable APP_URL and repo secret CRON_SECRET.
 on:
   schedule:
-    - cron: '0 */3 * * *' # fire-hazard zones, every 3h (UTC)
+    # Fire-hazard zones: hourly 06:00–16:00 UTC. BDL publishes ~09:00 & ~13:00 Polish time
+    # (and more often in extreme conditions); the window covers both across CET/CEST + intra-day updates.
+    - cron: '0 6-16 * * *'
     - cron: '30 3 * * *' # entry bans, daily 03:30 (UTC)
   workflow_dispatch: {} # manual "run now" → syncs everything
 

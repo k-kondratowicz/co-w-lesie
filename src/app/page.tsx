@@ -2,6 +2,7 @@ import { ForestMap } from '@/features/map/components/forest-map';
 import { CreateReportAction } from '@/features/reports/components/create-report-action';
 import { LocationRefreshAction } from '@/features/reports/components/location-refresh-action';
 import { OfflineReportSync } from '@/features/reports/components/offline-report-sync';
+import { ReportFilter } from '@/features/reports/components/report-filter';
 import { SafetyAssistant } from '@/features/safety/components/safety-assistant';
 import { AppLogoBox } from '@/shared/components/app-logo-box';
 import { DataInfoButton } from '@/shared/components/data-info-button';
@@ -11,11 +12,10 @@ export default function Home() {
   return (
     <div className="absolute inset-0 h-full w-full bg-zinc-50 font-sans dark:bg-black">
       <header className="pointer-events-none absolute top-0 z-20 w-full px-4 py-4 sm:px-6 lg:px-8">
-        <div className="mx-auto flex flex-row items-center justify-between gap-4">
+        <div className="mx-auto flex flex-row items-start justify-between gap-4">
           <AppLogoBox />
-          <div className="pointer-events-auto flex items-center gap-2">
+          <div className="pointer-events-auto">
             <LocationRefreshAction />
-            <CreateReportAction />
           </div>
         </div>
       </header>
@@ -33,7 +33,10 @@ export default function Home() {
         <DataInfoButton />
       </div>
 
-      <div className="absolute right-4 bottom-4 z-30 sm:right-6 sm:bottom-6 lg:right-8">
+      {/* Primary actions in the thumb zone (bottom-right), hero "safety" closest to the corner. */}
+      <div className="pointer-events-auto absolute right-4 bottom-4 z-30 flex flex-col items-end gap-2 sm:right-6 sm:bottom-6 lg:right-8">
+        <ReportFilter />
+        <CreateReportAction />
         <SafetyAssistant />
       </div>
     </div>

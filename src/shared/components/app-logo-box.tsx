@@ -13,7 +13,7 @@ function PineMark() {
 
 export function AppLogoBox() {
   return (
-    <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-background/80 p-2 shadow-sm backdrop-blur">
+    <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-background/80 p-1 shadow-sm backdrop-blur sm:p-2">
       <span className="grid size-10 place-items-center rounded-xl bg-primary text-white">
         <PineMark />
       </span>

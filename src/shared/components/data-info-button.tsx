@@ -25,15 +25,12 @@ export function DataInfoButton() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          aria-label="Informacje o danych i ograniczeniach"
-          variant="secondary"
-          size="icon-xxl"
-          className="rounded-full shadow-lg"
-        >
-          <Info className="size-5" />
+        <Button variant="outline" size="icon-xxl" rounded="full" className="shadow-lg">
+          <Info />
+          <span className="sr-only">Informacje o danych i ograniczeniach</span>
         </Button>
       </DialogTrigger>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>O danych i ograniczeniach</DialogTitle>

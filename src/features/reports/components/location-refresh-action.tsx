@@ -24,8 +24,15 @@ export function LocationRefreshAction() {
   };
 
   return (
-    <Button onClick={refreshLocation} variant="outline" size="icon-xxl" className="rounded-full" disabled={isFetching}>
-      <LocateFixed className="size-5" />
+    <Button
+      onClick={refreshLocation}
+      variant="outline"
+      size="icon-xxl"
+      rounded="full"
+      className="shadow-lg"
+      disabled={isFetching}
+    >
+      <LocateFixed />
       <span className="sr-only">Odśwież lokalizację</span>
     </Button>
   );

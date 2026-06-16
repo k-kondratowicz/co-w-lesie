@@ -60,4 +60,29 @@ describe('GET /api/reports', () => {
     expect(feature.properties.expiresAt).toBe(future.toISOString());
     expect(typeof feature.properties.opacity).toBe('number');
   });
+
+  it('honours the `since` filter (hides reports created before it)', async () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000);
+
+    const recent = await prisma.report.create({
+      data: { type: 'FIRE', lat: HERE.lat, lng: HERE.lng, expiresAt: future },
+      select: { id: true },
+    });
+    const old = await prisma.report.create({
+      // Active (not expired), but created 10 days ago.
+      data: { type: 'FIRE', lat: HERE.lat, lng: HERE.lng, expiresAt: future, createdAt: new Date(Date.now() - 10 * 86_400_000) },
+      select: { id: true },
+    });
+
+    const since = encodeURIComponent(new Date(Date.now() - 86_400_000).toISOString());
+    const filtered = await (await GET(new NextRequest(`http://localhost/api/reports?bbox=${BBOX}&since=${since}`))).json();
+    const filteredIds = filtered.features.map((feature: { properties: { id: string } }) => feature.properties.id);
+
+    expect(filteredIds).toContain(recent.id);
+    expect(filteredIds).not.toContain(old.id);
+
+    const all = await (await getReports()).json();
+    const allIds = all.features.map((feature: { properties: { id: string } }) => feature.properties.id).sort();
+    expect(allIds).toEqual([recent.id, old.id].sort());
+  });
 });

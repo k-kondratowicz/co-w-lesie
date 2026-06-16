@@ -2,11 +2,17 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-async function fetchFeatures(path: string, bbox: string): Promise<GeoJSON.FeatureCollection> {
-  const response = await fetch(`${path}?bbox=${encodeURIComponent(bbox)}`);
+async function fetchFeatures(path: string, bbox: string, since: string | null): Promise<GeoJSON.FeatureCollection> {
+  const params = new URLSearchParams({ bbox });
+  if (since) {
+    params.set('since', since);
+  }
+
+  const response = await fetch(`${path}?${params}`);
   if (!response.ok) {
     throw new Error(`Request failed (${response.status}) for ${path}`);
   }
+
   return response.json();
 }
 
@@ -21,10 +27,11 @@ export function useViewportFeatures(
   queryKey: string,
   bbox: string | null,
   enabled = true,
+  since: string | null = null,
 ): GeoJSON.FeatureCollection | null {
   const { data } = useQuery({
-    queryKey: [queryKey, bbox],
-    queryFn: () => fetchFeatures(path, bbox as string),
+    queryKey: [queryKey, bbox, since],
+    queryFn: () => fetchFeatures(path, bbox as string, since),
     enabled: enabled && bbox !== null,
     placeholderData: keepPreviousData,
   });

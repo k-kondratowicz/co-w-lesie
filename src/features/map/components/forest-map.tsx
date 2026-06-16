@@ -5,7 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Map as MapGL, type MapRef } from '@vis.gl/react-maplibre';
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BANS_MIN_ZOOM, MapLayers } from '@/features/map/components/map-layers';
 import { useMapInteraction } from '@/features/map/hooks/use-map-interaction';
 import { useViewportFeatures } from '@/features/map/hooks/use-viewport-features';
@@ -15,6 +15,7 @@ import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
+import { reportsSinceIso, useReportFilterStore } from '@/shared/store/use-report-filter-store';
 import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
 
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
@@ -28,7 +29,10 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const [bbox, setBbox] = useState<string | null>(null);
   const [zoom, setZoom] = useState(6);
 
-  const reports = useViewportFeatures('/api/reports', 'reports', bbox);
+  const sinceDays = useReportFilterStore((state) => state.sinceDays);
+  // Memoize so Date.now() (inside reportsSinceIso) doesn't churn the query key every render.
+  const reportsSince = useMemo(() => reportsSinceIso(sinceDays), [sinceDays]);
+  const reports = useViewportFeatures('/api/reports', 'reports', bbox, true, reportsSince);
   const bans = useViewportFeatures('/api/bans', 'bans', bbox, zoom >= BANS_MIN_ZOOM);
   const riskOverlay = useRiskOverlayStore((state) => state.overlay);
   const isPicking = useMapPickStore((state) => state.isPicking);
@@ -117,7 +121,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
         cursor={isPicking ? 'crosshair' : 'auto'}
         interactiveLayerIds={REPORT_LAYERS}
         attributionControl={{ compact: false }}
-        style={{ width: '100%', height: '100vh' }}
+        style={{ width: '100%', height: '100svh' }}
         onLoad={(event) => syncViewport(event.target)}
         onMoveEnd={(event) => syncViewport(event.target)}
         onClick={handleClick}

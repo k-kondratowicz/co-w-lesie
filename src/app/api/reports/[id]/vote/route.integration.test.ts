@@ -4,11 +4,12 @@ import { POST } from './route';
 
 type VoteKind = 'CONFIRM' | 'FLAG';
 
-function vote(id: string, kind: VoteKind, ip = '1.1.1.1') {
+// Reports live at (50.06, 19.94); voters default to that point so they pass the proximity check.
+function vote(id: string, kind: VoteKind, ip = '1.1.1.1', coords = { lat: 50.06, lng: 19.94 }) {
   const request = new Request(`http://localhost/api/reports/${id}/vote`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-forwarded-for': ip },
-    body: JSON.stringify({ kind }),
+    body: JSON.stringify({ kind, ...coords }),
   });
 
   return POST(request, { params: Promise.resolve({ id }) });
@@ -60,6 +61,18 @@ describe('POST /api/reports/:id/vote', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ confirmations: 0, flags: 1 });
+  });
+
+  it('rejects a vote from too far away with 422', async () => {
+    const report = await createReport();
+
+    // Warsaw, ~250 km from the report - well beyond the 2 km radius.
+    const response = await vote(report.id, 'CONFIRM', '6.6.6.6', { lat: 52.23, lng: 21.01 });
+
+    expect(response.status).toBe(422);
+    // The far-away vote must not be recorded.
+    const after = await prisma.report.findUniqueOrThrow({ where: { id: report.id }, select: { confirmations: true } });
+    expect(after.confirmations).toBe(0);
   });
 
   it('returns 404 for a missing report', async () => {

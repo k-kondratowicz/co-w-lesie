@@ -93,3 +93,6 @@ The crowd curates accuracy:
 - A report is **hidden as disputed** when `flags − confirmations ≥ 2`.
 - **One vote per IP per report**, enforced by a unique constraint on a salted IP hash (the raw IP
   is never stored). Vote rate limit: **20 per minute per IP**.
+- **Voting requires proximity**: a vote is a first-hand claim, so the voter must be within **2 km**
+  of the report (the server checks the voter's location against the report). Votes from further away
+  are rejected (422), mirroring the "be near a forest" rule for creating a report.

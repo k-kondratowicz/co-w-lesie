@@ -191,8 +191,8 @@ export function CreateReportAction() {
       onConfirm={dialog.confirm}
       loading={form.state.isSubmitting}
       trigger={
-        <Button size="icon-xxl" className="rounded-full">
-          <PlusIcon className="size-5" />
+        <Button size="icon-xxl" rounded="full" className="shadow-lg">
+          <PlusIcon />
           <span className="sr-only">Dodaj zgłoszenie</span>
         </Button>
       }

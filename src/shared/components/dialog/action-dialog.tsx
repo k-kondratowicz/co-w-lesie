@@ -2,17 +2,17 @@
 
 import type React from 'react';
 import type { BaseConfirmDialogProps } from '@/shared/components/dialog';
+import { Button, Spinner } from '@/shared/components/ui';
 import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  Spinner,
-} from '@/shared/components/ui';
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogScrollArea,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from '@/shared/components/ui/responsive-dialog';
 
 interface ActionDialogProps extends BaseConfirmDialogProps {
   children?: React.ReactNode;
@@ -38,30 +38,34 @@ export function ActionDialog({
   confirmLabel,
 }: ActionDialogProps) {
   return (
-    <Dialog modal open={open} onOpenChange={onOpenChange}>
-      {!!trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+    <ResponsiveDialog modal open={open} onOpenChange={onOpenChange}>
+      {!!trigger && <ResponsiveDialogTrigger asChild>{trigger}</ResponsiveDialogTrigger>}
 
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{title}</ResponsiveDialogTitle>
+          {description && <ResponsiveDialogDescription>{description}</ResponsiveDialogDescription>}
+        </ResponsiveDialogHeader>
 
-        <div className="max-w-full">{children}</div>
+        <ResponsiveDialogScrollArea>
+          <>
+            {children}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            {cancelLabel ?? 'Anuluj'}
-          </Button>
+            <ResponsiveDialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+                {cancelLabel ?? 'Anuluj'}
+              </Button>
 
-          {!isSaveHidden && (
-            <Button onClick={onConfirm} disabled={isDisabled || isSaveDisabled || loading}>
-              {!!loading && <Spinner />}
-              {confirmLabel ?? 'Zapisz'}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+              {!isSaveHidden && (
+                <Button onClick={onConfirm} disabled={isDisabled || isSaveDisabled || loading}>
+                  {!!loading && <Spinner />}
+                  {confirmLabel ?? 'Zapisz'}
+                </Button>
+              )}
+            </ResponsiveDialogFooter>
+          </>
+        </ResponsiveDialogScrollArea>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

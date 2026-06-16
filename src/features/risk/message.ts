@@ -1,3 +1,5 @@
+import { formatDistance } from '@/shared/lib/geo/format-distance';
+import { plPlural } from '@/shared/lib/pl-plural';
 import { fireDegreeRoman } from './format';
 import type { RiskResult } from './types';
 
@@ -8,22 +10,8 @@ const DISCLAIMER = 'To ocena pomocnicza i nie zastępuje komunikatów Lasów Pa�
 
 /** Whether each nationwide signal was actually known (vs UNKNOWN: outside coverage / sync down). */
 export type RiskMessageContext = { fireKnown: boolean; banKnown: boolean };
-
 function reportsWord(n: number): string {
-  if (n === 1) {
-    return 'zgłoszenie';
-  }
-  const tens = n % 100;
-  const ones = n % 10;
-  if (ones >= 2 && ones <= 4 && !(tens >= 12 && tens <= 14)) {
-    return 'zgłoszenia';
-  }
-  return 'zgłoszeń';
-}
-
-function formatKm(meters: number): string {
-  const km = meters / 1000;
-  return Number.isInteger(km) ? String(km) : km.toFixed(1);
+  return plPlural(n, { one: 'zgłoszenie', few: 'zgłoszenia', many: 'zgłoszeń' });
 }
 
 function fireClause(degree: 0 | 1 | 2 | 3 | null): string {
@@ -33,7 +21,7 @@ function fireClause(degree: 0 | 1 | 2 | 3 | null): string {
 export function buildRiskMessage(result: RiskResult, context: RiskMessageContext): string {
   const { level, signals, radiusMeters } = result;
   const n = signals.reports.count;
-  const km = formatKm(radiusMeters);
+  const radius = formatDistance(radiusMeters);
   const degree = signals.fire.degree;
 
   if (signals.entryBan.active) {
@@ -49,14 +37,14 @@ export function buildRiskMessage(result: RiskResult, context: RiskMessageContext
   }
 
   if (level === 'RED') {
-    return `Wysokie ryzyko w pobliżu: ${n} ${reportsWord(n)} w promieniu ${km} km${fireClause(degree)}. Zachowaj szczególną ostrożność.`;
+    return `Wysokie ryzyko w pobliżu: ${n} ${reportsWord(n)} w promieniu ${radius}${fireClause(degree)}. Zachowaj szczególną ostrożność.`;
   }
   if (level === 'YELLOW') {
-    return `Zachowaj ostrożność: ${n} ${reportsWord(n)} w promieniu ${km} km${fireClause(degree)}.`;
+    return `Zachowaj ostrożność: ${n} ${reportsWord(n)} w promieniu ${radius}${fireClause(degree)}.`;
   }
   // GREEN. Never imply "nothing here" when there are nearby reports - acknowledge them.
   if (n > 0) {
-    return `W pobliżu odnotowano ${n} ${reportsWord(n)} w promieniu ${km} km, ale poziom ryzyka jest niski. Zachowaj zwykłą ostrożność. ${DISCLAIMER}`;
+    return `W pobliżu odnotowano ${n} ${reportsWord(n)} w promieniu ${radius}, ale poziom ryzyka jest niski. Zachowaj zwykłą ostrożność. ${DISCLAIMER}`;
   }
   return `Brak znanych zagrożeń w pobliżu. ${DISCLAIMER}`;
 }

@@ -1,5 +1,7 @@
 import { fireDegreeRoman } from '@/features/risk/format';
 import type { RiskAssessment } from '@/features/safety/types';
+import { formatDate, formatDateTime } from '@/shared/lib/format-date';
+import { formatDistance } from '@/shared/lib/geo/format-distance';
 
 const LEVEL_STYLES = {
   GREEN: {
@@ -27,10 +29,6 @@ function fireLabel(degree: 0 | 1 | 2 | 3 | null): string {
 
 const IN_FOREST_LABEL = { IN: 'Tak', OUT: 'Nie', UNKNOWN: 'Nie wiadomo' } as const;
 
-function formatDistance(meters: number): string {
-  return meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`;
-}
-
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 border-border/60 border-b py-2 text-sm last:border-0">
@@ -43,10 +41,9 @@ function Row({ label, value }: { label: string; value: string }) {
 export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
   const { level, message, signals, fireAsOf, bansAsOf, ban, nearbyBans } = assessment;
   const style = LEVEL_STYLES[level];
-  const formatStamp = (iso: string) => new Date(iso).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' });
-  const fireUpdatedAt = fireAsOf ? formatStamp(fireAsOf) : null;
-  const bansUpdatedAt = bansAsOf ? formatStamp(bansAsOf) : null;
-  const banUntil = ban?.until ? new Date(ban.until).toLocaleDateString('pl-PL', { dateStyle: 'medium' }) : null;
+  const fireUpdatedAt = fireAsOf ? formatDateTime(fireAsOf) : null;
+  const bansUpdatedAt = bansAsOf ? formatDateTime(bansAsOf) : null;
+  const banUntil = ban?.until ? formatDate(ban.until) : null;
 
   return (
     <div className="space-y-4">

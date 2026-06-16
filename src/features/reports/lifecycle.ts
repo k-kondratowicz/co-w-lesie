@@ -1,5 +1,6 @@
 import type { ReportType } from '@prisma/client';
 import { clamp01 } from '@/shared/lib/math';
+import { HOUR_MS } from '@/shared/lib/time';
 
 // How long a report stays relevant, by type (hours). Time-critical events fade fast; physical,
 // persistent situations linger. A confirmation pushes the expiry out again (see the vote route).
@@ -21,7 +22,7 @@ const TTL_HOURS: Record<ReportType, number> = {
 export const FLAG_DISPUTE_THRESHOLD = 2;
 
 export function reportTtlMs(type: ReportType): number {
-  return TTL_HOURS[type] * 60 * 60 * 1000;
+  return TTL_HOURS[type] * HOUR_MS;
 }
 
 export function expiryFrom(type: ReportType, from: Date = new Date()): Date {

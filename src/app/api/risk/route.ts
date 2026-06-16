@@ -7,6 +7,7 @@ import { queryNearbyBans } from '@/shared/lib/geo/queries/nearby-bans';
 import { buildPointContext, queryPointContext } from '@/shared/lib/geo/queries/point-context';
 import { queryReportsInRadius } from '@/shared/lib/geo/queries/reports-in-radius';
 import { prisma } from '@/shared/lib/prisma';
+import { DAY_MS } from '@/shared/lib/time';
 
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
 export const dynamic = 'force-dynamic'; // reads live data; never cache.
@@ -17,8 +18,6 @@ const querySchema = z.object({
   lng: z.coerce.number().min(-180).max(180),
   radius: z.coerce.number().min(100).max(MAX_RADIUS_METERS).default(DEFAULT_RADIUS_METERS),
 });
-
-const MS_PER_DAY = 86_400_000;
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -46,7 +45,7 @@ export async function GET(request: NextRequest) {
     const result = assessRisk({
       reports: nearbyReports.map((report) => ({
         type: report.type,
-        ageDays: (now - report.createdAt.getTime()) / MS_PER_DAY,
+        ageDays: (now - report.createdAt.getTime()) / DAY_MS,
       })),
       fireDegree: context.fire.status === 'OK' ? context.fire.degree : null,
       entryBan: context.entryBan.status === 'BAN',

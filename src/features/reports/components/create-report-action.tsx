@@ -19,10 +19,12 @@ import { Turnstile } from '@/shared/components/turnstile';
 import { SelectItem } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/button';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
+import { useOnlineStatus } from '@/shared/hooks/use-online-status';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import { isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useOfflineReportStore } from '@/shared/store/use-offline-report-store';
+import { useTurnstileStore } from '@/shared/store/use-turnstile-store';
 
 type CreateReportResult = { queued: true } | { queued: false; id: string };
 
@@ -69,6 +71,13 @@ export function CreateReportAction() {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
     },
   });
+
+  const online = useOnlineStatus();
+  const turnstileStatus = useTurnstileStore((state) => state.status);
+
+  // Rendering the widget can take a few seconds; block submit until it hands us a token. Offline
+  // reports skip Turnstile (they re-solve on replay), so connectivity must not gate the button.
+  const turnstilePending = online && isTurnstileEnabled() && turnstileStatus !== 'ready';
 
   const { position, getCurrentPosition } = useGeolocation();
   const startPicking = useMapPickStore((state) => state.startPicking);
@@ -211,6 +220,7 @@ export function CreateReportAction() {
       onOpenChange={dialog.setOpen}
       onConfirm={dialog.confirm}
       loading={form.state.isSubmitting}
+      isSaveDisabled={turnstilePending}
       trigger={
         <Button size="icon-xxl" rounded="full" className="shadow-lg">
           <PlusIcon />
@@ -252,7 +262,7 @@ export function CreateReportAction() {
 
           <form.AppField name="photo">{(field) => <field.Photo label="Zdjęcie (opcjonalnie)" />}</form.AppField>
 
-          <Turnstile key={turnstileKey} tokenRef={turnstileTokenRef} className="flex justify-center empty:hidden" />
+          <Turnstile key={turnstileKey} tokenRef={turnstileTokenRef} />
         </form.Form>
       </form.AppForm>
     </ActionDialog>

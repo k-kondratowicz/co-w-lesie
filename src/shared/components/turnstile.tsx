@@ -38,6 +38,11 @@ export function Turnstile({ className }: { className?: string }) {
     reset();
     setRendering(true);
 
+    // `render()` returns before the widget paints, so the spinner stays up until the widget itself
+    // signals it's done loading: it either solves silently (callback) or shows a checkbox challenge
+    // (before-interactive-callback). Clearing it on `render()` would flash a gap with no UI.
+    const stopRendering = () => setRendering(false);
+
     loadTurnstileScript()
       .then(() => {
         if (cancelled || !containerRef.current || !window.turnstile) {
@@ -47,16 +52,25 @@ export function Turnstile({ className }: { className?: string }) {
         widgetId = window.turnstile.render(containerRef.current, {
           sitekey: siteKey,
           appearance: 'interaction-only',
-          callback: solve,
+          callback: (token) => {
+            solve(token);
+            stopRendering();
+          },
+          'before-interactive-callback': stopRendering,
           'expired-callback': reset,
-          'error-callback': fail,
+          'error-callback': () => {
+            fail();
+            stopRendering();
+          },
+          'timeout-callback': () => {
+            fail();
+            stopRendering();
+          },
         });
-
-        setRendering(false);
       })
       .catch(() => {
         fail();
-        setRendering(false);
+        stopRendering();
       });
 
     return () => {

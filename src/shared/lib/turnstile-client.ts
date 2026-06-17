@@ -5,6 +5,7 @@ const SOLVE_TIMEOUT_MS = 15_000;
 export type TurnstileRenderOptions = {
   sitekey: string;
   callback: (token: string) => void;
+  'before-interactive-callback'?: () => void;
   'expired-callback'?: () => void;
   'error-callback'?: () => void;
   'timeout-callback'?: () => void;

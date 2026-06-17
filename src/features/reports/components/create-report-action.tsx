@@ -3,7 +3,7 @@
 import { ReportType } from '@prisma/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, PlusIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import {
@@ -15,11 +15,12 @@ import { uploadReportPhoto } from '@/features/reports/upload-photo';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
 import { useAppForm } from '@/shared/components/form/form-hooks';
+import { Turnstile } from '@/shared/components/turnstile';
 import { SelectItem } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/button';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
-import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/turnstile-client';
+import { isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 
@@ -78,6 +79,15 @@ export function CreateReportAction() {
   // The GPS position the report offset is measured from, captured when picking starts.
   const anchorRef = useRef<{ lng: number; lat: number } | null>(null);
 
+  // Latest Turnstile token (read in onSubmit's closure - a ref avoids a stale capture). Bumping the
+  // key remounts the widget for a fresh token after a failed attempt consumed the previous one.
+  const turnstileTokenRef = useRef<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const resetTurnstile = () => {
+    turnstileTokenRef.current = null;
+    setTurnstileKey((key) => key + 1);
+  };
+
   const form = useAppForm({
     validators: {
       onChange: createReportFormSchema,
@@ -107,10 +117,11 @@ export function CreateReportAction() {
         }
       }
 
-      // Solve Turnstile only when online; offline reports queue without a token and re-solve on replay.
-      const turnstileToken = navigator.onLine ? await getTurnstileToken() : null;
+      // Token comes from the inline widget (in the dialog, so a challenge stays clickable). Offline
+      // reports queue without one and re-solve on replay.
+      const turnstileToken = turnstileTokenRef.current;
       if (navigator.onLine && isTurnstileEnabled() && !turnstileToken) {
-        toast.error('Weryfikacja nie powiodła się. Spróbuj ponownie.');
+        toast.error('Potwierdź, że nie jesteś robotem, i spróbuj ponownie.');
         return false;
       }
 
@@ -124,6 +135,7 @@ export function CreateReportAction() {
 
         return true;
       } catch (err) {
+        resetTurnstile();
         toast.error(err instanceof Error ? err.message : 'Nie udało się dodać zgłoszenia. Spróbuj ponownie.');
         return false;
       }
@@ -239,6 +251,14 @@ export function CreateReportAction() {
           </form.AppField>
 
           <form.AppField name="photo">{(field) => <field.Photo label="Zdjęcie (opcjonalnie)" />}</form.AppField>
+
+          <Turnstile
+            key={turnstileKey}
+            onToken={(token) => {
+              turnstileTokenRef.current = token;
+            }}
+            className="empty:hidden"
+          />
         </form.Form>
       </form.AppForm>
     </ActionDialog>

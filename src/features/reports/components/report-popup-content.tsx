@@ -2,10 +2,11 @@
 
 import type { ReportType } from '@prisma/client';
 import { CheckCircle2, ThumbsDown } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { PopupReport } from '@/features/map/hooks/use-map-interaction';
 import { useReportVote } from '@/features/reports/hooks/use-report-vote';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
+import { Turnstile } from '@/shared/components/turnstile';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatDateTime } from '@/shared/lib/format-date';
@@ -47,8 +48,26 @@ function confirmationsLabel(count: number): string {
 export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
   const { vote, isVoting, votedKind } = useReportVote();
 
+  // One Turnstile token serves the popup; tokens are single-use, so remount (bump the key) after
+  // each vote to get a fresh one for the next report in a multi-report popup.
+  const turnstileTokenRef = useRef<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+
+  const handleVote = (id: string, kind: 'CONFIRM' | 'FLAG') => {
+    vote({ id, kind, turnstileToken: turnstileTokenRef.current });
+    turnstileTokenRef.current = null;
+    setTurnstileKey((key) => key + 1);
+  };
+
   return (
     <div className="space-y-3">
+      <Turnstile
+        key={turnstileKey}
+        onToken={(token) => {
+          turnstileTokenRef.current = token;
+        }}
+        className="empty:hidden"
+      />
       {reports.map((report) => {
         const voted = votedKind(report.id);
 
@@ -80,7 +99,7 @@ export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
                 variant={voted === 'CONFIRM' ? 'default' : 'outline'}
                 className="h-7 flex-1 text-xs"
                 disabled={isVoting || Boolean(voted)}
-                onClick={() => vote({ id: report.id, kind: 'CONFIRM' })}
+                onClick={() => handleVote(report.id, 'CONFIRM')}
               >
                 <CheckCircle2 className="size-3.5" />
                 Potwierdzam
@@ -91,7 +110,7 @@ export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
                 variant={voted === 'FLAG' ? 'default' : 'outline'}
                 className="h-7 flex-1 text-xs"
                 disabled={isVoting || Boolean(voted)}
-                onClick={() => vote({ id: report.id, kind: 'FLAG' })}
+                onClick={() => handleVote(report.id, 'FLAG')}
               >
                 <ThumbsDown className="size-3.5" />
                 Nieaktualne

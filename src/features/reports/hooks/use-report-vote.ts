@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
-import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/turnstile-client';
+import { isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 
 export type VoteKind = 'CONFIRM' | 'FLAG';
 
@@ -78,8 +78,15 @@ export function useReportVote() {
     },
   });
 
+  // The token comes from the inline Turnstile widget in the popup (rendered inside the modal so a
+  // challenge stays clickable).
   const vote = useCallback(
-    async ({ id, kind }: { id: string; kind: VoteKind }) => {
+    async ({ id, kind, turnstileToken }: { id: string; kind: VoteKind; turnstileToken: string | null }) => {
+      if (isTurnstileEnabled() && !turnstileToken) {
+        toast.error('Potwierdź, że nie jesteś robotem, i spróbuj ponownie.');
+        return;
+      }
+
       let coords = position;
 
       if (!coords) {
@@ -89,12 +96,6 @@ export function useReportVote() {
           toast.error('Włącz lokalizację, aby zagłosować przy zgłoszeniu.');
           return;
         }
-      }
-
-      const turnstileToken = await getTurnstileToken();
-      if (isTurnstileEnabled() && !turnstileToken) {
-        toast.error('Weryfikacja nie powiodła się. Spróbuj ponownie.');
-        return;
       }
 
       mutation.mutate({ id, kind, lat: coords.latitude, lng: coords.longitude, turnstileToken });

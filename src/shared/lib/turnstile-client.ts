@@ -1,17 +1,18 @@
-const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+export const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 const SOLVE_TIMEOUT_MS = 15_000;
 
-type RenderOptions = {
+export type TurnstileRenderOptions = {
   sitekey: string;
   callback: (token: string) => void;
+  'expired-callback'?: () => void;
   'error-callback'?: () => void;
   'timeout-callback'?: () => void;
   appearance?: 'always' | 'execute' | 'interaction-only';
 };
 
 type TurnstileApi = {
-  render: (element: HTMLElement, options: RenderOptions) => string;
+  render: (element: HTMLElement, options: TurnstileRenderOptions) => string;
   remove: (widgetId: string) => void;
 };
 
@@ -22,12 +23,12 @@ declare global {
 }
 
 export function isTurnstileEnabled(): boolean {
-  return Boolean(SITE_KEY);
+  return Boolean(TURNSTILE_SITE_KEY);
 }
 
 let scriptPromise: Promise<void> | null = null;
 
-function loadScript(): Promise<void> {
+export function loadTurnstileScript(): Promise<void> {
   if (typeof window === 'undefined') {
     return Promise.reject(new Error('Turnstile is browser-only'));
   }
@@ -57,12 +58,12 @@ function loadScript(): Promise<void> {
 // interactive challenge is required it appears centered (appearance: interaction-only). When no site
 // key is configured we resolve null and the server, also unconfigured, accepts the request.
 export async function getTurnstileToken(): Promise<string | null> {
-  if (!SITE_KEY) {
+  if (!TURNSTILE_SITE_KEY) {
     return null;
   }
 
   try {
-    await loadScript();
+    await loadTurnstileScript();
   } catch {
     return null;
   }
@@ -98,7 +99,7 @@ export async function getTurnstileToken(): Promise<string | null> {
 
     try {
       widgetId = api.render(container, {
-        sitekey: SITE_KEY,
+        sitekey: TURNSTILE_SITE_KEY,
         appearance: 'interaction-only',
         callback: (token) => finish(token),
         'error-callback': () => finish(null),

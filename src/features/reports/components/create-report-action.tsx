@@ -252,13 +252,7 @@ export function CreateReportAction() {
 
           <form.AppField name="photo">{(field) => <field.Photo label="Zdjęcie (opcjonalnie)" />}</form.AppField>
 
-          <Turnstile
-            key={turnstileKey}
-            onToken={(token) => {
-              turnstileTokenRef.current = token;
-            }}
-            className="empty:hidden"
-          />
+          <Turnstile key={turnstileKey} tokenRef={turnstileTokenRef} className="flex justify-center empty:hidden" />
         </form.Form>
       </form.AppForm>
     </ActionDialog>

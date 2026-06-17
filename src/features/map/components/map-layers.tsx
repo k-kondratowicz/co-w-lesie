@@ -136,13 +136,22 @@ export function MapLayers({
           filter={['has', 'point_count']}
           minzoom={14}
           paint={{
-            'circle-color': '#ef4444',
-            'circle-radius': 12, // bigger than a lone report (7) to read as "several here"
+            'circle-color': [
+              'interpolate',
+              ['linear'],
+              ['/', ['get', 'opacitySum'], ['get', 'point_count']],
+              0.35,
+              '#eab308',
+              0.65,
+              '#f97316',
+              1.0,
+              '#ef4444',
+            ],
+            'circle-radius': 12,
             'circle-stroke-width': 2,
             'circle-stroke-color': '#ffffff',
-            // Average member opacity → the merged dot fades with age like single reports do.
-            'circle-opacity': ['/', ['get', 'opacitySum'], ['get', 'point_count']],
-            'circle-stroke-opacity': ['/', ['get', 'opacitySum'], ['get', 'point_count']],
+            'circle-opacity': 0.9,
+            'circle-stroke-opacity': 0.9,
           }}
         />
         <Layer
@@ -162,13 +171,22 @@ export function MapLayers({
           type="circle"
           filter={['!', ['has', 'point_count']]}
           paint={{
-            'circle-color': '#ef4444',
+            'circle-color': [
+              'interpolate',
+              ['linear'],
+              ['coalesce', ['get', 'opacity'], 0.9],
+              0.35,
+              '#eab308',
+              0.65,
+              '#f97316',
+              1.0,
+              '#ef4444',
+            ],
             'circle-radius': 7,
             'circle-stroke-width': 2,
             'circle-stroke-color': '#ffffff',
-            // Older reports fade (opacity computed server-side from age); fresh ones stay solid.
-            'circle-opacity': ['coalesce', ['get', 'opacity'], 0.9],
-            'circle-stroke-opacity': ['coalesce', ['get', 'opacity'], 0.9],
+            'circle-opacity': 0.9,
+            'circle-stroke-opacity': 0.9,
           }}
         />
       </Source>

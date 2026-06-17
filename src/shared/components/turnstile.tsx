@@ -1,6 +1,6 @@
 'use client';
 
-import { type RefObject, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Spinner } from '@/shared/components/ui';
 import { useOnlineStatus } from '@/shared/hooks/use-online-status';
 import { loadTurnstileScript, TURNSTILE_SITE_KEY } from '@/shared/lib/turnstile-client';
@@ -12,16 +12,19 @@ import { useTurnstileStore } from '@/shared/store/use-turnstile-store';
 // `interaction-only` keeps it invisible for legitimate visitors and only expands when a challenge
 // is actually required. Renders nothing when unconfigured (the server then accepts the request).
 //
-// Rendering the widget can take several seconds, so we surface a status (via useTurnstileStore)
-// that lets the form show a "verifying" hint and keep submit disabled until a token lands. The
-// token itself is written into `tokenRef`, not reported via a callback prop - a function prop here
-// trips Next's "use client" boundary lint (it can't tell a plain client-to-client callback from a
-// Server Action), and the caller reads the token from a ref at submit time anyway.
-export function Turnstile({ tokenRef, className }: { tokenRef: RefObject<string | null>; className?: string }) {
+// The solved token (and a failure flag) are published to useTurnstileStore so the guarding form
+// can keep submit disabled until a token lands and read the token at submit time. The "loading"
+// spinner is local: it only covers the slow script-fetch/render, after which the widget shows its
+// own UI (an invisible auto-pass or a checkbox challenge) and our hint must get out of the way.
+export function Turnstile({ className }: { className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const online = useOnlineStatus();
-  const status = useTurnstileStore((state) => state.status);
-  const setStatus = useTurnstileStore((state) => state.setStatus);
+  const failed = useTurnstileStore((state) => state.failed);
+  const solve = useTurnstileStore((state) => state.solve);
+  const fail = useTurnstileStore((state) => state.fail);
+  const reset = useTurnstileStore((state) => state.reset);
+
+  const [rendering, setRendering] = useState(true);
 
   useEffect(() => {
     const siteKey = TURNSTILE_SITE_KEY;
@@ -32,7 +35,8 @@ export function Turnstile({ tokenRef, className }: { tokenRef: RefObject<string 
     let cancelled = false;
     let widgetId: string | null = null;
 
-    setStatus('verifying');
+    reset();
+    setRendering(true);
 
     loadTurnstileScript()
       .then(() => {
@@ -43,33 +47,26 @@ export function Turnstile({ tokenRef, className }: { tokenRef: RefObject<string 
         widgetId = window.turnstile.render(containerRef.current, {
           sitekey: siteKey,
           appearance: 'interaction-only',
-          callback: (token) => {
-            tokenRef.current = token;
-            setStatus('ready');
-          },
-          'expired-callback': () => {
-            tokenRef.current = null;
-            setStatus('verifying');
-          },
-          'error-callback': () => {
-            tokenRef.current = null;
-            setStatus('error');
-          },
+          callback: solve,
+          'expired-callback': reset,
+          'error-callback': fail,
         });
+
+        setRendering(false);
       })
       .catch(() => {
-        tokenRef.current = null;
-        setStatus('error');
+        fail();
+        setRendering(false);
       });
 
     return () => {
       cancelled = true;
-      setStatus('idle');
+      reset();
       if (widgetId && window.turnstile) {
         window.turnstile.remove(widgetId);
       }
     };
-  }, [tokenRef, setStatus]);
+  }, [solve, fail, reset]);
 
   if (!TURNSTILE_SITE_KEY) {
     return null;
@@ -79,13 +76,13 @@ export function Turnstile({ tokenRef, className }: { tokenRef: RefObject<string 
     <div className={cn('space-y-2', className)}>
       <div ref={containerRef} className="flex justify-center empty:hidden" />
 
-      {online && status === 'verifying' && (
+      {online && rendering && (
         <p className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-          <Spinner /> Sprawdzamy, czy nie jesteś robotem. Poczekaj chwilę przed wysłaniem.
+          <Spinner /> Sprawdzamy, czy nie jesteś robotem. Poczekaj chwilę.
         </p>
       )}
 
-      {online && status === 'error' && (
+      {online && failed && (
         <p className="text-center text-destructive text-sm">Nie udało się zweryfikować. Odśwież stronę i spróbuj ponownie.</p>
       )}
     </div>

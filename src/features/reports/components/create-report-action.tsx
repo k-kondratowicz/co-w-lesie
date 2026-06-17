@@ -73,11 +73,11 @@ export function CreateReportAction() {
   });
 
   const online = useOnlineStatus();
-  const turnstileStatus = useTurnstileStore((state) => state.status);
+  const turnstileToken = useTurnstileStore((state) => state.token);
 
   // Rendering the widget can take a few seconds; block submit until it hands us a token. Offline
   // reports skip Turnstile (they re-solve on replay), so connectivity must not gate the button.
-  const turnstilePending = online && isTurnstileEnabled() && turnstileStatus !== 'ready';
+  const turnstilePending = online && isTurnstileEnabled() && !turnstileToken;
 
   const { position, getCurrentPosition } = useGeolocation();
   const startPicking = useMapPickStore((state) => state.startPicking);
@@ -88,14 +88,10 @@ export function CreateReportAction() {
   // The GPS position the report offset is measured from, captured when picking starts.
   const anchorRef = useRef<{ lng: number; lat: number } | null>(null);
 
-  // Latest Turnstile token (read in onSubmit's closure - a ref avoids a stale capture). Bumping the
-  // key remounts the widget for a fresh token after a failed attempt consumed the previous one.
-  const turnstileTokenRef = useRef<string | null>(null);
+  // Bumping the key remounts the widget for a fresh token after a failed attempt consumed the
+  // previous one; the remount resets the shared Turnstile store back to 'verifying'.
   const [turnstileKey, setTurnstileKey] = useState(0);
-  const resetTurnstile = () => {
-    turnstileTokenRef.current = null;
-    setTurnstileKey((key) => key + 1);
-  };
+  const resetTurnstile = () => setTurnstileKey((key) => key + 1);
 
   const form = useAppForm({
     validators: {
@@ -128,7 +124,7 @@ export function CreateReportAction() {
 
       // Token comes from the inline widget (in the dialog, so a challenge stays clickable). Offline
       // reports queue without one and re-solve on replay.
-      const turnstileToken = turnstileTokenRef.current;
+      const turnstileToken = useTurnstileStore.getState().token;
       if (navigator.onLine && isTurnstileEnabled() && !turnstileToken) {
         toast.error('Potwierdź, że nie jesteś robotem, i spróbuj ponownie.');
         return false;
@@ -262,7 +258,7 @@ export function CreateReportAction() {
 
           <form.AppField name="photo">{(field) => <field.Photo label="Zdjęcie (opcjonalnie)" />}</form.AppField>
 
-          <Turnstile key={turnstileKey} tokenRef={turnstileTokenRef} />
+          <Turnstile key={turnstileKey} />
         </form.Form>
       </form.AppForm>
     </ActionDialog>

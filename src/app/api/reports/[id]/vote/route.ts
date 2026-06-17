@@ -6,7 +6,6 @@ import { clientIp } from '@/shared/lib/client-ip';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import { prisma } from '@/shared/lib/prisma';
 import { checkRateLimit } from '@/shared/lib/rate-limit';
-import { verifyTurnstile } from '@/shared/lib/turnstile';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,7 +19,6 @@ const voteSchema = z.object({
   kind: z.enum(['CONFIRM', 'FLAG']),
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
-  turnstileToken: z.string().optional(),
 });
 
 // Salted hash so we can dedupe votes per IP without ever storing the raw address.
@@ -59,11 +57,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return Response.json({ error: 'Nieprawidłowe dane głosu' }, { status: 400 });
   }
 
-  const { kind, lat, lng, turnstileToken } = parsed.data;
-
-  if (!(await verifyTurnstile(turnstileToken, ip))) {
-    return Response.json({ error: 'Weryfikacja nie powiodła się. Odśwież stronę i spróbuj ponownie.' }, { status: 403 });
-  }
+  const { kind, lat, lng } = parsed.data;
   const ipHash = hashIp(ip);
 
   const report = await prisma.report.findUnique({ where: { id }, select: { type: true, lat: true, lng: true } });

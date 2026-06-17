@@ -9,12 +9,13 @@ Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
   no dedicated abuse-report or review queue.
 
 ## Anti-abuse / integrity
-- **Proof-of-humanity (Cloudflare Turnstile).** Done for **report-create** and **vote**: a token is
-  solved client-side (`getTurnstileToken`) and verified server-side (`verifyTurnstile`), rejecting
-  with 403. Offline reports re-solve on replay. **Remaining: the photo upload endpoint** - deferred
-  because the report flow would then need two solved tokens (upload + create); it stays on its rate
-  limit for now (orphan images are cheap and capped). Requires `TURNSTILE_SECRET_KEY` +
-  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in prod; verification fails open when the secret is unset.
+- **Proof-of-humanity (Cloudflare Turnstile).** Done for **report-create**: an inline widget solves
+  a token (`Turnstile` / `getTurnstileToken` for offline replay), verified server-side
+  (`verifyTurnstile`), rejecting with 403; offline reports re-solve on replay. **Voting was
+  intentionally left out** - it's a low-value, high-frequency one-tap action already guarded by
+  proximity + per-IP dedupe + rate-limit, and a per-vote interactive challenge was too much
+  friction. Upload also stays on its rate limit (orphan images are cheap and capped). Requires
+  `TURNSTILE_SECRET_KEY` + `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in prod; fails open when the secret is unset.
 
 ## Privacy / legal
 - **Privacy policy + consent (GDPR).** Done: `/polityka-prywatnosci` page plus a non-blocking

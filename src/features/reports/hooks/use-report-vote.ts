@@ -4,7 +4,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
-import { isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 
 export type VoteKind = 'CONFIRM' | 'FLAG';
 
@@ -30,11 +29,11 @@ function writeVoted(voted: Record<string, VoteKind>) {
   }
 }
 
-async function postVote(id: string, kind: VoteKind, lat: number, lng: number, turnstileToken: string | null): Promise<void> {
+async function postVote(id: string, kind: VoteKind, lat: number, lng: number): Promise<void> {
   const res = await fetch(`/api/reports/${id}/vote`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ kind, lat, lng, turnstileToken }),
+    body: JSON.stringify({ kind, lat, lng }),
   });
 
   if (!res.ok) {
@@ -53,19 +52,8 @@ export function useReportVote() {
   const [voted, setVoted] = useState<Record<string, VoteKind>>(readVoted);
 
   const mutation = useMutation({
-    mutationFn: ({
-      id,
-      kind,
-      lat,
-      lng,
-      turnstileToken,
-    }: {
-      id: string;
-      kind: VoteKind;
-      lat: number;
-      lng: number;
-      turnstileToken: string | null;
-    }) => postVote(id, kind, lat, lng, turnstileToken),
+    mutationFn: ({ id, kind, lat, lng }: { id: string; kind: VoteKind; lat: number; lng: number }) =>
+      postVote(id, kind, lat, lng),
     onSuccess: (_data, { id, kind }) => {
       const next = { ...voted, [id]: kind };
       setVoted(next);
@@ -78,15 +66,8 @@ export function useReportVote() {
     },
   });
 
-  // The token comes from the inline Turnstile widget in the popup (rendered inside the modal so a
-  // challenge stays clickable).
   const vote = useCallback(
-    async ({ id, kind, turnstileToken }: { id: string; kind: VoteKind; turnstileToken: string | null }) => {
-      if (isTurnstileEnabled() && !turnstileToken) {
-        toast.error('Potwierdź, że nie jesteś robotem, i spróbuj ponownie.');
-        return;
-      }
-
+    async ({ id, kind }: { id: string; kind: VoteKind }) => {
       let coords = position;
 
       if (!coords) {
@@ -98,7 +79,7 @@ export function useReportVote() {
         }
       }
 
-      mutation.mutate({ id, kind, lat: coords.latitude, lng: coords.longitude, turnstileToken });
+      mutation.mutate({ id, kind, lat: coords.latitude, lng: coords.longitude });
     },
     [position, getCurrentPosition, mutation],
   );

@@ -1,9 +1,9 @@
 import './globals.css';
 
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Noto_Sans, Noto_Sans_Mono } from 'next/font/google';
+import { AnalyticsConsent } from '@/shared/components/analytics-consent';
+import { ConsentBanner } from '@/shared/components/consent-banner';
 import { Toaster } from '@/shared/components/ui';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
 import { SITE_BRAND_COLOR, SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from '@/shared/lib/site';
@@ -56,8 +56,8 @@ export default function RootLayout({
         </QueryClientProvider>
         <Toaster />
         <ServiceWorkerRegister />
-        <Analytics />
-        <SpeedInsights />
+        <ConsentBanner />
+        <AnalyticsConsent />
       </body>
     </html>
   );

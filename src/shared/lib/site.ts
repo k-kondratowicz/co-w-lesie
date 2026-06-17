@@ -10,5 +10,8 @@ export const SITE_DESCRIPTION =
 
 export const SITE_DESCRIPTION_SHORT = process.env.NEXT_PUBLIC_SITE_DESCRIPTION_SHORT ?? SITE_DESCRIPTION;
 
+// Contact address for the privacy policy / data-protection requests. Override in production.
+export const SITE_CONTACT_EMAIL = process.env.NEXT_PUBLIC_SITE_CONTACT_EMAIL ?? 'kontakt@co-w-lesie.pl';
+
 // BRAND_COLOR should track --primary in globals.css; re-run `npm run generate:icons` after changing it.
 export const SITE_BRAND_COLOR = '#00786f';

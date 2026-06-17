@@ -1,6 +1,7 @@
 'use client';
 
 import { Info } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/shared/components/ui/button';
 import {
   Dialog,
@@ -62,6 +63,14 @@ export function DataInfoButton() {
             Aplikacja nie zastępuje oficjalnych komunikatów Lasów Państwowych ani decyzji służb. W razie wątpliwości zawsze
             zachowaj ostrożność.
           </InfoItem>
+
+          <p className="text-muted-foreground text-sm">
+            Jak przetwarzamy dane opisuje{' '}
+            <Link href="/polityka-prywatnosci" className="text-foreground underline underline-offset-4">
+              polityka prywatności
+            </Link>
+            .
+          </p>
         </div>
       </DialogContent>
     </Dialog>

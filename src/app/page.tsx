@@ -11,7 +11,7 @@ import { OfflineIndicator } from '@/shared/components/offline-indicator';
 export default function Home() {
   return (
     <div className="absolute inset-0 h-full w-full bg-zinc-50 font-sans dark:bg-black">
-      <header className="pointer-events-none absolute top-0 z-20 w-full px-4 py-4 sm:px-6 lg:px-8">
+      <header className="pointer-events-none absolute top-0 z-20 w-full px-4 py-4 sm:px-6">
         <div className="mx-auto flex flex-row items-start justify-between gap-4">
           <AppLogoBox />
           <div className="pointer-events-auto">
@@ -29,12 +29,12 @@ export default function Home() {
         }
       />
 
-      <div className="absolute bottom-4 left-4 z-30 sm:bottom-6 sm:left-6 lg:left-8">
+      <div className="absolute bottom-4 left-4 z-30 sm:bottom-6 sm:left-6">
         <DataInfoButton />
       </div>
 
       {/* Primary actions in the thumb zone (bottom-right), hero "safety" closest to the corner. */}
-      <div className="pointer-events-auto absolute right-4 bottom-4 z-30 flex flex-col items-end gap-2 sm:right-6 sm:bottom-6 lg:right-8">
+      <div className="pointer-events-auto absolute right-4 bottom-4 z-30 flex flex-col items-end gap-2 sm:right-6 sm:bottom-6">
         <ReportFilter />
         <CreateReportAction />
         <SafetyAssistant />

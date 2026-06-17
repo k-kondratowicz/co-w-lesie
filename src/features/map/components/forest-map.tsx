@@ -13,8 +13,10 @@ import { boundsToBbox } from '@/features/map/utils/bounds-to-bbox';
 import { ReportDetailsOverlay } from '@/features/reports/components/report-details-overlay';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
+import { Spinner } from '@/shared/components/ui/spinner';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
+import { useMapViewStore } from '@/shared/store/use-map-view-store';
 import { reportsSinceIso, useReportFilterStore } from '@/shared/store/use-report-filter-store';
 import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
 
@@ -26,8 +28,12 @@ type ForestMapProps = { pmtilesUrl: string };
 export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const mapRef = useRef<MapRef | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [bbox, setBbox] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(6);
+  const setMapView = useMapViewStore((state) => state.setView);
+  // Captured once: the viewport we left on a previous visit (null on first ever load).
+  const [restoredView] = useState(() => useMapViewStore.getState().view);
+  const [zoom, setZoom] = useState(restoredView?.zoom ?? 6);
 
   const sinceDays = useReportFilterStore((state) => state.sinceDays);
   // Memoize so Date.now() (inside reportsSinceIso) doesn't churn the query key every render.
@@ -76,10 +82,20 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
     }
   }, [riskOverlay]);
 
+  // Skip the very first run when we restored a previous viewport - otherwise coming back to the
+  // map (e.g. from the privacy policy) would yank the view back to the user instead of where they left off.
+  const skipRecenter = useRef(restoredView !== null);
   useEffect(() => {
-    if (userPosition) {
-      mapRef.current?.flyTo({ center: [userPosition.longitude, userPosition.latitude], zoom: 14 });
+    if (!userPosition) {
+      return;
     }
+
+    if (skipRecenter.current) {
+      skipRecenter.current = false;
+      return;
+    }
+
+    mapRef.current?.flyTo({ center: [userPosition.longitude, userPosition.latitude], zoom: 14 });
   }, [userPosition]);
 
   // Ask for location once on first load, tailored to the current permission:
@@ -102,19 +118,23 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   }, [userPosition, locationStatus, locationPermission, requestLocation, permissionDialog]);
 
   if (!mounted) {
-    return <div className="h-screen w-full" />;
+    return <MapLoading />;
   }
 
   const syncViewport = (map: maplibregl.Map) => {
+    const center = map.getCenter();
+    const nextZoom = map.getZoom();
+
     setBbox(boundsToBbox(map));
-    setZoom(map.getZoom());
+    setZoom(nextZoom);
+    setMapView({ longitude: center.lng, latitude: center.lat, zoom: nextZoom });
   };
 
   return (
     <>
       <MapGL
         ref={mapRef}
-        initialViewState={{ longitude: 19.23, latitude: 52.1, zoom: 6 }}
+        initialViewState={restoredView ?? { longitude: 19.23, latitude: 52.1, zoom: 6 }}
         minZoom={5}
         maxZoom={16}
         mapStyle={MAP_STYLE}
@@ -122,7 +142,10 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
         interactiveLayerIds={REPORT_LAYERS}
         attributionControl={{ compact: false }}
         style={{ width: '100%', height: '100svh' }}
-        onLoad={(event) => syncViewport(event.target)}
+        onLoad={(event) => {
+          syncViewport(event.target);
+          setLoaded(true);
+        }}
         onMoveEnd={(event) => syncViewport(event.target)}
         onClick={handleClick}
       >
@@ -136,6 +159,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
           selectedPoint={popup ? { lng: popup.lng, lat: popup.lat } : null}
         />
       </MapGL>
+
+      {loaded ? null : <MapLoading />}
 
       <ReportDetailsOverlay info={popup} onClose={closePopup} />
 
@@ -181,5 +206,16 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
         )}
       </ActionDialog>
     </>
+  );
+}
+
+// Covers the gap between the map mounting and the basemap tiles painting (the user marker draws
+// onto the still-blank canvas, so without this you'd briefly see the blue dot over white).
+function MapLoading() {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-1 bg-background">
+      <Spinner className="size-5 text-muted-foreground" />
+      <p className="text-muted-foreground text-sm">Ładowanie mapy...</p>
+    </div>
   );
 }

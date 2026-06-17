@@ -38,8 +38,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const sinceDays = useReportFilterStore((state) => state.sinceDays);
   // Memoize so Date.now() (inside reportsSinceIso) doesn't churn the query key every render.
   const reportsSince = useMemo(() => reportsSinceIso(sinceDays), [sinceDays]);
-  const reports = useViewportFeatures('/api/reports', 'reports', bbox, true, reportsSince);
-  const bans = useViewportFeatures('/api/bans', 'bans', bbox, zoom >= BANS_MIN_ZOOM);
+  const reports = useViewportFeatures('reports', 'reports', bbox, true, reportsSince);
+  const bans = useViewportFeatures('bans', 'bans', bbox, zoom >= BANS_MIN_ZOOM);
   const riskOverlay = useRiskOverlayStore((state) => state.overlay);
   const isPicking = useMapPickStore((state) => state.isPicking);
   const pickConstraint = useMapPickStore((state) => state.constraint);

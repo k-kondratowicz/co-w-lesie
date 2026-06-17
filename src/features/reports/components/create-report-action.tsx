@@ -20,7 +20,9 @@ import { SelectItem } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/button';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { useOnlineStatus } from '@/shared/hooks/use-online-status';
+import { ApiError, api } from '@/shared/lib/api/client';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
+import { formatDistance } from '@/shared/lib/geo/format-distance';
 import { isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useOfflineReportStore } from '@/shared/store/use-offline-report-store';
@@ -29,30 +31,21 @@ import { useTurnstileStore } from '@/shared/store/use-turnstile-store';
 type CreateReportResult = { queued: true } | { queued: false; id: string };
 
 async function createReport(input: CreateReportInput, turnstileToken: string | null): Promise<CreateReportResult> {
-  let res: Response;
-
   try {
-    res = await fetch('/api/reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...input, turnstileToken }),
-    });
-  } catch {
+    const { id } = await api.reports.create(input, turnstileToken);
+
+    return { queued: false, id };
+  } catch (error) {
     // Network failure (offline): queue it. GPS coordinates captured offline are still valid,
     // so the report is sent - and validated - once connectivity returns.
-    useOfflineReportStore.getState().enqueue(input);
+    if (!(error instanceof ApiError)) {
+      useOfflineReportStore.getState().enqueue(input);
 
-    return { queued: true };
+      return { queued: true };
+    }
+
+    throw error;
   }
-
-  if (!res.ok) {
-    const data = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(data?.error ?? 'Nie udało się dodać zgłoszenia. Spróbuj ponownie.');
-  }
-
-  const { id } = (await res.json()) as { id: string };
-
-  return { queued: false, id };
 }
 
 // Form-only schema: the API fields plus the in-progress photo File (uploaded on submit, not sent).
@@ -200,7 +193,7 @@ export function CreateReportAction() {
     }
 
     if (distanceMeters(anchor.lng, anchor.lat, point.lng, point.lat) > REPORT_MAX_OFFSET_METERS) {
-      toast.error(`Wybierz miejsce maksymalnie ${REPORT_MAX_OFFSET_METERS / 1000} km od swojej lokalizacji.`);
+      toast.error(`Wybierz miejsce maksymalnie ${formatDistance(REPORT_MAX_OFFSET_METERS)} od swojej lokalizacji.`);
       return;
     }
 
@@ -239,7 +232,7 @@ export function CreateReportAction() {
                   disabled={form.state.values.location.length !== 2}
                 >
                   <MapPin className="size-4" />
-                  Wskaż miejsce na mapie (do {REPORT_MAX_OFFSET_METERS / 1000} km)
+                  Wskaż miejsce na mapie (do {formatDistance(REPORT_MAX_OFFSET_METERS)})
                 </Button>
               </field.Location>
             )}

@@ -34,7 +34,7 @@ describe('GET /api/reports', () => {
     });
     await prisma.report.create({ data: { type: 'FIRE', lat: HERE.lat, lng: HERE.lng, expiresAt: past } });
     await prisma.report.create({
-      data: { type: 'FIRE', lat: HERE.lat, lng: HERE.lng, expiresAt: future, flags: 3, confirmations: 0 }, // disputed
+      data: { type: 'FIRE', lat: HERE.lat, lng: HERE.lng, expiresAt: future, flags: 5, confirmations: 0 }, // disputed (critical type needs 4+ net flags)
     });
     await prisma.report.create({ data: { type: 'FIRE', lat: 52.5, lng: 16.9, expiresAt: future } }); // outside bbox
 
@@ -59,6 +59,24 @@ describe('GET /api/reports', () => {
     expect(feature.properties).toMatchObject({ type: 'BLOOD', confirmations: 2, flags: 1 });
     expect(feature.properties.expiresAt).toBe(future.toISOString());
     expect(typeof feature.properties.opacity).toBe('number');
+  });
+
+  it('uses a higher dispute threshold for critical hazard types', async () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000);
+
+    const criticalFlagged = await prisma.report.create({
+      data: { type: 'FIRE', lat: HERE.lat, lng: HERE.lng, expiresAt: future, flags: 3, confirmations: 0 },
+      select: { id: true },
+    });
+    await prisma.report.create({
+      data: { type: 'ILLEGAL_DUMP', lat: HERE.lat, lng: HERE.lng, expiresAt: future, flags: 3, confirmations: 0 },
+    });
+
+    const body = await (await getReports()).json();
+    const ids = body.features.map((f: { properties: { id: string } }) => f.properties.id);
+
+    expect(ids).toContain(criticalFlagged.id);
+    expect(ids).toHaveLength(1);
   });
 
   it('honours the `since` filter (hides reports created before it)', async () => {

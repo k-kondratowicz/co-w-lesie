@@ -18,8 +18,25 @@ const TTL_HOURS: Record<ReportType, number> = {
   OTHER: 72,
 };
 
-// Hidden once flags outweigh confirmations by this much - the crowd marking it gone/wrong.
-export const FLAG_DISPUTE_THRESHOLD = 2;
+// How many net flags (flags - confirmations) it takes to hide a report. Critical hazard types
+// need more flags because wrongly hiding a FIRE or SHOTS report has real safety consequences.
+const DISPUTE_THRESHOLD: Record<ReportType, number> = {
+  FIRE: 4,
+  SHOTS: 4,
+  SHOTS_HEARD: 4,
+  HUNTING: 4,
+  AGGRESSIVE_ANIMAL: 4,
+  BLOOD: 2,
+  VACCINATION: 2,
+  DEAD_ANIMAL: 2,
+  BLOCKED_PATH: 2,
+  ILLEGAL_DUMP: 2,
+  OTHER: 2,
+};
+
+export function flagDisputeThreshold(type: ReportType): number {
+  return DISPUTE_THRESHOLD[type];
+}
 
 export function reportTtlMs(type: ReportType): number {
   return TTL_HOURS[type] * HOUR_MS;

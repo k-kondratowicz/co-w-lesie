@@ -1,7 +1,7 @@
 import type { ReportType } from '@prisma/client';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { ageOpacity, expiryFrom, FLAG_DISPUTE_THRESHOLD } from '@/features/reports/lifecycle';
+import { ageOpacity, expiryFrom } from '@/features/reports/lifecycle';
 import { createReportSchema } from '@/features/reports/schemas/create-report.schema';
 import { clientIp } from '@/shared/lib/client-ip';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
@@ -117,7 +117,14 @@ export async function GET(request: NextRequest) {
     FROM "Report"
     WHERE ST_Intersects("geog", ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)::geography)
       AND ("expiresAt" IS NULL OR "expiresAt" > now())
-      AND ("flags" - "confirmations") < ${FLAG_DISPUTE_THRESHOLD}
+      AND ("flags" - "confirmations") < CASE "type"
+        WHEN 'FIRE' THEN 4
+        WHEN 'SHOTS' THEN 4
+        WHEN 'SHOTS_HEARD' THEN 4
+        WHEN 'HUNTING' THEN 4
+        WHEN 'AGGRESSIVE_ANIMAL' THEN 4
+        ELSE 2
+      END
       AND (${since}::timestamptz IS NULL OR "createdAt" > ${since}::timestamptz)
     ORDER BY "createdAt" DESC
     LIMIT 2000

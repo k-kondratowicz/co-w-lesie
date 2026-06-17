@@ -26,9 +26,9 @@ Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
   (defaults to kontakt@co-w-lesie.pl, which must actually receive mail).
 
 ## Safety
-- **Severity-aware dispute threshold.** Hiding is a flat `flags - confirmations >= 2` for every
-  type, so two flags can hide a `FIRE` or `SHOTS` report - the hazards where wrongly hiding is
-  worst. Make the threshold depend on type (critical types need more flags to disappear).
+- ~~**Severity-aware dispute threshold.**~~ Done: critical hazard types (`FIRE`, `SHOTS`,
+  `SHOTS_HEARD`, `HUNTING`, `AGGRESSIVE_ANIMAL`) now require 4 net flags to hide; others keep 2.
+  See `DISPUTE_THRESHOLD` in `lifecycle.ts` and the SQL CASE in `GET /api/reports`.
 - **Loud stale-data banner.** The risk panel shows per-signal timestamps, but a silent sync death
   isn't prominent. When the BDL sync age exceeds a threshold, show a visible "dane mogą być
   nieaktualne" warning - enforces *missing != safe* at the UI level, not just in the API.

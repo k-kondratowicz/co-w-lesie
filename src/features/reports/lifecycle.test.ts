@@ -1,6 +1,6 @@
 import { ReportType } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
-import { ageOpacity, expiryFrom, FLAG_DISPUTE_THRESHOLD, reportTtlMs } from './lifecycle';
+import { ageOpacity, expiryFrom, flagDisputeThreshold, reportTtlMs } from './lifecycle';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -57,8 +57,26 @@ describe('ageOpacity', () => {
   });
 });
 
-describe('FLAG_DISPUTE_THRESHOLD', () => {
-  it('hides a report once flags outweigh confirmations by 2', () => {
-    expect(FLAG_DISPUTE_THRESHOLD).toBe(2);
+describe('flagDisputeThreshold', () => {
+  it('requires more flags to hide critical hazard types', () => {
+    expect(flagDisputeThreshold('FIRE')).toBe(4);
+    expect(flagDisputeThreshold('SHOTS')).toBe(4);
+    expect(flagDisputeThreshold('SHOTS_HEARD')).toBe(4);
+    expect(flagDisputeThreshold('HUNTING')).toBe(4);
+    expect(flagDisputeThreshold('AGGRESSIVE_ANIMAL')).toBe(4);
+  });
+
+  it('uses a lower threshold for non-critical types', () => {
+    expect(flagDisputeThreshold('BLOOD')).toBe(2);
+    expect(flagDisputeThreshold('DEAD_ANIMAL')).toBe(2);
+    expect(flagDisputeThreshold('ILLEGAL_DUMP')).toBe(2);
+    expect(flagDisputeThreshold('BLOCKED_PATH')).toBe(2);
+    expect(flagDisputeThreshold('OTHER')).toBe(2);
+  });
+
+  it('defines a positive threshold for every report type', () => {
+    for (const type of Object.values(ReportType)) {
+      expect(flagDisputeThreshold(type)).toBeGreaterThan(0);
+    }
   });
 });

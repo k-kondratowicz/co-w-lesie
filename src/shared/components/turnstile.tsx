@@ -92,7 +92,7 @@ export function Turnstile({ className }: { className?: string }) {
 
       {online && rendering && (
         <p className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-          <Spinner /> Sprawdzamy, czy nie jesteś robotem. Poczekaj chwilę.
+          <Spinner /> Sprawdzamy, czy nie jesteś robotem...
         </p>
       )}
 

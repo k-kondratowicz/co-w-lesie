@@ -18,6 +18,7 @@ export function fireKodToDegree(kod: string): number | null {
  * BDL serializes timestamps as strings in two inconsistent formats:
  *   - "YYYY-MM-DD HH:MM:SS" (e.g. the fire/ban `data` field)
  *   - "DD-MM-YYYY HH:MM:SS" (e.g. the ban `data_koncowa` field)
+ * The clock is Polish local time (no zone marker), so we interpret it as Europe/Warsaw.
  * Returns null on anything unparseable.
  */
 export function parseBdlDateTime(value: string | null | undefined): Date | null {
@@ -29,30 +30,69 @@ export function parseBdlDateTime(value: string | null | undefined): Date | null 
   const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
   if (isoMatch) {
     const [, year, month, day, hours, minutes, seconds] = isoMatch;
-    return makeUtcDate(+year, +month, +day, +hours, +minutes, +seconds);
+    return makeWarsawDate(+year, +month, +day, +hours, +minutes, +seconds);
   }
 
   const polishMatch = trimmed.match(/^(\d{2})-(\d{2})-(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/);
   if (polishMatch) {
     const [, day, month, year, hours, minutes, seconds] = polishMatch;
-    return makeUtcDate(+year, +month, +day, +hours, +minutes, +seconds);
+    return makeWarsawDate(+year, +month, +day, +hours, +minutes, +seconds);
   }
 
   return null;
 }
 
-function makeUtcDate(year: number, month: number, day: number, hours: number, minutes: number, seconds: number): Date | null {
-  const date = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
-  // Date.UTC normalizes overflow (e.g. month 13 -> next year), so reject inputs whose
-  // components don't round-trip - "2025-13-40 99:99:99" must be null, not a valid date.
+const warsawWallClockParts = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Europe/Warsaw',
+  hour12: false,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+});
+
+type WallClock = { year: number; month: number; day: number; hours: number; minutes: number; seconds: number };
+
+function warsawWallClock(instant: number): WallClock {
+  const parts = warsawWallClockParts.formatToParts(new Date(instant));
+  const value = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((part) => part.type === type)?.value);
+  const hours = value('hour');
+
+  return {
+    year: value('year'),
+    month: value('month'),
+    day: value('day'),
+    hours: hours === 24 ? 0 : hours, // some engines emit "24" for midnight
+    minutes: value('minute'),
+    seconds: value('second'),
+  };
+}
+
+// Treats the components as a Europe/Warsaw wall-clock time and returns the matching UTC instant.
+// DST-aware: we measure the zone's offset at the candidate instant (refined twice to settle across
+// spring/autumn transitions). Rejects inputs that don't round-trip - "2025-13-40 99:99:99" -> null.
+function makeWarsawDate(year: number, month: number, day: number, hours: number, minutes: number, seconds: number): Date | null {
+  const target = Date.UTC(year, month - 1, day, hours, minutes, seconds);
+
+  let instant = target;
+  for (let pass = 0; pass < 2; pass += 1) {
+    const local = warsawWallClock(instant);
+    const localAsUtc = Date.UTC(local.year, local.month - 1, local.day, local.hours, local.minutes, local.seconds);
+    instant = target - (localAsUtc - instant);
+  }
+
+  const check = warsawWallClock(instant);
   const roundTrips =
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day &&
-    date.getUTCHours() === hours &&
-    date.getUTCMinutes() === minutes &&
-    date.getUTCSeconds() === seconds;
-  return roundTrips ? date : null;
+    check.year === year &&
+    check.month === month &&
+    check.day === day &&
+    check.hours === hours &&
+    check.minutes === minutes &&
+    check.seconds === seconds;
+
+  return roundTrips ? new Date(instant) : null;
 }
 
 /** Combines the fire layer's `data` (date) + `godz` (hour) into the forecast timestamp. */

@@ -21,12 +21,12 @@ describe('fireKodToDegree', () => {
 });
 
 describe('parseBdlDateTime', () => {
-  it('parses the ISO-like format (YYYY-MM-DD HH:MM:SS) as UTC', () => {
-    expect(parseBdlDateTime('2025-03-13 07:52:07')?.toISOString()).toBe('2025-03-13T07:52:07.000Z');
+  it('parses the ISO-like format (YYYY-MM-DD HH:MM:SS) as Warsaw local time (winter, +01:00)', () => {
+    expect(parseBdlDateTime('2025-03-13 07:52:07')?.toISOString()).toBe('2025-03-13T06:52:07.000Z');
   });
 
-  it('parses the Polish format (DD-MM-YYYY HH:MM:SS) as UTC', () => {
-    expect(parseBdlDateTime('31-12-2026 00:00:00')?.toISOString()).toBe('2026-12-31T00:00:00.000Z');
+  it('parses the Polish format (DD-MM-YYYY HH:MM:SS) as Warsaw local time (winter, +01:00)', () => {
+    expect(parseBdlDateTime('31-12-2026 00:00:00')?.toISOString()).toBe('2026-12-30T23:00:00.000Z');
   });
 
   it('returns null for empty or unparseable input', () => {
@@ -39,16 +39,17 @@ describe('parseBdlDateTime', () => {
 });
 
 describe('fireUpdatedAt', () => {
+  // The forecast hour is Polish local time; June is CEST (+02:00).
   it('combines the date and the hour', () => {
-    expect(fireUpdatedAt('2026-06-10', '13')?.toISOString()).toBe('2026-06-10T13:00:00.000Z');
+    expect(fireUpdatedAt('2026-06-10', '13')?.toISOString()).toBe('2026-06-10T11:00:00.000Z');
   });
 
   it('pads single-digit hours', () => {
-    expect(fireUpdatedAt('2026-06-10', '7')?.toISOString()).toBe('2026-06-10T07:00:00.000Z');
+    expect(fireUpdatedAt('2026-06-10', '7')?.toISOString()).toBe('2026-06-10T05:00:00.000Z');
   });
 
   it('falls back to midnight when the hour is invalid', () => {
-    expect(fireUpdatedAt('2026-06-10', 'xx')?.toISOString()).toBe('2026-06-10T00:00:00.000Z');
+    expect(fireUpdatedAt('2026-06-10', 'xx')?.toISOString()).toBe('2026-06-09T22:00:00.000Z');
   });
 });
 

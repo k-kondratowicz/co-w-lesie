@@ -62,7 +62,9 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
       params.set('spatialRel', 'esriSpatialRelIntersects');
     }
 
-    const response = await fetch(`${layerUrl}/query?${params.toString()}`);
+    const response = await fetch(`${layerUrl}/query?${params.toString()}`, {
+      cache: 'no-store', // always fresh from BDL; we sync to our DB for caching
+    });
     if (!response.ok) {
       throw new Error(`BDL query failed (${response.status} ${response.statusText}) for ${layerUrl}`);
     }

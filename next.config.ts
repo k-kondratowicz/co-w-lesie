@@ -22,9 +22,12 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  // Next injects inline bootstrap/RSC scripts; dev also needs eval for HMR.
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  // Next injects inline bootstrap/RSC scripts; dev also needs eval for HMR. Turnstile loads its
+  // anti-bot script from challenges.cloudflare.com.
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
+  // Turnstile renders its challenge inside an iframe from this origin.
+  'frame-src https://challenges.cloudflare.com',
   // *.cartocdn.com serves the basemap style, glyphs, sprite and vector tiles; photos load from R2.
   `img-src 'self' data: blob: ${pmtilesOrigin} ${photosOrigin} https://*.cartocdn.com`,
   // Photo uploads go to our own /api (same-origin), so R2 needs no connect-src entry here.

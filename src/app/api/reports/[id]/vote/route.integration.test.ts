@@ -75,6 +75,23 @@ describe('POST /api/reports/:id/vote', () => {
     expect(after.confirmations).toBe(0);
   });
 
+  it('rejects a vote with a missing Turnstile token when verification is configured (403)', async () => {
+    const report = await createReport();
+
+    // With a secret set, an absent token fails verification (no network call - the helper short-circuits).
+    process.env.TURNSTILE_SECRET_KEY = 'test-secret';
+
+    try {
+      const response = await vote(report.id, 'CONFIRM', '7.7.7.7');
+
+      expect(response.status).toBe(403);
+      const after = await prisma.report.findUniqueOrThrow({ where: { id: report.id }, select: { confirmations: true } });
+      expect(after.confirmations).toBe(0);
+    } finally {
+      delete process.env.TURNSTILE_SECRET_KEY;
+    }
+  });
+
   it('returns 404 for a missing report', async () => {
     const response = await vote('does-not-exist', 'CONFIRM', '4.4.4.4');
 

@@ -3,14 +3,22 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 import { type QueuedReport, useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 
 async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | 'retry'> {
+  // Re-solve Turnstile at replay time (the original submit's token is long expired). If it can't be
+  // solved right now, keep the report queued rather than letting the server reject it as a 4xx.
+  const turnstileToken = await getTurnstileToken();
+  if (isTurnstileEnabled() && !turnstileToken) {
+    return 'retry';
+  }
+
   try {
     const res = await fetch('/api/reports', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(report.payload),
+      body: JSON.stringify({ ...report.payload, turnstileToken }),
     });
 
     if (res.ok) {

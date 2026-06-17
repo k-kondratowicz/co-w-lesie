@@ -8,6 +8,7 @@ import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo
 import { prisma } from '@/shared/lib/prisma';
 import { reportImageUrl } from '@/shared/lib/r2';
 import { checkRateLimit } from '@/shared/lib/rate-limit';
+import { verifyTurnstile } from '@/shared/lib/turnstile';
 
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
 export const dynamic = 'force-dynamic'; // GET reads live data; never cache.
@@ -38,6 +39,11 @@ export async function POST(request: Request) {
   const parsed = createReportSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json({ error: 'Nieprawidłowe dane zgłoszenia', issues: z.flattenError(parsed.error) }, { status: 400 });
+  }
+
+  const turnstileToken = (body as { turnstileToken?: unknown }).turnstileToken;
+  if (!(await verifyTurnstile(typeof turnstileToken === 'string' ? turnstileToken : null, clientIp(request)))) {
+    return Response.json({ error: 'Weryfikacja nie powiodła się. Odśwież stronę i spróbuj ponownie.' }, { status: 403 });
   }
 
   const { type, description, location, imageKey } = parsed.data;

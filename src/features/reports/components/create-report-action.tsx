@@ -19,19 +19,20 @@ import { SelectItem } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/button';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
+import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 
 type CreateReportResult = { queued: true } | { queued: false; id: string };
 
-async function createReport(input: CreateReportInput): Promise<CreateReportResult> {
+async function createReport(input: CreateReportInput, turnstileToken: string | null): Promise<CreateReportResult> {
   let res: Response;
 
   try {
     res = await fetch('/api/reports', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
+      body: JSON.stringify({ ...input, turnstileToken }),
     });
   } catch {
     // Network failure (offline): queue it. GPS coordinates captured offline are still valid,
@@ -58,7 +59,8 @@ type CreateReportFormValues = z.infer<typeof createReportFormSchema>;
 export function CreateReportAction() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: createReport,
+    mutationFn: ({ input, turnstileToken }: { input: CreateReportInput; turnstileToken: string | null }) =>
+      createReport(input, turnstileToken),
     // Run even when offline so createReport can catch the failure and queue the report
     // (default 'online' would pause the mutation instead of calling it).
     networkMode: 'always',
@@ -105,8 +107,15 @@ export function CreateReportAction() {
         }
       }
 
+      // Solve Turnstile only when online; offline reports queue without a token and re-solve on replay.
+      const turnstileToken = navigator.onLine ? await getTurnstileToken() : null;
+      if (navigator.onLine && isTurnstileEnabled() && !turnstileToken) {
+        toast.error('Weryfikacja nie powiodła się. Spróbuj ponownie.');
+        return false;
+      }
+
       try {
-        const result = await mutation.mutateAsync({ ...report, imageKey });
+        const result = await mutation.mutateAsync({ input: { ...report, imageKey }, turnstileToken });
         toast.success(
           result.queued
             ? 'Brak internetu - zgłoszenie wyślemy automatycznie, gdy wróci połączenie.'

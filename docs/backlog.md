@@ -9,16 +9,20 @@ Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
   no dedicated abuse-report or review queue.
 
 ## Anti-abuse / integrity
-- **Proof-of-humanity (Cloudflare Turnstile).** The current defenses - rate limit, per-IP vote
-  dedupe, the 2 km vote-proximity check - are all bypassable by a script (IPs rotate; the proximity
-  check trusts client-sent `lat`/`lng`, so a bot can claim coordinates near any forest). Add an
-  invisible Turnstile token to report-create, vote, and upload; verify server-side and reject (403)
-  before any write. Highest-leverage hardening - the rest of the integrity work leans on it.
+- **Proof-of-humanity (Cloudflare Turnstile).** Done for **report-create** and **vote**: a token is
+  solved client-side (`getTurnstileToken`) and verified server-side (`verifyTurnstile`), rejecting
+  with 403. Offline reports re-solve on replay. **Remaining: the photo upload endpoint** - deferred
+  because the report flow would then need two solved tokens (upload + create); it stays on its rate
+  limit for now (orphan images are cheap and capped). Requires `TURNSTILE_SECRET_KEY` +
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in prod; verification fails open when the secret is unset.
 
 ## Privacy / legal
-- **Privacy policy + consent (GDPR).** We collect location, hashed IPs, and user photos, and run
-  Vercel Analytics + Sentry. An EU public launch needs a privacy policy page and a consent gate
-  for non-essential tracking (analytics/Sentry load only after opt-in). Currently missing.
+- **Privacy policy + consent (GDPR).** Done: `/polityka-prywatnosci` page plus a non-blocking
+  consent banner. Vercel Analytics + Speed Insights and Sentry load only after opt-in
+  (`AnalyticsConsent` / `initSentryClient`), Sentry runs with `sendDefaultPii: false`, and consent
+  can be withdrawn from the policy page (`ConsentControls`). **Remaining:** set a real
+  `NEXT_PUBLIC_SITE_CONTACT_EMAIL` in prod - a working data-protection contact is legally required
+  (defaults to kontakt@co-w-lesie.pl, which must actually receive mail).
 
 ## Safety
 - **Severity-aware dispute threshold.** Hiding is a flat `flags - confirmations >= 2` for every

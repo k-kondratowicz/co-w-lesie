@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
+import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 
 export type VoteKind = 'CONFIRM' | 'FLAG';
 
@@ -29,11 +30,11 @@ function writeVoted(voted: Record<string, VoteKind>) {
   }
 }
 
-async function postVote(id: string, kind: VoteKind, lat: number, lng: number): Promise<void> {
+async function postVote(id: string, kind: VoteKind, lat: number, lng: number, turnstileToken: string | null): Promise<void> {
   const res = await fetch(`/api/reports/${id}/vote`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ kind, lat, lng }),
+    body: JSON.stringify({ kind, lat, lng, turnstileToken }),
   });
 
   if (!res.ok) {
@@ -52,8 +53,19 @@ export function useReportVote() {
   const [voted, setVoted] = useState<Record<string, VoteKind>>(readVoted);
 
   const mutation = useMutation({
-    mutationFn: ({ id, kind, lat, lng }: { id: string; kind: VoteKind; lat: number; lng: number }) =>
-      postVote(id, kind, lat, lng),
+    mutationFn: ({
+      id,
+      kind,
+      lat,
+      lng,
+      turnstileToken,
+    }: {
+      id: string;
+      kind: VoteKind;
+      lat: number;
+      lng: number;
+      turnstileToken: string | null;
+    }) => postVote(id, kind, lat, lng, turnstileToken),
     onSuccess: (_data, { id, kind }) => {
       const next = { ...voted, [id]: kind };
       setVoted(next);
@@ -79,7 +91,13 @@ export function useReportVote() {
         }
       }
 
-      mutation.mutate({ id, kind, lat: coords.latitude, lng: coords.longitude });
+      const turnstileToken = await getTurnstileToken();
+      if (isTurnstileEnabled() && !turnstileToken) {
+        toast.error('Weryfikacja nie powiodła się. Spróbuj ponownie.');
+        return;
+      }
+
+      mutation.mutate({ id, kind, lat: coords.latitude, lng: coords.longitude, turnstileToken });
     },
     [position, getCurrentPosition, mutation],
   );

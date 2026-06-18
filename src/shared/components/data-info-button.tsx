@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/shared/components/ui/dialog';
+import { formatDistance } from '@/shared/lib/geo/format-distance';
 import { REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
 
 function InfoItem({ title, children }: { title: string; children: React.ReactNode }) {
@@ -52,8 +53,8 @@ export function DataInfoButton() {
             oddaleniu najmniejsze lasy mogą nie być widoczne.
           </InfoItem>
           <InfoItem title="Zgłoszenia w pobliżu lasu">
-            Zgłoszenie można dodać w lesie lub w jego pobliżu (do około {REPORT_FOREST_BUFFER_METERS} m). Uwzględniamy w ten
-            sposób niedokładność GPS oraz obrzeża lasu.
+            Zgłoszenie można dodać w lesie lub w jego pobliżu (do około {formatDistance(REPORT_FOREST_BUFFER_METERS)}).
+            Uwzględniamy w ten sposób niedokładność GPS oraz obrzeża lasu.
           </InfoItem>
           <InfoItem title="Zagrożenie pożarowe i zakazy wstępu">
             Dane o zagrożeniu pożarowym i zakazach wstępu pochodzą z Lasów Państwowych i są synchronizowane okresowo. Gdy dla

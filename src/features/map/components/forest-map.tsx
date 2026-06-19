@@ -14,6 +14,7 @@ import { ReportDetailsOverlay } from '@/features/reports/components/report-detai
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Spinner } from '@/shared/components/ui/spinner';
+import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useMapViewStore } from '@/shared/store/use-map-view-store';
@@ -30,6 +31,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const [mounted, setMounted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [bbox, setBbox] = useState<string | null>(null);
+  const debouncedBbox = useDebouncedValue(bbox, 300);
   const setMapView = useMapViewStore((state) => state.setView);
   // Captured once: the viewport we left on a previous visit (null on first ever load).
   const [restoredView] = useState(() => useMapViewStore.getState().view);
@@ -38,8 +40,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const sinceDays = useReportFilterStore((state) => state.sinceDays);
   // Memoize so Date.now() (inside reportsSinceIso) doesn't churn the query key every render.
   const reportsSince = useMemo(() => reportsSinceIso(sinceDays), [sinceDays]);
-  const reports = useViewportFeatures('reports', 'reports', bbox, true, reportsSince);
-  const bans = useViewportFeatures('bans', 'bans', bbox, zoom >= BANS_MIN_ZOOM);
+  const reports = useViewportFeatures('reports', 'reports', debouncedBbox, true, reportsSince);
+  const bans = useViewportFeatures('bans', 'bans', debouncedBbox, zoom >= BANS_MIN_ZOOM);
   const riskOverlay = useRiskOverlayStore((state) => state.overlay);
   const isPicking = useMapPickStore((state) => state.isPicking);
   const pickConstraint = useMapPickStore((state) => state.constraint);

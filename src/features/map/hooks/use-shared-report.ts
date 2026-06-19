@@ -27,7 +27,7 @@ export function useSharedReport(
   });
 
   useEffect(() => {
-    if (!loaded || !sharedReport || handled.current) {
+    if (!loaded || !sharedReport || handled.current || popup) {
       return;
     }
 
@@ -36,7 +36,7 @@ export function useSharedReport(
     const { lng, lat, ...rest } = sharedReport;
     mapRef.current?.flyTo({ center: [lng, lat], zoom: 14 });
     setPopup({ lng, lat, reports: [rest] });
-  }, [loaded, sharedReport, setPopup, mapRef]);
+  }, [loaded, sharedReport, popup, setPopup, mapRef]);
 
   useEffect(() => {
     if (isError && !dismissed) {

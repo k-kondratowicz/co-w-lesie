@@ -15,11 +15,13 @@ export function useShareReport() {
       if (navigator.share) {
         try {
           await navigator.share({ url });
-        } catch {
-          // User cancelled or share failed - fall through to clipboard
-        }
 
-        return;
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return;
+          }
+        }
       }
 
       const copyToClipboard = navigator.clipboard.writeText(url);

@@ -1,19 +1,20 @@
 'use client';
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import type { BansGeoJSON } from '@/features/map/types';
+import type { ReportsGeoJSON } from '@/features/reports/types';
+import { api } from '@/shared/lib/api/client';
 
-async function fetchFeatures(path: string, bbox: string, since: string | null): Promise<GeoJSON.FeatureCollection> {
-  const params = new URLSearchParams({ bbox });
-  if (since) {
-    params.set('since', since);
+type ViewportGeoJSON = ReportsGeoJSON | BansGeoJSON;
+
+type EndpointKey = 'reports' | 'bans';
+
+function fetchFeatures(endpoint: EndpointKey, bbox: string, since: string | null): Promise<ViewportGeoJSON> {
+  if (endpoint === 'bans') {
+    return api.bans.list(bbox);
   }
 
-  const response = await fetch(`${path}?${params}`);
-  if (!response.ok) {
-    throw new Error(`Request failed (${response.status}) for ${path}`);
-  }
-
-  return response.json();
+  return api.reports.list(bbox, since);
 }
 
 /**
@@ -23,17 +24,18 @@ async function fetchFeatures(path: string, bbox: string, since: string | null): 
  * callers skip the fetch (e.g. hide a heavy layer below a zoom threshold).
  */
 export function useViewportFeatures(
-  path: string,
+  endpoint: EndpointKey,
   queryKey: string,
   bbox: string | null,
   enabled = true,
   since: string | null = null,
-): GeoJSON.FeatureCollection | null {
+): ViewportGeoJSON | null {
   const { data } = useQuery({
-    queryKey: [queryKey, bbox, since],
-    queryFn: () => fetchFeatures(path, bbox as string, since),
+    queryKey: [queryKey, endpoint, bbox, since],
+    queryFn: () => fetchFeatures(endpoint, bbox as string, since),
     enabled: enabled && bbox !== null,
     placeholderData: keepPreviousData,
   });
+
   return data ?? null;
 }

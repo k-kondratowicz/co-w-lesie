@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { ApiError, api } from '@/shared/lib/api/client';
 import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/turnstile-client';
 import { type QueuedReport, useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 
@@ -15,19 +16,15 @@ async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | '
   }
 
   try {
-    const res = await fetch('/api/reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...report.payload, turnstileToken }),
-    });
+    await api.reports.create(report.payload, turnstileToken);
 
-    if (res.ok) {
-      return 'sent';
+    return 'sent';
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // 4xx is permanent (validation / rate limit) - drop it; 5xx is transient - keep and retry.
+      return error.status >= 400 && error.status < 500 ? 'rejected' : 'retry';
     }
 
-    // 4xx is permanent (validation / rate limit) - drop it; 5xx is transient - keep and retry.
-    return res.status >= 400 && res.status < 500 ? 'rejected' : 'retry';
-  } catch {
     return 'retry'; // still offline
   }
 }

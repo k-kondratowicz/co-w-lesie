@@ -5,7 +5,7 @@ import { type RefObject, useCallback, useEffect, useRef } from 'react';
 import { useActionDialog } from '@/shared/components/dialog';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 
-export function useLocationPrompt(mapRef: RefObject<MapRef | null>, skipInitialRecenter: boolean) {
+export function useLocationPrompt(mapRef: RefObject<MapRef | null>, skipInitialRecenter: boolean, defer: boolean) {
   const {
     position: userPosition,
     status: locationStatus,
@@ -48,6 +48,10 @@ export function useLocationPrompt(mapRef: RefObject<MapRef | null>, skipInitialR
       return;
     }
 
+    if (defer) {
+      return;
+    }
+
     if (locationPermission === 'granted') {
       locationPromptHandled.current = true;
       void requestLocation();
@@ -55,7 +59,7 @@ export function useLocationPrompt(mapRef: RefObject<MapRef | null>, skipInitialR
       locationPromptHandled.current = true;
       permissionDialog.setOpen(true);
     }
-  }, [userPosition, locationStatus, locationPermission, requestLocation, permissionDialog]);
+  }, [userPosition, locationStatus, locationPermission, requestLocation, permissionDialog, defer]);
 
   return {
     userPosition,

@@ -47,10 +47,11 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const pickConstraint = useMapPickStore((state) => state.constraint);
 
   const { popup, setPopup, closePopup, handleClick } = useMapInteraction(mapRef);
-  const { sharedReportId } = useSharedReport(mapRef, loaded, popup, setPopup);
+  const { sharedReportId, sharedReportActive } = useSharedReport(mapRef, loaded, popup, setPopup);
   const { userPosition, permissionDenied, locationError, permissionDialog } = useLocationPrompt(
     mapRef,
     restoredView !== null || !!sharedReportId,
+    sharedReportActive,
   );
 
   useEffect(() => {

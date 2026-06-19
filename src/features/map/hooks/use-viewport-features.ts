@@ -31,7 +31,7 @@ export function useViewportFeatures(
   since: string | null = null,
 ): ViewportGeoJSON | null {
   const { data } = useQuery({
-    queryKey: [queryKey, bbox, since],
+    queryKey: [queryKey, endpoint, bbox, since],
     queryFn: () => fetchFeatures(endpoint, bbox as string, since),
     enabled: enabled && bbox !== null,
     placeholderData: keepPreviousData,

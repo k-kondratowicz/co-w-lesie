@@ -1,10 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { expiryFrom } from '@/features/reports/lifecycle';
+import { queryReportsInBbox } from '@/features/reports/queries/reports-in-bbox';
 import { createReportSchema } from '@/features/reports/schemas/create-report.schema';
 import { clientIp } from '@/shared/lib/client-ip';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
-import { queryReportsInBbox } from '@/shared/lib/geo/queries/reports-in-bbox';
 import { prisma } from '@/shared/lib/prisma';
 import { checkRateLimit } from '@/shared/lib/rate-limit';
 import { verifyTurnstile } from '@/shared/lib/turnstile';

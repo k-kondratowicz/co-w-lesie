@@ -24,9 +24,13 @@ export function useShareReport() {
         }
       }
 
-      const copyToClipboard = navigator.clipboard.writeText(url);
+      if (!navigator.clipboard?.writeText) {
+        toast.error('Kopiowanie do schowka nie jest dostępne w tej przeglądarce');
 
-      toast.promise(copyToClipboard, {
+        return;
+      }
+
+      toast.promise(navigator.clipboard.writeText(url), {
         loading: 'Kopiowanie linku...',
         success: 'Link został skopiowany do schowka',
         error: 'Nie udało się skopiować linku do schowka',

@@ -29,6 +29,10 @@ export function useLocationPrompt(mapRef: RefObject<MapRef | null>, skipInitialR
   const locationPromptHandled = useRef(false);
 
   const skipRecenter = useRef(skipInitialRecenter);
+  if (skipInitialRecenter) {
+    skipRecenter.current = true;
+  }
+
   useEffect(() => {
     if (!userPosition) {
       return;

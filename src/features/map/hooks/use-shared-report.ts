@@ -16,7 +16,7 @@ export function useSharedReport(
   const searchParams = useSearchParams();
   const [initialReportId] = useState(() => searchParams.get('report'));
   const handled = useRef(false);
-
+  const [reportShown, setReportShown] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   const { data: sharedReport, isError } = useQuery({
@@ -32,6 +32,7 @@ export function useSharedReport(
     }
 
     handled.current = true;
+    setReportShown(true);
     const { lng, lat, ...rest } = sharedReport;
     mapRef.current?.flyTo({ center: [lng, lat], zoom: 14 });
     setPopup({ lng, lat, reports: [rest] });
@@ -68,5 +69,5 @@ export function useSharedReport(
 
   const sharedReportActive = !!initialReportId && !dismissed;
 
-  return { sharedReportId: initialReportId, sharedReportActive };
+  return { sharedReportActive, reportShown };
 }

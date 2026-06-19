@@ -39,10 +39,16 @@ export async function get<T>(url: string, params?: Record<string, string | undef
 }
 
 export async function post<T>(url: string, body: unknown, headers?: HeadersInit): Promise<T> {
-  const isRaw = body instanceof Blob || body instanceof ArrayBuffer || body instanceof Uint8Array;
+  const isRaw = body instanceof Blob || body instanceof ArrayBuffer || body instanceof Uint8Array || body instanceof FormData;
+  const mergedHeaders = new Headers(headers);
+
+  if (!isRaw && !mergedHeaders.has('Content-Type')) {
+    mergedHeaders.set('Content-Type', 'application/json');
+  }
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: isRaw ? headers : { 'Content-Type': 'application/json', ...headers },
+    headers: mergedHeaders,
     body: isRaw ? (body as BodyInit) : JSON.stringify(body),
   });
 

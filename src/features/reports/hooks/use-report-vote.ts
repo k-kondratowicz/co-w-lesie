@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
+import { api } from '@/shared/lib/api/client';
 
 export type VoteKind = 'CONFIRM' | 'FLAG';
 
@@ -30,17 +31,7 @@ function writeVoted(voted: Record<string, VoteKind>) {
 }
 
 async function postVote(id: string, kind: VoteKind, lat: number, lng: number): Promise<void> {
-  const res = await fetch(`/api/reports/${id}/vote`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ kind, lat, lng }),
-  });
-
-  if (!res.ok) {
-    // Surface the server's message (e.g. "too far to vote") instead of a generic failure.
-    const data = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(data?.error ?? 'Nie udało się zapisać głosu. Spróbuj ponownie.');
-  }
+  await api.reports.vote(id, kind, lat, lng);
 }
 
 // Confirm/flag a report. A vote is a first-hand claim, so we send the voter's location and the

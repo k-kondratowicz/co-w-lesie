@@ -50,7 +50,7 @@ export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
                 type="button"
                 size="sm"
                 variant={voted === 'CONFIRM' ? 'default' : 'outline'}
-                className="h-7 flex-1 text-xs"
+                className="flex-1"
                 disabled={isVoting || Boolean(voted)}
                 onClick={() => vote({ id: report.id, kind: 'CONFIRM' })}
               >
@@ -62,7 +62,7 @@ export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
                 type="button"
                 size="sm"
                 variant={voted === 'FLAG' ? 'default' : 'outline'}
-                className="h-7 flex-1 text-xs"
+                className="flex-1"
                 disabled={isVoting || Boolean(voted)}
                 onClick={() => vote({ id: report.id, kind: 'FLAG' })}
               >
@@ -70,13 +70,7 @@ export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
                 Nieaktualne
               </Button>
 
-              <Button
-                type="button"
-                size="icon-sm"
-                variant="ghost"
-                className="h-7 px-2 text-xs"
-                onClick={() => shareReport(report.id)}
-              >
+              <Button type="button" size="icon-sm" variant="ghost" onClick={() => shareReport(report.id)}>
                 <Share2 />
                 <span className="sr-only">Udostępnij zgłoszenie</span>
               </Button>

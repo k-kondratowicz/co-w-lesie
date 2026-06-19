@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { prisma } from '@/shared/lib/prisma';
 import { GET } from './route';
@@ -8,7 +9,7 @@ function getReport(id: string) {
   return GET(request, { params: Promise.resolve({ id }) });
 }
 
-function createReport(overrides: Record<string, unknown> = {}) {
+function createReport(overrides: Partial<Prisma.ReportUncheckedCreateInput> = {}) {
   return prisma.report.create({
     data: {
       type: 'FIRE',

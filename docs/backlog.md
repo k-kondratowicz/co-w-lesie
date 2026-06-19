@@ -85,7 +85,9 @@ moment the user remembers to open it.
   PWA service worker, push subscription, and a server-side check on each sync cycle.
 - ~~**Shareable report links.**~~ Done: `/?report=<id>` deep-links fly the map to the report and
   open the overlay. Share button on each report uses `navigator.share` (mobile) or clipboard copy.
-  URL syncs on every popup change so it's always shareable.
+  URL syncs on every popup change so it's always shareable. Opening a shared link defers the
+  location permission dialog until the report overlay is closed, so only one dialog is visible
+  at a time.
 
 ## Engagement loop (medium priority)
 Close the feedback loop so reporters stay motivated and planned trips get proactive alerts.

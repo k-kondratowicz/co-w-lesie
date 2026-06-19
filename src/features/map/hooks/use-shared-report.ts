@@ -19,10 +19,10 @@ export function useSharedReport(
 
   const [dismissed, setDismissed] = useState(false);
 
-  const { data: sharedReport } = useQuery({
+  const { data: sharedReport, isError } = useQuery({
     queryKey: ['report', initialReportId],
     queryFn: () => reportsApi.get(initialReportId as string),
-    enabled: !!initialReportId && !handled.current,
+    enabled: !!initialReportId && !dismissed && !popup,
     retry: false,
   });
 
@@ -38,13 +38,19 @@ export function useSharedReport(
   }, [loaded, sharedReport, setPopup, mapRef]);
 
   useEffect(() => {
+    if (isError && !dismissed) {
+      setDismissed(true);
+    }
+  }, [isError, dismissed]);
+
+  useEffect(() => {
     if (handled.current && !popup && !dismissed) {
       setDismissed(true);
     }
   }, [popup, dismissed]);
 
   useEffect(() => {
-    if (initialReportId && !handled.current) {
+    if (initialReportId && !handled.current && !isError) {
       return;
     }
 
@@ -58,7 +64,7 @@ export function useSharedReport(
     }
 
     window.history.replaceState(null, '', url);
-  }, [popup, initialReportId]);
+  }, [popup, initialReportId, isError]);
 
   const sharedReportActive = !!initialReportId && !dismissed;
 

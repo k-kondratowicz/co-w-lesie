@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReportType } from '@prisma/client';
 import type { MapLayerMouseEvent, MapRef } from '@vis.gl/react-maplibre';
 import type { GeoJSONSource } from 'maplibre-gl';
 import { type RefObject, useCallback, useState } from 'react';
@@ -7,7 +8,7 @@ import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 
 export type PopupReport = {
   id: string;
-  type: string;
+  type: ReportType;
   description: string | null;
   createdAt: string;
   expiresAt: string | null;
@@ -24,7 +25,7 @@ function featureToReport(feature: FeatureLike): PopupReport {
 
   return {
     id: String(props.id ?? feature.id),
-    type: String(props.type),
+    type: props.type as ReportType,
     description: (props.description as string | null) ?? null,
     createdAt: String(props.createdAt ?? ''),
     expiresAt: props.expiresAt ? String(props.expiresAt) : null,
@@ -114,5 +115,5 @@ export function useMapInteraction(mapRef: RefObject<MapRef | null>) {
 
   const closePopup = useCallback(() => setPopup(null), []);
 
-  return { popup, closePopup, handleClick };
+  return { popup, setPopup, closePopup, handleClick };
 }

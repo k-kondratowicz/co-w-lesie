@@ -23,3 +23,16 @@ export type ReportFeatureProperties = {
 };
 
 export type ReportsGeoJSON = GeoJSON.FeatureCollection<GeoJSON.Point, ReportFeatureProperties>;
+
+export type SingleReportResponse = {
+  id: string;
+  type: ReportType;
+  description: string | null;
+  createdAt: string;
+  expiresAt: string | null;
+  confirmations: number;
+  flags: number;
+  imageUrl: string | null;
+  lng: number;
+  lat: number;
+};

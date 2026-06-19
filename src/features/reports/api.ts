@@ -1,8 +1,18 @@
 import type { CreateReportInput } from '@/features/reports/schemas/create-report.schema';
-import type { CreateReportResponse, ReportsGeoJSON, UploadReportResponse, VoteResponse } from '@/features/reports/types';
+import type {
+  CreateReportResponse,
+  ReportsGeoJSON,
+  SingleReportResponse,
+  UploadReportResponse,
+  VoteResponse,
+} from '@/features/reports/types';
 import { get, post } from '@/shared/lib/api/fetch';
 
 export const reportsApi = {
+  get(id: string) {
+    return get<SingleReportResponse>(`/api/reports/${id}`);
+  },
+
   list(bbox: string, since?: string | null) {
     return get<ReportsGeoJSON>('/api/reports', {
       bbox,

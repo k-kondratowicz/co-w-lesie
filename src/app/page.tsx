@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { ForestMap } from '@/features/map/components/forest-map';
 import { CreateReportAction } from '@/features/reports/components/create-report-action';
 import { LocationRefreshAction } from '@/features/reports/components/location-refresh-action';
@@ -23,11 +24,13 @@ export default function Home() {
       <OfflineIndicator />
       <OfflineReportSync />
 
-      <ForestMap
-        pmtilesUrl={
-          process.env.NEXT_PUBLIC_FOREST_PMTILES_URL ?? 'https://pub-a4d0d7d33aad4567b65c357ab9677ce3.r2.dev/forests.pmtiles'
-        }
-      />
+      <Suspense>
+        <ForestMap
+          pmtilesUrl={
+            process.env.NEXT_PUBLIC_FOREST_PMTILES_URL ?? 'https://pub-a4d0d7d33aad4567b65c357ab9677ce3.r2.dev/forests.pmtiles'
+          }
+        />
+      </Suspense>
 
       <div className="absolute bottom-4 left-4 z-30 sm:bottom-6 sm:left-6">
         <DataInfoButton />

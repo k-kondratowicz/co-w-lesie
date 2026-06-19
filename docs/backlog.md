@@ -83,9 +83,9 @@ moment the user remembers to open it.
   and gets web push when: entry ban appears, fire-hazard degree hits III, or new reports cluster
   nearby. This is the only feature that brings users back without an external trigger. Requires
   PWA service worker, push subscription, and a server-side check on each sync cycle.
-- **Shareable report links.** Deep-link URL (`/?report=<id>`) that opens the map centered on a
-  report's popup. One user sees a report, shares the link on a running/mushroom/hunting group
-  chat - viral reach without marketing. Cheapest acquisition channel for a niche app.
+- ~~**Shareable report links.**~~ Done: `/?report=<id>` deep-links fly the map to the report and
+  open the overlay. Share button on each report uses `navigator.share` (mobile) or clipboard copy.
+  URL syncs on every popup change so it's always shareable.
 
 ## Engagement loop (medium priority)
 Close the feedback loop so reporters stay motivated and planned trips get proactive alerts.

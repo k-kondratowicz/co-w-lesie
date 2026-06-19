@@ -1,4 +1,7 @@
-import type { PrismaClient, ReportType } from '@prisma/client';
+import { Prisma, type PrismaClient, type ReportType } from '@prisma/client';
+import { disputeThresholdSql } from '@/features/reports/lifecycle';
+
+const DISPUTE_CASE = Prisma.raw(disputeThresholdSql());
 
 // Thin $queryRaw wrapper (I/O): reports within a radius, newest-relevant only. Uses the
 // geog GIST index via ST_DWithin (metres). Distance is returned for callers that need it.
@@ -21,6 +24,8 @@ export async function queryReportsInRadius(
     FROM "Report"
     WHERE ST_DWithin("geog", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusMeters})
       AND "createdAt" > NOW() - (${windowDays} || ' days')::interval
+      AND ("expiresAt" IS NULL OR "expiresAt" > now())
+      AND ("flags" - "confirmations") < ${DISPUTE_CASE}
     ORDER BY "distanceMeters" ASC
   `;
 }

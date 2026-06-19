@@ -1,6 +1,6 @@
 import { ReportType } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
-import { ageOpacity, expiryFrom, flagDisputeThreshold, reportTtlMs } from './lifecycle';
+import { ageOpacity, disputeThresholdSql, expiryFrom, flagDisputeThreshold, isReportVisible, reportTtlMs } from './lifecycle';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -77,6 +77,36 @@ describe('flagDisputeThreshold', () => {
   it('defines a positive threshold for every report type', () => {
     for (const type of Object.values(ReportType)) {
       expect(flagDisputeThreshold(type)).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('isReportVisible', () => {
+  const base = { type: 'FIRE' as ReportType, expiresAt: null, flags: 0, confirmations: 0 };
+
+  it('returns true for a fresh report', () => {
+    expect(isReportVisible(base)).toBe(true);
+  });
+
+  it('returns false for an expired report', () => {
+    expect(isReportVisible({ ...base, expiresAt: new Date(Date.now() - 1000) })).toBe(false);
+  });
+
+  it('returns false when flags reach the dispute threshold', () => {
+    expect(isReportVisible({ ...base, flags: 4, confirmations: 0 })).toBe(false);
+  });
+
+  it('stays visible when confirmations offset flags', () => {
+    expect(isReportVisible({ ...base, flags: 5, confirmations: 2 })).toBe(true);
+  });
+});
+
+describe('disputeThresholdSql', () => {
+  it('generates a WHEN clause for every ReportType', () => {
+    const sql = disputeThresholdSql();
+
+    for (const type of Object.values(ReportType)) {
+      expect(sql).toContain(`WHEN '${type}' THEN ${flagDisputeThreshold(type)}`);
     }
   });
 });

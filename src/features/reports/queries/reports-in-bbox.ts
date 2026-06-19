@@ -1,7 +1,9 @@
-import type { PrismaClient, ReportType } from '@prisma/client';
-import { ageOpacity } from '@/features/reports/lifecycle';
+import { Prisma, type PrismaClient, type ReportType } from '@prisma/client';
+import { ageOpacity, disputeThresholdSql } from '@/features/reports/lifecycle';
 import type { ReportsGeoJSON } from '@/features/reports/types';
 import { reportImageUrl } from '@/shared/lib/r2';
+
+const DISPUTE_CASE = Prisma.raw(disputeThresholdSql());
 
 type ReportRow = {
   id: string;
@@ -30,14 +32,7 @@ export async function queryReportsInBbox(
     FROM "Report"
     WHERE ST_Intersects("geog", ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)::geography)
       AND ("expiresAt" IS NULL OR "expiresAt" > now())
-      AND ("flags" - "confirmations") < CASE "type"
-        WHEN 'FIRE' THEN 4
-        WHEN 'SHOTS' THEN 4
-        WHEN 'SHOTS_HEARD' THEN 4
-        WHEN 'HUNTING' THEN 4
-        WHEN 'AGGRESSIVE_ANIMAL' THEN 4
-        ELSE 2
-      END
+      AND ("flags" - "confirmations") < ${DISPUTE_CASE}
       AND (${since}::timestamptz IS NULL OR "createdAt" > ${since}::timestamptz)
     ORDER BY "createdAt" DESC
     LIMIT 2000

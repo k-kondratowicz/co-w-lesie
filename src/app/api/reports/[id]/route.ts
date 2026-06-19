@@ -1,4 +1,4 @@
-import { flagDisputeThreshold } from '@/features/reports/lifecycle';
+import { isReportVisible } from '@/features/reports/lifecycle';
 import { prisma } from '@/shared/lib/prisma';
 import { reportImageUrl } from '@/shared/lib/r2';
 
@@ -24,16 +24,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     },
   });
 
-  if (!report) {
+  if (!report || !isReportVisible(report)) {
     return Response.json({ error: 'Nie znaleziono zgłoszenia' }, { status: 404 });
-  }
-
-  if (report.expiresAt && report.expiresAt < new Date()) {
-    return Response.json({ error: 'Zgłoszenie wygasło' }, { status: 404 });
-  }
-
-  if (report.flags - report.confirmations >= flagDisputeThreshold(report.type)) {
-    return Response.json({ error: 'Zgłoszenie zostało usunięte' }, { status: 404 });
   }
 
   return Response.json({

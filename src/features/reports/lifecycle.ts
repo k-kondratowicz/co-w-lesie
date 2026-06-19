@@ -38,6 +38,31 @@ export function flagDisputeThreshold(type: ReportType): number {
   return DISPUTE_THRESHOLD[type];
 }
 
+export function isReportVisible(report: {
+  type: ReportType;
+  expiresAt: Date | null;
+  flags: number;
+  confirmations: number;
+}): boolean {
+  if (report.expiresAt && report.expiresAt < new Date()) {
+    return false;
+  }
+
+  if (report.flags - report.confirmations >= DISPUTE_THRESHOLD[report.type]) {
+    return false;
+  }
+
+  return true;
+}
+
+export function disputeThresholdSql(): string {
+  const whens = Object.entries(DISPUTE_THRESHOLD)
+    .map(([type, threshold]) => `WHEN '${type}' THEN ${threshold}`)
+    .join(' ');
+
+  return `CASE "type" ${whens} END`;
+}
+
 export function reportTtlMs(type: ReportType): number {
   return TTL_HOURS[type] * HOUR_MS;
 }

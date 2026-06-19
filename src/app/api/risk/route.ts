@@ -1,11 +1,11 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { queryReportsInRadius } from '@/features/reports/queries/reports-in-radius';
 import { DEFAULT_RADIUS_METERS, MAX_RADIUS_METERS, RECENCY_WINDOW_DAYS } from '@/features/risk/config';
 import { assessRisk } from '@/features/risk/engine';
 import { buildRiskMessage } from '@/features/risk/message';
 import { queryNearbyBans } from '@/shared/lib/geo/queries/nearby-bans';
 import { buildPointContext, queryPointContext } from '@/shared/lib/geo/queries/point-context';
-import { queryReportsInRadius } from '@/shared/lib/geo/queries/reports-in-radius';
 import { prisma } from '@/shared/lib/prisma';
 import { DAY_MS } from '@/shared/lib/time';
 

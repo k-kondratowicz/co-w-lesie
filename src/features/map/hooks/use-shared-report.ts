@@ -64,7 +64,9 @@ export function useSharedReport(
       url.searchParams.delete('report');
     }
 
-    window.history.replaceState(null, '', url);
+    if (url.href !== window.location.href) {
+      window.history.replaceState(null, '', url);
+    }
   }, [popup, initialReportId, isError]);
 
   const sharedReportActive = !!initialReportId && !dismissed;

@@ -20,6 +20,15 @@ output has real-world consequences. The caution rule (below) overrides convenien
 - zod 4 for all input validation. TanStack Form + TanStack Query. Zustand for client state.
 - MapLibre GL + PMTiles (NOT Mapbox). shadcn/ui (radix-nova, olive). Biome for lint/format.
 
+## Skills (installed under `.claude/skills/`, pinned in `skills-lock.json`)
+- `next-best-practices` / `vercel-react-best-practices`: invoke when writing, reviewing, or
+  refactoring Next.js route/RSC code or React components (boundaries, data fetching, caching,
+  bundle/perf). They give patterns; they do NOT replace the rule above - the bundled
+  `node_modules/next/dist/docs/` remains the source of truth for Next 16 API *signatures*.
+- Hooks under `.claude/hooks/` already enforce the mechanical rules (no `any`/`console.log`,
+  ASCII punctuation, Biome, a Next-16-docs reminder, and the safety rule on risk/safety code).
+  A hook reminder is a backstop, not the spec - this file is the spec.
+
 ## Language
 - Code, identifiers, commit messages, and THIS file: **English**.
 - All user-facing UI text and human-facing planning docs (PLAN.md, README): **Polish**.

@@ -5,10 +5,11 @@ name: Sync BDL
 # Requires repo variable APP_URL and repo secret CRON_SECRET.
 on:
   schedule:
-    # Fire-hazard zones: hourly 06:00–16:00 UTC. BDL publishes ~09:00 & ~13:00 Polish time
+    # Fire-hazard zones: hourly 06:00-16:00 UTC. BDL publishes ~09:00 & ~13:00 Polish time
     # (and more often in extreme conditions); the window covers both across CET/CEST + intra-day updates.
     - cron: '0 6-16 * * *'
     - cron: '30 3 * * *' # entry bans, daily 03:30 (UTC)
+    - cron: '15 0,6,12,18 * * *' # KMZB police incidents, 4x/day - rolling 7-day window, off the BDL hours
   workflow_dispatch: {} # manual "run now" → syncs everything
 
 jobs:
@@ -16,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger BDL sync
+        if: github.event.schedule != '15 0,6,12,18 * * *'
         run: |
           dataset=fire
           case "${{ github.event.schedule }}" in
@@ -23,4 +25,10 @@ jobs:
             "") dataset=all ;;
           esac
           curl -fsS "${{ vars.APP_URL }}/api/cron/sync-bdl?dataset=${dataset}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+      - name: Trigger KMZB sync
+        if: github.event.schedule == '15 0,6,12,18 * * *' || github.event_name == 'workflow_dispatch'
+        run: |
+          curl -fsS "${{ vars.APP_URL }}/api/cron/sync-kmzb" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

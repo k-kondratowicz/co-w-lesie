@@ -59,7 +59,7 @@ export function KmzbDetailsOverlay({ info, onClose }: { info: KmzbPopupInfo | nu
                 W przypadku pilnej interwencji należy zgłosić dane zdarzenie korzystając z numeru alarmowego (tel. 112).
               </div>
 
-              <p className="text-muted-foreground text-xs">Źródło: KMZB (Policja).</p>
+              <p className="text-muted-foreground text-xs">Źródło: KMZB (Policja) via geoportal.gov.pl.</p>
             </div>
           </ResponsiveDialogScrollArea>
         ) : null}

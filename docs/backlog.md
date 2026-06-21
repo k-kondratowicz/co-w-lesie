@@ -75,13 +75,19 @@ Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
   distinct layer, informational (advisory, not a RED trigger).
 - ~~**KMZB sync (Krajowa Mapa Zagrożeń Bezpieczeństwa).**~~ Done (display layer): background cron
   (`/api/cron/sync-kmzb`, daily) into `kmzb_report`, shown as a distinct blue map layer (not mixed
-  with user reports), filtered to within 10 m of `forest_area` on import. The unofficial iMapLite
-  API (EPSG:2180, clusters above ~4k features) is tiled + subdivided and zod-validated in
-  `src/shared/lib/kmzb/`; PostGIS reprojects to 4326 via `ST_Transform` on insert. An empty fetch
-  refuses to wipe the table (missing != safe). The two danger-relevant types (kłusownictwo,
-  wypalanie traw) drive a cautionary advisory in the safety assistant (call police), deliberately
-  NOT scored. **Remaining:** feed police-verified incidents into `assessRisk` with higher trust
-  weight than anonymous tips; register the daily cron in the Vercel config.
+  with user reports), filtered to within 10 m of `forest_area` on import. **Data source:**
+  KMZB is a presentation layer on top of Geoportal's iMapLite API
+  (`mapy.geoportal.gov.pl/iMapLite/`); we fetch from Geoportal directly, not from the KMZB portal
+  (the portal's automation ban in §8.2 of KMZB regulations governs the portal wrapper, not the
+  underlying API). Geoportal data is not copyright-protected (public government data, Polish
+  copyright law art. 4.2) and may be republished with attribution (source + download date stored
+  per row). The API uses EPSG:2180, clusters above ~4k features - tiled + subdivided;
+  zod-validated in `src/shared/lib/kmzb/`; PostGIS reprojects to 4326 via `ST_Transform` on
+  insert. An empty fetch refuses to wipe the table (missing != safe). The two danger-relevant
+  types (kłusownictwo, wypalanie traw) drive a cautionary advisory in the safety assistant (call
+  police), deliberately NOT scored. **Remaining:** feed police-verified incidents into
+  `assessRisk` with higher trust weight than anonymous tips; register the daily cron in the
+  Vercel config.
 
 - **Tick risk layer (kleszcze).** Two potential sources of tick occurrence data in Poland:
   1. **ciemnastronawiosny.pl** - JSON API, no auth needed (token appears static). Endpoint:

@@ -91,7 +91,10 @@ export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
         <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-amber-800 text-sm dark:bg-amber-950 dark:text-amber-200">
           <p className="font-medium">Zgłoszenia policyjne w okolicy (ostatni tydzień)</p>
           <p>W pobliżu odnotowano: {kmzbItems.join(', ')}. Zachowaj ostrożność.</p>
-          <p>Jeśli zauważysz oznaki kłusownictwa lub wypalania traw, zgłoś to policji (tel. 112). Źródło: KMZB (Policja).</p>
+          <p>
+            Jeśli zauważysz oznaki kłusownictwa lub wypalania traw, zgłoś to policji (tel. 112). Źródło: KMZB (Policja) via
+            geoportal.gov.pl.
+          </p>
         </div>
       ) : null}
 

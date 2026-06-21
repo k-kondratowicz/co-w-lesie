@@ -20,7 +20,7 @@ export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
   const shareReport = useShareReport();
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pb-4">
       {reports.map((report) => {
         const voted = votedKind(report.id);
 

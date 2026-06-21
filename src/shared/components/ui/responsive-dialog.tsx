@@ -101,10 +101,10 @@ export function ResponsiveDialogFooter({ className, ...props }: React.ComponentP
   );
 }
 
-export function ResponsiveDialogTitle(props: React.ComponentProps<typeof DialogTitle>) {
+export function ResponsiveDialogTitle({ className, ...props }: React.ComponentProps<typeof DialogTitle>) {
   const Title = useIsDesktopContext() ? DialogTitle : DrawerTitle;
 
-  return <Title {...props} />;
+  return <Title className={cn('pr-4', className)} {...props} />;
 }
 
 export function ResponsiveDialogDescription(props: React.ComponentProps<typeof DialogDescription>) {

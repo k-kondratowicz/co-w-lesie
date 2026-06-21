@@ -1,6 +1,6 @@
 import type { ReportType } from '@prisma/client';
+import { HOUR_MS } from '@/shared/lib/date/time';
 import { clamp01 } from '@/shared/lib/math';
-import { HOUR_MS } from '@/shared/lib/time';
 
 // How long a report stays relevant, by type (hours). Time-critical events fade fast; physical,
 // persistent situations linger. A confirmation pushes the expiry out again (see the vote route).

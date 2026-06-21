@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { isAllowedImageType, isReportImageKey, reportImageKey, reportImageUrl } from './r2';
+import { isAllowedImageType, isReportImageKey, reportImageKey, reportImageUrl } from './image';
 
 describe('isAllowedImageType', () => {
   it('accepts jpeg/png/webp and rejects anything else', () => {

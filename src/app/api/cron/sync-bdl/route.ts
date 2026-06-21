@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { type SyncResult, syncEntryBans, syncFireHazard } from '@/shared/lib/bdl/sync';
 import { prisma } from '@/shared/lib/prisma';
+import { isAuthorizedCron } from '@/shared/lib/security/cron-auth';
 
 // Background BDL sync, triggered by a scheduler (e.g. Vercel Cron). Never hit on a user
 // request. Forest areas are a one-off seed (npm run seed:forest), so they are not synced
@@ -18,16 +19,8 @@ const querySchema = z.object({
   dataset: z.enum(['all', 'fire', 'bans']).default('all'),
 });
 
-function isAuthorized(request: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return false; // fail closed if misconfigured
-  }
-  return request.headers.get('authorization') === `Bearer ${secret}`;
-}
-
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!isAuthorizedCron(request)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

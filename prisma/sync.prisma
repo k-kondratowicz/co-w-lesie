@@ -1,6 +1,7 @@
-/// Records when each BDL dataset was last synced, so the app can show honest data freshness
-/// (bans/forest have no inherent timestamp of their own).
+/// Records when each external dataset was last synced, so the app can show honest data freshness
+/// (most sources have no inherent timestamp of their own). Named for its first use (BDL) but now
+/// generic across background syncs.
 model BdlSync {
-  dataset  String   @id // 'fire' | 'bans' | 'forest'
+  dataset  String   @id // 'fire' | 'bans' | 'forest' | 'kmzb'
   syncedAt DateTime @default(now()) @updatedAt
 }

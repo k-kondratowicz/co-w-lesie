@@ -1,5 +1,6 @@
 import { ReportType } from '@prisma/client';
 import { z } from 'zod';
+import { isReportImageKey } from '@/features/reports/image';
 import { isWithinBbox, POLAND_BBOX } from '@/shared/lib/geo/bbox';
 
 export const MAX_DESCRIPTION_LENGTH = 1000;
@@ -22,10 +23,7 @@ export const createReportSchema = z.object({
     .max(MAX_DESCRIPTION_LENGTH, `Opis może mieć maksymalnie ${MAX_DESCRIPTION_LENGTH} znaków`)
     .optional(),
   // R2 object key of an already-uploaded photo, in our reports/ namespace (always re-encoded to webp).
-  imageKey: z
-    .string()
-    .regex(/^reports\/[a-f0-9-]+\.webp$/, 'Nieprawidłowy klucz zdjęcia')
-    .optional(),
+  imageKey: z.string().refine(isReportImageKey, 'Nieprawidłowy klucz zdjęcia').optional(),
 });
 
 export type CreateReportInput = z.infer<typeof createReportSchema>;

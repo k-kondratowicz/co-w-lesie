@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { ApiError, api } from '@/shared/lib/api/client';
-import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/turnstile-client';
+import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/security/turnstile-client';
 import { type QueuedReport, useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 
 async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | 'retry'> {

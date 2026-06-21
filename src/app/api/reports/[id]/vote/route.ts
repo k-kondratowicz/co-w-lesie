@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { expiryFrom } from '@/features/reports/lifecycle';
-import { clientIp } from '@/shared/lib/client-ip';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import { prisma } from '@/shared/lib/prisma';
-import { checkRateLimit } from '@/shared/lib/rate-limit';
+import { clientIp } from '@/shared/lib/security/client-ip';
+import { checkRateLimit } from '@/shared/lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -7,8 +7,8 @@ import { useReportVote } from '@/features/reports/hooks/use-report-vote';
 import { useShareReport } from '@/features/reports/hooks/use-share-report';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
 import { Button } from '@/shared/components/ui/button';
-import { formatDateTime } from '@/shared/lib/format-date';
-import { formatRelativeTime } from '@/shared/lib/format-relative-time';
+import { formatDateTime } from '@/shared/lib/date/format-date';
+import { formatRelativeTime } from '@/shared/lib/date/format-relative-time';
 import { plPlural } from '@/shared/lib/pl-plural';
 
 function confirmationsLabel(count: number): string {

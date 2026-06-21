@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DAY_MS } from '@/shared/lib/time';
+import { DAY_MS } from '@/shared/lib/date/time';
 
 type ReportFilterState = {
   // How far back to show reports, in days. null = all (still bounded by per-type expiry).

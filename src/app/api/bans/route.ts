@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { bboxParamSchema } from '@/shared/lib/geo/bbox';
 import { prisma } from '@/shared/lib/prisma';
 
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
@@ -7,16 +8,10 @@ export const dynamic = 'force-dynamic'; // reads live data; never cache.
 
 // GET /api/bans?bbox=minLng,minLat,maxLng,maxLat
 // Active forest-entry-ban polygons in the viewport, as a GeoJSON FeatureCollection.
-const bboxSchema = z
-  .string()
-  .transform((value) => value.split(',').map(Number))
-  .pipe(z.tuple([z.number(), z.number(), z.number(), z.number()]))
-  .refine(([minLng, minLat, maxLng, maxLat]) => minLng < maxLng && minLat < maxLat, 'Nieprawidłowy bbox');
-
 type BanRow = { id: string; reason: string | null; until: Date | null; geojson: string };
 
 export async function GET(request: NextRequest) {
-  const parsed = bboxSchema.safeParse(request.nextUrl.searchParams.get('bbox') ?? '');
+  const parsed = bboxParamSchema.safeParse(request.nextUrl.searchParams.get('bbox') ?? '');
   if (!parsed.success) {
     return Response.json({ error: 'Nieprawidłowy bbox', issues: z.flattenError(parsed.error) }, { status: 400 });
   }

@@ -1,6 +1,16 @@
 // Canonical bounding boxes (EPSG:4326), ordered [minLng, minLat, maxLng, maxLat].
 
+import { z } from 'zod';
+
 export type Bbox = [minLng: number, minLat: number, maxLng: number, maxLat: number];
+
+// Parses a "minLng,minLat,maxLng,maxLat" viewport query param into a validated tuple. Shared by
+// every bbox-driven route (/api/reports, /api/bans, /api/kmzb) so they agree on what's valid.
+export const bboxParamSchema = z
+  .string()
+  .transform((value) => value.split(',').map(Number))
+  .pipe(z.tuple([z.number(), z.number(), z.number(), z.number()]))
+  .refine(([minLng, minLat, maxLng, maxLat]) => minLng < maxLng && minLat < maxLat, 'Nieprawidłowy bbox');
 
 export const POLAND_BBOX: Bbox = [14.07, 49.0, 24.16, 54.9];
 

@@ -2,11 +2,12 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { Map as MapGL, type MapRef } from '@vis.gl/react-maplibre';
+import { Map as MapGL, type MapLayerMouseEvent, type MapRef } from '@vis.gl/react-maplibre';
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BANS_MIN_ZOOM, MapLayers } from '@/features/map/components/map-layers';
+import { KmzbDetailsOverlay, type KmzbPopupInfo } from '@/features/map/components/kmzb-details-overlay';
+import { BANS_MIN_ZOOM, KMZB_MIN_ZOOM, MapLayers } from '@/features/map/components/map-layers';
 import { MapPickBanner } from '@/features/map/components/map-pick-banner';
 import { useLocationPrompt } from '@/features/map/hooks/use-location-prompt';
 import { useMapInteraction } from '@/features/map/hooks/use-map-interaction';
@@ -42,6 +43,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const reportsSince = useMemo(() => reportsSinceIso(sinceDays), [sinceDays]);
   const reports = useViewportFeatures('reports', 'reports', debouncedBbox, true, reportsSince);
   const bans = useViewportFeatures('bans', 'bans', debouncedBbox, zoom >= BANS_MIN_ZOOM);
+  const kmzb = useViewportFeatures('kmzb', 'kmzb', debouncedBbox, zoom >= KMZB_MIN_ZOOM);
+  const [kmzbPopup, setKmzbPopup] = useState<KmzbPopupInfo | null>(null);
   const riskOverlay = useRiskOverlayStore((state) => state.overlay);
   const isPicking = useMapPickStore((state) => state.isPicking);
   const pickConstraint = useMapPickStore((state) => state.constraint);
@@ -78,6 +81,27 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
     setMapView({ longitude: center.lng, latitude: center.lat, zoom: nextZoom });
   };
 
+  // KMZB points open their own read-only details overlay (police data, distinct from the
+  // user-report overlay). Everything else falls through to the report/pick interaction handler.
+  const handleMapClick = (event: MapLayerMouseEvent) => {
+    const kmzbFeature = !isPicking ? event.features?.find((feature) => feature.layer.id === 'kmzb-point') : undefined;
+    if (kmzbFeature) {
+      const [lng, lat] = (kmzbFeature.geometry as GeoJSON.Point).coordinates as [number, number];
+      const props = kmzbFeature.properties ?? {};
+      setKmzbPopup({
+        lng,
+        lat,
+        type: String(props.type ?? ''),
+        status: String(props.status ?? ''),
+        eventAt: props.eventAt ? String(props.eventAt) : null,
+        createdAt: String(props.createdAt ?? ''),
+      });
+      return;
+    }
+
+    handleClick(event);
+  };
+
   return (
     <>
       <MapGL
@@ -87,7 +111,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
         maxZoom={16}
         mapStyle={MAP_STYLE}
         cursor={isPicking ? 'crosshair' : 'auto'}
-        interactiveLayerIds={REPORT_LAYERS}
+        interactiveLayerIds={[...REPORT_LAYERS, 'kmzb-point']}
         attributionControl={{ compact: false }}
         style={{ width: '100%', height: '100svh' }}
         onLoad={(event) => {
@@ -95,12 +119,13 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
           setLoaded(true);
         }}
         onMoveEnd={(event) => syncViewport(event.target)}
-        onClick={handleClick}
+        onClick={handleMapClick}
       >
         <MapLayers
           pmtilesUrl={pmtilesUrl}
           reports={reports}
           bans={bans}
+          kmzb={kmzb}
           riskOverlay={riskOverlay}
           pickConstraint={pickConstraint}
           userPosition={userPosition}
@@ -111,6 +136,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
       {loaded ? null : <MapLoading />}
 
       <ReportDetailsOverlay info={popup} onClose={closePopup} />
+
+      <KmzbDetailsOverlay info={kmzbPopup} onClose={() => setKmzbPopup(null)} />
 
       <MapPickBanner />
 

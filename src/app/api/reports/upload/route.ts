@@ -1,7 +1,8 @@
 import sharp from 'sharp';
-import { clientIp } from '@/shared/lib/client-ip';
-import { isAllowedImageType, isR2Configured, putReportImage, reportImageKey } from '@/shared/lib/r2';
-import { checkRateLimit } from '@/shared/lib/rate-limit';
+import { isAllowedImageType, reportImageKey } from '@/features/reports/image';
+import { isR2Configured, putObject } from '@/shared/lib/r2';
+import { clientIp } from '@/shared/lib/security/client-ip';
+import { checkRateLimit } from '@/shared/lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,7 +12,7 @@ const UPLOAD_WINDOW_MS = 60_000; // per minute
 const MAX_UPLOAD_BYTES = 4_000_000; // raw bytes accepted before re-encoding (Vercel caps ~4.5 MB)
 const MAX_DIMENSION = 1600;
 
-// POST /api/reports/upload — accept one image, re-encode it to WebP (which strips EXIF/GPS and
+// POST /api/reports/upload - accept one image, re-encode it to WebP (which strips EXIF/GPS and
 // caps dimensions server-side, so this can't be bypassed by a crafted client), store it on R2.
 export async function POST(request: Request) {
   if (!isR2Configured()) {
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
   const key = reportImageKey();
 
   try {
-    await putReportImage(key, webp, 'image/webp');
+    await putObject(key, webp, 'image/webp');
   } catch (error) {
     console.error('[POST /api/reports/upload] R2 upload failed', error);
 

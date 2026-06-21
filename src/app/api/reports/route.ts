@@ -3,11 +3,12 @@ import { z } from 'zod';
 import { expiryFrom } from '@/features/reports/lifecycle';
 import { queryReportsInBbox } from '@/features/reports/queries/reports-in-bbox';
 import { createReportSchema } from '@/features/reports/schemas/create-report.schema';
-import { clientIp } from '@/shared/lib/client-ip';
+import { bboxParamSchema } from '@/shared/lib/geo/bbox';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
 import { prisma } from '@/shared/lib/prisma';
-import { checkRateLimit } from '@/shared/lib/rate-limit';
-import { verifyTurnstile } from '@/shared/lib/turnstile';
+import { clientIp } from '@/shared/lib/security/client-ip';
+import { checkRateLimit } from '@/shared/lib/security/rate-limit';
+import { verifyTurnstile } from '@/shared/lib/security/turnstile';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -64,14 +65,8 @@ export async function POST(request: Request) {
   }
 }
 
-const bboxSchema = z
-  .string()
-  .transform((value) => value.split(',').map(Number))
-  .pipe(z.tuple([z.number(), z.number(), z.number(), z.number()]))
-  .refine(([minLng, minLat, maxLng, maxLat]) => minLng < maxLng && minLat < maxLat, 'Nieprawidłowy bbox');
-
 const querySchema = z.object({
-  bbox: bboxSchema,
+  bbox: bboxParamSchema,
   since: z.iso.datetime({ offset: true }).optional(),
 });
 

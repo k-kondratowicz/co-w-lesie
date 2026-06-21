@@ -10,11 +10,13 @@ const FOREST_SOURCE_LAYER = 'forests'; // matches tippecanoe `-l forests`
 const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 const RISK_COLORS = { GREEN: '#16a34a', YELLOW: '#f59e0b', RED: '#dc2626' } as const;
 export const BANS_MIN_ZOOM = 9; // only fetch/draw ban polygons once zoomed into a region
+export const KMZB_MIN_ZOOM = 9; // police incidents are dense nationwide - draw once zoomed in
 
 interface MapLayersProps {
   pmtilesUrl: string;
   reports: GeoJSON.FeatureCollection | null;
   bans: GeoJSON.FeatureCollection | null;
+  kmzb: GeoJSON.FeatureCollection | null;
   riskOverlay: RiskOverlay | null;
   pickConstraint: PickConstraint | null;
   userPosition: GeolocationPosition['coords'] | null;
@@ -26,6 +28,7 @@ export function MapLayers({
   pmtilesUrl,
   reports,
   bans,
+  kmzb,
   riskOverlay,
   pickConstraint,
   userPosition,
@@ -94,6 +97,24 @@ export function MapLayers({
       <Source id="risk-circle" type="geojson" data={circleData}>
         <Layer id="risk-circle-fill" type="fill" paint={{ 'fill-color': circleColor, 'fill-opacity': 0.15 }} />
         <Layer id="risk-circle-line" type="line" paint={{ 'line-color': circleColor, 'line-width': 2 }} />
+      </Source>
+
+      {/* KMZB police incidents near forests (live GeoJSON from /api/kmzb). A distinct layer from
+          user reports - police-sourced - so it reads as a different, higher-trust signal. */}
+      <Source id="kmzb" type="geojson" data={kmzb ?? EMPTY_FC}>
+        <Layer
+          id="kmzb-point"
+          type="circle"
+          minzoom={KMZB_MIN_ZOOM}
+          paint={{
+            'circle-color': '#4338ca',
+            'circle-radius': 5,
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+            'circle-opacity': 0.9,
+            'circle-stroke-opacity': 0.9,
+          }}
+        />
       </Source>
 
       {/* Reports: clustered GeoJSON from /api/reports. */}

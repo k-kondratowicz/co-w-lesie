@@ -1,6 +1,6 @@
 import { fireDegreeRoman } from '@/features/risk/format';
 import type { RiskAssessment } from '@/features/safety/types';
-import { formatDate, formatDateTime } from '@/shared/lib/format-date';
+import { formatDate, formatDateTime } from '@/shared/lib/date/format-date';
 import { formatDistance } from '@/shared/lib/geo/format-distance';
 
 const LEVEL_STYLES = {
@@ -38,12 +38,22 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+const KMZB_ADVISORY_LABELS = { poaching: 'kłusownictwo', grassBurning: 'wypalanie traw' } as const;
+
+function kmzbAdvisoryItems(advisory: RiskAssessment['kmzbAdvisory']): string[] {
+  return (Object.keys(KMZB_ADVISORY_LABELS) as (keyof typeof KMZB_ADVISORY_LABELS)[])
+    .filter((key) => advisory[key] > 0)
+    .map((key) => `${KMZB_ADVISORY_LABELS[key]} (${advisory[key]})`);
+}
+
 export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
-  const { level, message, signals, fireAsOf, bansAsOf, ban, nearbyBans } = assessment;
+  const { level, message, signals, fireAsOf, bansAsOf, kmzbAsOf, ban, nearbyBans, kmzbAdvisory } = assessment;
   const style = LEVEL_STYLES[level];
   const fireUpdatedAt = fireAsOf ? formatDateTime(fireAsOf) : null;
   const bansUpdatedAt = bansAsOf ? formatDateTime(bansAsOf) : null;
+  const kmzbUpdatedAt = kmzbAsOf ? formatDateTime(kmzbAsOf) : null;
   const banUntil = ban?.until ? formatDate(ban.until) : null;
+  const kmzbItems = kmzbAdvisoryItems(kmzbAdvisory);
 
   return (
     <div className="space-y-4">
@@ -77,10 +87,22 @@ export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
         </div>
       ) : null}
 
+      {kmzbItems.length > 0 ? (
+        <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-amber-800 text-sm dark:bg-amber-950 dark:text-amber-200">
+          <p className="font-medium">Zgłoszenia policyjne w okolicy (ostatni tydzień)</p>
+          <p>W pobliżu odnotowano: {kmzbItems.join(', ')}. Zachowaj ostrożność.</p>
+          <p>
+            Jeśli zauważysz oznaki kłusownictwa lub wypalania traw, zgłoś to policji (tel. 112). Źródło: KMZB (Policja) via
+            geoportal.gov.pl.
+          </p>
+        </div>
+      ) : null}
+
       <p className="text-muted-foreground text-xs">
         {fireUpdatedAt ? `Zagrożenie pożarowe - dane z: ${fireUpdatedAt}. ` : ''}
         {bansUpdatedAt ? `Zakazy wstępu - dane z: ${bansUpdatedAt}. ` : ''}
-        {!fireUpdatedAt && !bansUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
+        {kmzbUpdatedAt ? `Zgłoszenia policyjne (KMZB) - dane z: ${kmzbUpdatedAt}. ` : ''}
+        {!fireUpdatedAt && !bansUpdatedAt && !kmzbUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
         To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.
       </p>
     </div>

@@ -9,6 +9,7 @@
     "lint": "biome check",
     "format": "biome format --write",
     "sync:bdl": "tsx scripts/sync-bdl.ts",
+    "sync:kmzb": "tsx scripts/sync-kmzb.ts",
     "seed:forest": "tsx scripts/seed-forest.ts",
     "dissolve:forest": "tsx scripts/dissolve-forest.ts",
     "export:forest": "tsx scripts/export-forest-geojson.ts",

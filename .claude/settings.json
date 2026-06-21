@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-edit-nextjs.sh",
+            "timeout": 5,
+            "statusMessage": "Checking Next.js docs reminder..."
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-edit-safety.sh",
+            "timeout": 5,
+            "statusMessage": "Checking safety rule..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-edit-checks.sh",
+            "timeout": 30,
+            "statusMessage": "Running post-edit checks..."
+          }
+        ]
+      }
+    ]
+  }
+}

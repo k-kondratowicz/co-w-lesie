@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { recordSync } from '@/shared/lib/sync-freshness';
 import { fetchAllFeatures, fetchFeaturePages } from './client';
 import { ENTRY_BAN_LAYER, FIRE_HAZARD_LAYER, FOREST_LAYERS } from './config';
 import { banReason, fireKodToDegree, fireUpdatedAt, parseBdlDateTime } from './mappers';
@@ -13,22 +14,10 @@ export type SyncResult = { fetched: number; inserted: number; skipped: number };
 
 const TX_OPTIONS = { timeout: 120_000, maxWait: 10_000 } as const;
 
-export type BdlDataset = 'fire' | 'bans' | 'forest';
-
 // Coerce a GeoJSON geometry (possibly Polygon) into geometry(MultiPolygon, 4326).
 function geomFromGeoJson(geometry: unknown): Prisma.Sql {
   const json = JSON.stringify(geometry);
   return Prisma.sql`ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON(${json}), 4326))`;
-}
-
-// Records when a dataset was last synced, so the app can show honest data freshness.
-function recordSync(prisma: PrismaClient, dataset: BdlDataset) {
-  const now = new Date();
-  return prisma.bdlSync.upsert({
-    where: { dataset },
-    create: { dataset, syncedAt: now },
-    update: { syncedAt: now },
-  });
 }
 
 export async function syncFireHazard(prisma: PrismaClient): Promise<SyncResult> {

@@ -4,10 +4,11 @@ import { queryReportsInRadius } from '@/features/reports/queries/reports-in-radi
 import { DEFAULT_RADIUS_METERS, MAX_RADIUS_METERS, RECENCY_WINDOW_DAYS } from '@/features/risk/config';
 import { assessRisk } from '@/features/risk/engine';
 import { buildRiskMessage } from '@/features/risk/message';
+import { DAY_MS } from '@/shared/lib/date/time';
+import { queryKmzbAdvisory } from '@/shared/lib/geo/queries/kmzb-advisory';
 import { queryNearbyBans } from '@/shared/lib/geo/queries/nearby-bans';
 import { buildPointContext, queryPointContext } from '@/shared/lib/geo/queries/point-context';
 import { prisma } from '@/shared/lib/prisma';
-import { DAY_MS } from '@/shared/lib/time';
 
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
 export const dynamic = 'force-dynamic'; // reads live data; never cache.
@@ -33,11 +34,13 @@ export async function GET(request: NextRequest) {
   const { lat, lng, radius } = parsed.data;
 
   try {
-    const [nearbyReports, contextRow, nearbyBans, banSync] = await Promise.all([
+    const [nearbyReports, contextRow, nearbyBans, banSync, kmzbAdvisory, kmzbSync] = await Promise.all([
       queryReportsInRadius(prisma, lng, lat, radius, RECENCY_WINDOW_DAYS),
       queryPointContext(prisma, lng, lat),
       queryNearbyBans(prisma, lng, lat, radius),
       prisma.bdlSync.findUnique({ where: { dataset: 'bans' } }),
+      queryKmzbAdvisory(prisma, lng, lat, radius),
+      prisma.bdlSync.findUnique({ where: { dataset: 'kmzb' } }),
     ]);
     const context = buildPointContext(contextRow, lng, lat);
 
@@ -62,6 +65,7 @@ export async function GET(request: NextRequest) {
     // surface each separately instead of collapsing to the oldest (which hid fresh fire data).
     const fireAsOf = contextRow.fire_updated_at ? contextRow.fire_updated_at.toISOString() : null;
     const bansAsOf = banSync?.syncedAt ? banSync.syncedAt.toISOString() : null;
+    const kmzbAsOf = kmzbSync?.syncedAt ? kmzbSync.syncedAt.toISOString() : null;
 
     // Why the area is closed (shown in the assistant), when there's an active ban.
     const ban =
@@ -69,7 +73,7 @@ export async function GET(request: NextRequest) {
         ? { reason: context.entryBan.reason ?? null, until: context.entryBan.until ?? null }
         : null;
 
-    return Response.json({ ...result, message, fireAsOf, bansAsOf, ban, nearbyBans });
+    return Response.json({ ...result, message, fireAsOf, bansAsOf, kmzbAsOf, ban, nearbyBans, kmzbAdvisory });
   } catch (error) {
     console.error('[GET /api/risk] assessment failed', error);
     return Response.json({ error: 'Nie udało się ocenić ryzyka' }, { status: 500 });

@@ -1,6 +1,6 @@
+import { reportImageUrl } from '@/features/reports/image';
 import { isReportVisible } from '@/features/reports/lifecycle';
 import { prisma } from '@/shared/lib/prisma';
-import { reportImageUrl } from '@/shared/lib/r2';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

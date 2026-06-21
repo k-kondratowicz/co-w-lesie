@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Spinner } from '@/shared/components/ui';
 import { useOnlineStatus } from '@/shared/hooks/use-online-status';
-import { loadTurnstileScript, TURNSTILE_SITE_KEY } from '@/shared/lib/turnstile-client';
+import { loadTurnstileScript, TURNSTILE_SITE_KEY } from '@/shared/lib/security/turnstile-client';
 import { cn } from '@/shared/lib/utils';
 import { useTurnstileStore } from '@/shared/store/use-turnstile-store';
 

@@ -1,0 +1,16 @@
+// Police "Krajowa Mapa Zagrozen Bezpieczenstwa" incidents near forests, populated only by the
+// background KMZB sync job and read via $queryRaw. Declared here (with @@ignore) solely so
+// `prisma migrate dev` does not treat the raw-SQL-managed table as drift. Do NOT use via Prisma CRUD.
+
+model kmzb_report {
+  id         String                               @id
+  type       String
+  status     String
+  teryt      String?
+  event_at   DateTime?                            @db.Timestamptz(6)
+  created_at DateTime                             @db.Timestamptz(6)
+  geom       Unsupported("geometry(Point, 4326)")
+
+  @@index([geom], type: Gist, map: "kmzb_report_geom_idx")
+  @@ignore
+}

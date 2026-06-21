@@ -2,6 +2,15 @@
 
 Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
 
+> **Survey signal (2026-06, ~74 respondents).** A user survey reshuffled priorities. Top
+> findings: (1) **hunting locations** are the single most-requested piece of info - not yet a
+> first-class feature; (2) **push for a self-chosen area** (not whole voivodeship) is the
+> retention hook; (3) **offline / no cell coverage** is the top friction blocker, not a
+> nice-to-have; (4) most users currently check *nothing* before going; (5) many didn't report
+> incidents only because they "didn't know where to". Secondary asks: rabies-vaccine drops,
+> ticks, windthrow/weather warnings, legal overnight/bushcraft zones. Items below are annotated
+> `[survey]` where this validates or re-ranks them.
+
 ## Report photos
 - **Verify `imageKey` references a real object** on report create (a HEAD to R2). Today a
   missing/foreign valid-format key just renders as a broken image - low impact, so deferred.
@@ -51,14 +60,34 @@ Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
   discovered by a user. Pairs with the stale-data banner above.
 
 ## Data sources
-- **KMZB sync (Krajowa Mapa Zagrożeń Bezpieczeństwa).** Background cron like BDL sync, separate
-  table, displayed as a distinct map layer (not mixed with user reports). Relevant types:
-  klusownictwo, nielegalna wycinka, niszczenie zieleni, wypalanie traw, zdarzenia drogowe ze
-  zwierzetami, quady w lesie, dzikie wysypiska. API is unofficial iMapLite (undocumented,
-  EPSG:2180, returns clusters above ~4k features - needs bbox tiling). Filter to forest_area on
-  import. Police-verified statuses are higher trust than anonymous tips. Risk: API may change or
-  get rate-limited without notice - sync failure must surface as UNKNOWN, not "safe".
-  Exploration script: `scripts/fetch-kmzb.ts`.
+- **Hunting locations (polowania zbiorowe).** `[survey: #1 most-requested signal]` By a wide
+  margin the most-wanted piece of info, with strong emotional pull ("I never want to run into a
+  hunter who mistakes me or my dog for a boar"). Collective-hunt schedules (date + area/circuit)
+  are published by gminy and RDLP, but there's no single national feed - sources are scattered
+  PDFs/HTML per gmina/nadlesnictwo, so expect a per-source scraper or a structured manual/admin
+  entry path to start. Treat like BDL/KMZB: separate table with a validity window (hunt date),
+  distinct map layer, feeds `assessRisk` (active hunt nearby today raises the level). Safety rule
+  still applies: absence of a listed hunt is not proof none is happening - never imply "no hunts
+  = safe", surface coverage limits. Start with one region's published schedule to prove the flow.
+- **Rabies-vaccine drops (szczepionki dla dzikich zwierzat).** `[survey: frequent ask]` LP/
+  veterinary authorities publish aerial vaccine-drop campaigns (area + date window, "don't touch
+  baits, keep dogs leashed"). Cheap, distinctive layer nobody surfaces well. Synced/manual table,
+  distinct layer, informational (advisory, not a RED trigger).
+- ~~**KMZB sync (Krajowa Mapa Zagrożeń Bezpieczeństwa).**~~ Done (display layer): background cron
+  (`/api/cron/sync-kmzb`, daily) into `kmzb_report`, shown as a distinct blue map layer (not mixed
+  with user reports), filtered to within 10 m of `forest_area` on import. **Data source:**
+  KMZB is a presentation layer on top of Geoportal's iMapLite API
+  (`mapy.geoportal.gov.pl/iMapLite/`); we fetch from Geoportal directly, not from the KMZB portal
+  (the portal's automation ban in §8.2 of KMZB regulations governs the portal wrapper, not the
+  underlying API). Geoportal data is not copyright-protected (public government data, Polish
+  copyright law art. 4.2) and may be republished with attribution (source + download date stored
+  per row). The API uses EPSG:2180, clusters above ~4k features - tiled + subdivided;
+  zod-validated in `src/shared/lib/kmzb/`; PostGIS reprojects to 4326 via `ST_Transform` on
+  insert. An empty fetch refuses to wipe the table (missing != safe). The two danger-relevant
+  types (kłusownictwo, wypalanie traw) drive a cautionary advisory in the safety assistant (call
+  police), deliberately NOT scored. **Remaining:** feed police-verified incidents into
+  `assessRisk` with higher trust weight than anonymous tips; register the daily cron in the
+  Vercel config.
 
 - **Tick risk layer (kleszcze).** Two potential sources of tick occurrence data in Poland:
   1. **ciemnastronawiosny.pl** - JSON API, no auth needed (token appears static). Endpoint:
@@ -79,10 +108,13 @@ These turn the app from reactive ("check before going") to proactive ("it tells 
 something changes") and drive organic acquisition. Without them the app lives only in the
 moment the user remembers to open it.
 
-- **Saved areas + push notifications.** User bookmarks an area (e.g. "Puszcza Niepolomicka")
-  and gets web push when: entry ban appears, fire-hazard degree hits III, or new reports cluster
-  nearby. This is the only feature that brings users back without an external trigger. Requires
-  PWA service worker, push subscription, and a server-side check on each sync cycle.
+- **Saved areas + push notifications.** `[survey: top retention ask]` User bookmarks an area
+  (e.g. "Puszcza Niepolomicka") and gets web push when: entry ban appears, fire-hazard degree
+  hits III, or new reports cluster nearby. This is the only feature that brings users back
+  without an external trigger. Requires PWA service worker, push subscription, and a server-side
+  check on each sync cycle. **Survey constraint:** notifications must be scoped to the user's
+  chosen area - respondents explicitly rejected voivodeship-wide alerts ("I don't want threats
+  for the whole voivodeship").
 - ~~**Shareable report links.**~~ Done: `/?report=<id>` deep-links fly the map to the report and
   open the overlay. Share button on each report uses `navigator.share` (mobile) or clipboard copy.
   URL syncs on every popup change so it's always shareable. Opening a shared link defers the
@@ -111,7 +143,17 @@ Close the feedback loop so reporters stay motivated and planned trips get proact
 ## Deferred
 - **Download-area offline** - cache the forest PMTiles for a chosen area for true no-signal use
   (Range/206 responses can't go in the Cache API, so this needs a dedicated approach).
+  `[survey: re-rank up]` Offline / no cell coverage was the **top friction blocker** in the
+  survey ("there's often no signal in the forest - it would have to work offline"; "where I live
+  and in the forest I have no coverage, the app would be useless"). Closer to a precondition for
+  the core use case than a deferred extra. Minimum viable step: PWA shell + cache the last-known
+  status/risk for saved areas so the app still shows something useful with no signal, before the
+  full offline-tiles work.
 - **Weather-based fire risk prediction.** Temperature + humidity + wind could forecast fire
   hazard before official BDL sync. Deferred because predicting independently risks contradicting
   official data - dangerous for a safety app. Revisit as a "trend indicator" with heavy
   disclaimers only after the core proactive features ship.
+- **Windthrow / high-wind warning.** `[survey: named by frequent users]` A few respondents avoid
+  the forest in strong wind (falling branches/trees). A plain high-wind advisory from a weather
+  feed is lower-risk than fire prediction (it doesn't contradict LP data) and maps to a real
+  hazard. Advisory layer, not a RED trigger.

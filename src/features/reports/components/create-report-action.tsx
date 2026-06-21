@@ -23,7 +23,7 @@ import { useOnlineStatus } from '@/shared/hooks/use-online-status';
 import { ApiError, api } from '@/shared/lib/api/client';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import { formatDistance } from '@/shared/lib/geo/format-distance';
-import { isTurnstileEnabled } from '@/shared/lib/turnstile-client';
+import { isTurnstileEnabled } from '@/shared/lib/security/turnstile-client';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 import { useTurnstileStore } from '@/shared/store/use-turnstile-store';

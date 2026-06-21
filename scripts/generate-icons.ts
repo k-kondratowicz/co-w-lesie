@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { renderIcon, renderOgImage } from '@/shared/lib/og-icon';
+import { renderIcon, renderOgImage } from '@/shared/lib/image/og-icon';
 
 // Pre-renders the brand app icons + social share image to static files so they ship from
 // /public (and src/app for the Apple touch and OG images) instead of being generated per request.

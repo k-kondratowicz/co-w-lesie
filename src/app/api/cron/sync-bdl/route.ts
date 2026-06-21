@@ -27,19 +27,34 @@ export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse({
     dataset: request.nextUrl.searchParams.get('dataset') ?? undefined,
   });
+
   if (!parsed.success) {
     return Response.json({ error: 'Invalid dataset', details: z.flattenError(parsed.error) }, { status: 400 });
   }
+
   const { dataset } = parsed.data;
 
   try {
     const results: Record<string, SyncResult> = {};
+    const tasks: Promise<void>[] = [];
+
     if (dataset === 'all' || dataset === 'fire') {
-      results.fire = await syncFireHazard(prisma);
+      tasks.push(
+        syncFireHazard(prisma).then((r) => {
+          results.fire = r;
+        }),
+      );
     }
+
     if (dataset === 'all' || dataset === 'bans') {
-      results.bans = await syncEntryBans(prisma);
+      tasks.push(
+        syncEntryBans(prisma).then((r) => {
+          results.bans = r;
+        }),
+      );
     }
+
+    await Promise.all(tasks);
     return Response.json({ ok: true, syncedAt: new Date().toISOString(), results });
   } catch (error) {
     // Technical log only; the scheduler reads the status code.

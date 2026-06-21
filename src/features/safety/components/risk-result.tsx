@@ -99,7 +99,7 @@ export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
         {fireUpdatedAt ? `Zagrożenie pożarowe - dane z: ${fireUpdatedAt}. ` : ''}
         {bansUpdatedAt ? `Zakazy wstępu - dane z: ${bansUpdatedAt}. ` : ''}
         {kmzbUpdatedAt ? `Zgłoszenia policyjne (KMZB) - dane z: ${kmzbUpdatedAt}. ` : ''}
-        {!fireUpdatedAt && !bansUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
+        {!fireUpdatedAt && !bansUpdatedAt && !kmzbUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
         To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.
       </p>
     </div>

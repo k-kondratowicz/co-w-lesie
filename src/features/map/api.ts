@@ -1,10 +1,16 @@
-import type { BansGeoJSON } from '@/features/map/types';
+import type { BansGeoJSON, KmzbGeoJSON } from '@/features/map/types';
 import { get } from '@/shared/lib/api/fetch';
 import type { PointContext } from '@/shared/lib/geo/queries/point-context';
 
 export const bansApi = {
   list(bbox: string) {
     return get<BansGeoJSON>('/api/bans', { bbox });
+  },
+};
+
+export const kmzbApi = {
+  list(bbox: string) {
+    return get<KmzbGeoJSON>('/api/kmzb', { bbox });
   },
 };
 

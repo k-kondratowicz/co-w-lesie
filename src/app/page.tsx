@@ -5,9 +5,12 @@ import { LocationRefreshAction } from '@/features/reports/components/location-re
 import { OfflineReportSync } from '@/features/reports/components/offline-report-sync';
 import { ReportFilter } from '@/features/reports/components/report-filter';
 import { SafetyAssistant } from '@/features/safety/components/safety-assistant';
+import { SavedAreasSheet } from '@/features/saved-areas/components/saved-areas-sheet';
+import { SavedAreasWarmer } from '@/features/saved-areas/components/saved-areas-warmer';
 import { AppLogoBox } from '@/shared/components/app-logo-box';
 import { DataInfoButton } from '@/shared/components/data-info-button';
 import { OfflineIndicator } from '@/shared/components/offline-indicator';
+import { StaleDataBanner } from '@/shared/components/stale-data-banner';
 
 export default function Home() {
   return (
@@ -22,7 +25,9 @@ export default function Home() {
       </header>
 
       <OfflineIndicator />
+      <StaleDataBanner />
       <OfflineReportSync />
+      <SavedAreasWarmer />
 
       <Suspense>
         <ForestMap
@@ -39,6 +44,7 @@ export default function Home() {
       {/* Primary actions in the thumb zone (bottom-right), hero "safety" closest to the corner. */}
       <div className="pointer-events-auto absolute right-4 bottom-4 z-30 flex flex-col items-end gap-2 sm:right-6 sm:bottom-6">
         <ReportFilter />
+        <SavedAreasSheet />
         <CreateReportAction />
         <SafetyAssistant />
       </div>

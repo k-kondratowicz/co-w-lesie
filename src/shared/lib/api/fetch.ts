@@ -74,8 +74,17 @@ export async function patch<T>(url: string, body: unknown, headers?: HeadersInit
   return parseResponseBody<T>(res);
 }
 
-export async function del(url: string, headers?: HeadersInit): Promise<void> {
-  const res = await fetch(url, { method: 'DELETE', headers });
+export async function del(url: string, headers?: HeadersInit, body?: unknown): Promise<void> {
+  const mergedHeaders = new Headers(headers);
+  if (body !== undefined && !mergedHeaders.has('Content-Type')) {
+    mergedHeaders.set('Content-Type', 'application/json');
+  }
+
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: mergedHeaders,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
 
   if (!res.ok) {
     throw new ApiError(res.status, await parseErrorMessage(res));

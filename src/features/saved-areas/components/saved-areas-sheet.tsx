@@ -2,6 +2,7 @@
 
 import { Bookmark } from 'lucide-react';
 import { useState } from 'react';
+import { PushToggle } from '@/features/push/components/push-toggle';
 import { SavedAreasList } from '@/features/saved-areas/components/saved-areas-list';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -46,6 +47,10 @@ export function SavedAreasSheet() {
               setOpen(false);
             }}
           />
+
+          <div className="mt-4 border-t pt-3">
+            <PushToggle />
+          </div>
         </ResponsiveDialogScrollArea>
       </ResponsiveDialogContent>
     </ResponsiveDialog>

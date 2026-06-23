@@ -231,7 +231,7 @@ export function CreateReportAction() {
                   className="w-full"
                   disabled={form.state.values.location.length !== 2}
                 >
-                  <MapPin className="size-4" />
+                  <MapPin />
                   Wskaż miejsce na mapie (do {formatDistance(REPORT_MAX_OFFSET_METERS)})
                 </Button>
               </field.Location>

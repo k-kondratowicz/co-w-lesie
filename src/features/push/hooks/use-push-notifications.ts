@@ -20,16 +20,48 @@ function isSupported(): boolean {
   return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
-type Status = 'unsupported' | 'denied' | 'subscribed' | 'idle';
+// iOS exposes the Push API only to a home-screen-installed PWA, never to a Safari tab. So an
+// unsupported iOS browser is not a dead end - it just needs installing first.
+function isIos(): boolean {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const ua = navigator.userAgent;
+  const iPadOnMac = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+
+  return /iPad|iPhone|iPod/.test(ua) || iPadOnMac;
+}
+
+function isStandalone(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+  return iosStandalone || window.matchMedia('(display-mode: standalone)').matches;
+}
+
+type Status = 'unsupported' | 'needs-install' | 'denied' | 'subscribed' | 'idle';
+
+// The push service (FCM/Mozilla/Apple) can reject subscribe() with an AbortError even when our
+// VAPID key is valid - Brave with Google push off, a Chromium build without API keys, or a network
+// that blocks the push endpoint. None of that is the user's fault, so we explain it instead of
+// letting the rejection surface as an uncaught promise.
+const PUSH_SERVICE_REFUSED =
+  'Nie udalo sie wlaczyc powiadomien - przegladarka lub siec odmowily polaczenia z usluga push. Sprobuj w Chrome, sprawdz ustawienia powiadomien lub wylacz blokady sieci.';
+const PUSH_GENERIC_ERROR = 'Nie udalo sie wlaczyc powiadomien. Sprobuj ponownie.';
 
 export function usePushNotifications() {
   const visitorId = useVisitorIdStore((state) => state.visitorId);
   const [status, setStatus] = useState<Status>('idle');
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSupported()) {
-      setStatus('unsupported');
+      setStatus(isIos() && !isStandalone() ? 'needs-install' : 'unsupported');
       return;
     }
 
@@ -51,6 +83,7 @@ export function usePushNotifications() {
     }
 
     setPending(true);
+    setError(null);
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
@@ -70,6 +103,8 @@ export function usePushNotifications() {
 
       await api.push.subscribe(visitorId, subscription.toJSON() as Parameters<typeof api.push.subscribe>[1]);
       setStatus('subscribed');
+    } catch (cause) {
+      setError(cause instanceof DOMException && cause.name === 'AbortError' ? PUSH_SERVICE_REFUSED : PUSH_GENERIC_ERROR);
     } finally {
       setPending(false);
     }
@@ -77,6 +112,7 @@ export function usePushNotifications() {
 
   const unsubscribe = useCallback(async () => {
     setPending(true);
+    setError(null);
     try {
       const registration = await navigator.serviceWorker.getRegistration();
       const subscription = await registration?.pushManager.getSubscription();
@@ -94,6 +130,7 @@ export function usePushNotifications() {
   return {
     status,
     pending,
+    error,
     subscribe,
     unsubscribe,
   };

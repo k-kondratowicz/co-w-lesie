@@ -172,16 +172,17 @@ export function SafetyAssistant() {
             <ResponsiveDialogFooter className="sm:flex-col">
               {target ? (
                 <Button
-                  variant="secondary"
+                  variant="default"
                   onClick={() => createArea.mutate({ location: [target.lng, target.lat], radiusMeters: data.radiusMeters })}
                   disabled={createArea.isPending || !online}
                   className="w-full"
                   title={online ? undefined : 'Zapisywanie obszaru wymaga połączenia z internetem'}
                 >
-                  {createArea.isPending ? <Spinner /> : <Star className="size-4" />}
+                  {createArea.isPending ? <Spinner /> : <Star />}
                   {online ? 'Zapisz ten obszar' : 'Zapisz ten obszar (wymaga połączenia)'}
                 </Button>
               ) : null}
+
               <div className="flex w-full flex-col gap-2 sm:flex-row">
                 <Button variant="outline" onClick={chooseMyLocation} disabled={locating || isFetching} className="sm:flex-1">
                   {locating && <Spinner />}

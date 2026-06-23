@@ -65,7 +65,7 @@ export function SavedAreasList({ onSelect, emptyMessage }: { onSelect: (area: Sa
               disabled={remove.isPending}
               onClick={() => remove.mutate(area.id)}
             >
-              <Trash2 className="size-4" />
+              <Trash2 />
             </Button>
           </li>
         );

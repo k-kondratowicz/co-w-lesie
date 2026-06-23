@@ -1,10 +1,11 @@
 'use client';
 
-import { ShieldQuestion, Star } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ShieldQuestion, Star, StarPlus } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRiskAssessment } from '@/features/safety/hooks/use-risk-assessment';
 import { SavedAreasList } from '@/features/saved-areas/components/saved-areas-list';
 import { useSavedAreas } from '@/features/saved-areas/hooks/use-saved-areas';
+import { findDuplicateSavedArea } from '@/features/saved-areas/is-duplicate-area';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -28,7 +29,7 @@ import { RiskResult } from './risk-result';
 export function SafetyAssistant() {
   const [open, setOpen] = useState(false);
   const { target, setTarget, data, isFetching, isError, refetch, dataUpdatedAt } = useRiskAssessment(open);
-  const { create: createArea } = useSavedAreas();
+  const { create: createArea, areas } = useSavedAreas();
   const online = useOnlineStatus();
   const { position, getCurrentPosition, isFetching: locating, error: locationError, permissionDenied } = useGeolocation();
   const startPicking = useMapPickStore((state) => state.startPicking);
@@ -60,6 +61,11 @@ export function SafetyAssistant() {
     setOpen(true);
     consumeRequestedTarget();
   }, [requestedTarget, setTarget, consumeRequestedTarget]);
+
+  const isTargetSaved = useMemo(
+    () => (target && data ? findDuplicateSavedArea(areas, target, data.radiusMeters) !== undefined : false),
+    [target, data, areas],
+  );
 
   const chooseMyLocation = async () => {
     try {
@@ -174,12 +180,12 @@ export function SafetyAssistant() {
                 <Button
                   variant="default"
                   onClick={() => createArea.mutate({ location: [target.lng, target.lat], radiusMeters: data.radiusMeters })}
-                  disabled={createArea.isPending || !online}
+                  disabled={createArea.isPending || !online || isTargetSaved}
                   className="w-full"
-                  title={online ? undefined : 'Zapisywanie obszaru wymaga połączenia z internetem'}
+                  title={online || isTargetSaved ? undefined : 'Zapisywanie obszaru wymaga połączenia z internetem'}
                 >
-                  {createArea.isPending ? <Spinner /> : <Star />}
-                  {online ? 'Zapisz ten obszar' : 'Zapisz ten obszar (wymaga połączenia)'}
+                  {createArea.isPending ? <Spinner /> : isTargetSaved ? <StarPlus /> : <Star />}
+                  {online ? (isTargetSaved ? 'Zapisany obszar' : 'Zapisz ten obszar') : 'Zapisz ten obszar (wymaga połączenia)'}
                 </Button>
               ) : null}
 

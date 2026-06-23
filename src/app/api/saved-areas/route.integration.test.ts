@@ -12,7 +12,9 @@ const OTHER_VISITOR = 'visitor-bbbbbbbb';
 const KRAKOW = { lng: 19.94, lat: 50.06 };
 
 function postArea(visitorId: string | null, body: unknown) {
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  // Each POST gets a fresh client IP so the per-IP rate limiter (shared, in-memory) does not bleed
+  // across tests - none of these cases exercise rate limiting, the cap is enforced per visitor.
+  const headers: Record<string, string> = { 'content-type': 'application/json', 'x-forwarded-for': crypto.randomUUID() };
   if (visitorId) {
     headers[VISITOR_ID_HEADER] = visitorId;
   }
@@ -95,6 +97,22 @@ describe('saved areas API', () => {
 
     // Same point, different radius is a distinct area.
     expect((await postArea(VISITOR, { ...validBody, radiusMeters: 8000 })).status).toBe(201);
+  });
+
+  it('treats a jittered re-save of the same spot as a duplicate', async () => {
+    expect((await postArea(VISITOR, validBody)).status).toBe(201);
+
+    // ~0.002 deg lat is roughly 220 m - within the buffer of a 5000 m area, so it is the same spot.
+    const jittered = { ...validBody, location: [KRAKOW.lng, KRAKOW.lat + 0.002] };
+    expect((await postArea(VISITOR, jittered)).status).toBe(409);
+  });
+
+  it('allows a genuinely distant point of the same radius', async () => {
+    expect((await postArea(VISITOR, validBody)).status).toBe(201);
+
+    // ~0.05 deg lat is roughly 5.5 km - well beyond the buffer, a different spot.
+    const elsewhere = { ...validBody, location: [KRAKOW.lng, KRAKOW.lat + 0.05] };
+    expect((await postArea(VISITOR, elsewhere)).status).toBe(201);
   });
 
   it('enforces the per-visitor cap with 409', async () => {

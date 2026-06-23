@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { DUPLICATE_BUFFER_MIN_METERS, DUPLICATE_BUFFER_RADIUS_FRACTION } from '@/features/saved-areas/constants';
 import type { CreateSavedAreaInput } from '@/features/saved-areas/schemas/saved-area.schema';
 import type { SavedArea } from '@/features/saved-areas/types';
 
@@ -63,20 +64,32 @@ export function updateAlertSignature(prisma: PrismaClient, id: string, signature
   return prisma.savedArea.update({ where: { id }, data: { lastAlertSignature: signature }, select: { id: true } });
 }
 
-// An area with the same point and radius produces an identical risk-query key, which would make
-// the saved-areas list observe duplicate queries (and just clutters the list). Exact match only -
-// a slightly different GPS fix is a genuinely different spot.
-export function findDuplicateArea(
+// A re-save of the same spot only differs by GPS jitter, which an exact lat/lng match would miss -
+// spawning a near-identical duplicate. Match same-radius areas whose center is within a buffer
+// scaled to the area size (see DUPLICATE_BUFFER_*). Different radius = a deliberately wider/tighter
+// watch on the spot, left as a distinct area.
+export async function findDuplicateArea(
   prisma: PrismaClient,
   visitorId: string,
   input: CreateSavedAreaInput,
 ): Promise<{ id: string } | null> {
   const [lng, lat] = input.location;
+  const buffer = Math.max(DUPLICATE_BUFFER_MIN_METERS, input.radiusMeters * DUPLICATE_BUFFER_RADIUS_FRACTION);
 
-  return prisma.savedArea.findFirst({
-    where: { visitorId, lat, lng, radiusMeters: input.radiusMeters },
-    select: { id: true },
-  });
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT "id"
+    FROM "SavedArea"
+    WHERE "visitorId" = ${visitorId}
+      AND "radiusMeters" = ${input.radiusMeters}
+      AND ST_DWithin(
+        ST_SetSRID(ST_MakePoint("lng", "lat"), 4326)::geography,
+        ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
+        ${buffer}
+      )
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
 }
 
 export async function createSavedArea(prisma: PrismaClient, visitorId: string, input: CreateSavedAreaInput): Promise<SavedArea> {

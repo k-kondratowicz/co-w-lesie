@@ -108,13 +108,13 @@ These turn the app from reactive ("check before going") to proactive ("it tells 
 something changes") and drive organic acquisition. Without them the app lives only in the
 moment the user remembers to open it.
 
-- **Saved areas + push notifications.** `[survey: top retention ask]` User bookmarks an area
-  (e.g. "Puszcza Niepolomicka") and gets web push when: entry ban appears, fire-hazard degree
-  hits III, or new reports cluster nearby. This is the only feature that brings users back
-  without an external trigger. Requires PWA service worker, push subscription, and a server-side
-  check on each sync cycle. **Survey constraint:** notifications must be scoped to the user's
-  chosen area - respondents explicitly rejected voivodeship-wide alerts ("I don't want threats
-  for the whole voivodeship").
+- ~~**Saved areas + push notifications.**~~ `[survey: top retention ask]` Done (MVP): a visitor
+  bookmarks areas (per anonymous `visitorId`) and opts into Web Push. The `notify-areas` cron runs
+  after each BDL sync, re-assesses every saved area against local PostGIS, and pushes **onset-only**
+  when a RED hazard newly appears (entry ban or fire-hazard degree III) - never an "all clear"
+  (safety rule). Alerts are scoped to the user's own area, per the survey constraint. See
+  `docs/adr/0005-web-push-notifications.md`. **Deferred to a later pass:** new-report-cluster
+  alerts (needs a count/recency threshold + noise handling), and trip-planning lead-time alerts.
 - ~~**Shareable report links.**~~ Done: `/?report=<id>` deep-links fly the map to the report and
   open the overlay. Share button on each report uses `navigator.share` (mobile) or clipboard copy.
   URL syncs on every popup change so it's always shareable. Opening a shared link defers the

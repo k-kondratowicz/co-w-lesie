@@ -51,6 +51,7 @@ Open http://localhost:3000.
 | `NEXT_PUBLIC_SENTRY_DSN` | optional | Enables Sentry error monitoring |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | optional | Durable rate limiting (else in-memory) |
 | `VOTE_SALT` | optional | Salt for the per-IP report-vote hash |
+| `VAPID_PUBLIC_KEY` / `_PRIVATE_KEY` / `VAPID_SUBJECT` | push | Web Push (VAPID) for saved-area hazard alerts; absent => push disabled |
 
 ## Scripts
 

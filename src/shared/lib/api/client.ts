@@ -1,6 +1,7 @@
 import { bansApi, contextApi, kmzbApi } from '@/features/map/api';
 import { reportsApi } from '@/features/reports/api';
 import { riskApi } from '@/features/safety/api';
+import { savedAreasApi } from '@/features/saved-areas/api';
 
 export { ApiError } from './fetch';
 
@@ -10,4 +11,5 @@ export const api = {
   bans: bansApi,
   kmzb: kmzbApi,
   context: contextApi,
+  savedAreas: savedAreasApi,
 };

@@ -33,7 +33,7 @@ export function SavedAreasSheet() {
 
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle className="pr-4">Zapisane obszary</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>Zapisane obszary</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             Ostatnio znana ocena dla każdego obszaru. Dotknij, aby sprawdzić aktualne warunki.
           </ResponsiveDialogDescription>

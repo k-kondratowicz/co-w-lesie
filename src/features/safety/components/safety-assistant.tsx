@@ -165,7 +165,7 @@ export function SafetyAssistant() {
 
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle className="pr-4">Czy mogę dziś bezpiecznie iść do lasu?</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>Czy mogę dziś bezpiecznie iść do lasu?</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             Sprawdź swoją lokalizację GPS albo wskaż dowolny punkt na mapie.
           </ResponsiveDialogDescription>

@@ -10,6 +10,7 @@ on:
     - cron: '0 6-16 * * *'
     - cron: '30 3 * * *' # entry bans, daily 03:30 (UTC)
     - cron: '15 0,6,12,18 * * *' # KMZB police incidents, 4x/day - rolling 7-day window, off the BDL hours
+    - cron: '45 */6 * * *' # sync-health watchdog, every 6h - catches a dead cron before users do
   workflow_dispatch: {} # manual "run now" → syncs everything
 
 jobs:
@@ -31,4 +32,12 @@ jobs:
         if: github.event.schedule == '15 0,6,12,18 * * *' || github.event_name == 'workflow_dispatch'
         run: |
           curl -fsS "${{ vars.APP_URL }}/api/cron/sync-kmzb" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+      # Returns 503 when a safety-critical dataset is stale; -f makes curl exit non-zero so the
+      # job fails and GitHub notifies us (Sentry alerts too). A dead cron is caught here, not by a user.
+      - name: Check sync health
+        if: github.event.schedule == '45 */6 * * *' || github.event_name == 'workflow_dispatch'
+        run: |
+          curl -fsS "${{ vars.APP_URL }}/api/cron/sync-health" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

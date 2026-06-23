@@ -41,6 +41,28 @@ export function countSavedAreas(prisma: PrismaClient, visitorId: string): Promis
   return prisma.savedArea.count({ where: { visitorId } });
 }
 
+export type AlertArea = {
+  id: string;
+  visitorId: string;
+  name: string | null;
+  lat: number;
+  lng: number;
+  radiusMeters: number;
+  lastAlertSignature: string | null;
+};
+
+// Every area across all visitors, for the notification cron. Not visitor-scoped on purpose -
+// this runs server-side after a sync, never on a user request.
+export function listAreasForAlerts(prisma: PrismaClient): Promise<AlertArea[]> {
+  return prisma.savedArea.findMany({
+    select: { id: true, visitorId: true, name: true, lat: true, lng: true, radiusMeters: true, lastAlertSignature: true },
+  });
+}
+
+export function updateAlertSignature(prisma: PrismaClient, id: string, signature: string | null): Promise<unknown> {
+  return prisma.savedArea.update({ where: { id }, data: { lastAlertSignature: signature }, select: { id: true } });
+}
+
 // An area with the same point and radius produces an identical risk-query key, which would make
 // the saved-areas list observe duplicate queries (and just clutters the list). Exact match only -
 // a slightly different GPS fix is a genuinely different spot.

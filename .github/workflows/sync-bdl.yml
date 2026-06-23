@@ -28,6 +28,14 @@ jobs:
           curl -fsS "${{ vars.APP_URL }}/api/cron/sync-bdl?dataset=${dataset}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 
+      # Runs after a BDL sync so saved areas are checked against fresh fire/ban data. Onset-only
+      # dedup means extra runs (e.g. on the health tick) never re-alert a standing hazard.
+      - name: Notify saved areas
+        if: github.event.schedule != '15 0,6,12,18 * * *'
+        run: |
+          curl -fsS "${{ vars.APP_URL }}/api/cron/notify-areas" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
       - name: Trigger KMZB sync
         if: github.event.schedule == '15 0,6,12,18 * * *' || github.event_name == 'workflow_dispatch'
         run: |

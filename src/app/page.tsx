@@ -42,7 +42,7 @@ export default function Home() {
       </div>
 
       {/* Primary actions in the thumb zone (bottom-right), hero "safety" closest to the corner. */}
-      <div className="pointer-events-auto absolute right-4 bottom-4 z-30 flex flex-col items-end gap-2 sm:right-6 sm:bottom-6">
+      <div className="pointer-events-auto absolute right-4 bottom-4 z-30 flex flex-col items-end gap-2 sm:right-6 sm:bottom-6 [&>*:not(:first-child)]:relative">
         <ReportFilter />
         <SavedAreasSheet />
         <CreateReportAction />

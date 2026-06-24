@@ -13,26 +13,36 @@ layer served as vector tiles (PMTiles).
 
 ## Code layout
 
-Feature-based: domain code lives under `src/features/<feature>/`, cross-cutting code under
-`src/shared/`.
+Feature-based, in layers that import **downward only**:
+`app -> features/* -> features/core -> shared`. A feature never imports a sibling feature;
+shared domain drops to `features/core`, and composition of two features rises to the `app` route
+layer. `features/core` holds domain reused by several features; `shared` holds infrastructure with
+no domain. The rules are enforced by `npm run lint:arch` (dependency-cruiser). See
+[ADR-0006](./adr/0006-feature-based-structure.md).
 
 ```
 src/
-  app/                     Next routes, API route handlers, metadata
-    api/                   reports, risk, bans, context, cron/sync-bdl
+  app/                     Next routes + API handlers; also the composition layer
+    api/                   reports, risk, bans, context, cron/*
   features/
+    core/                  domain reused across features (imported via index.ts)
+      risk/                pure engine + config + assessment DTO/api/query (no I/O in the engine)
+      report/              report types, schema (incl locationSchema), api, popup contract + store
+      saved-area/          SavedArea type, schema, api, is-duplicate, useSavedAreas
     map/                   MapLibre map, layers, interaction
-    reports/               create/list/vote, lifecycle, offline queue
-    risk/                  pure risk engine + config (no I/O)
+    reports/               create/list/vote UI, lifecycle, offline queue, repos
+    saved-areas/           saved-areas UI (list, sheet) + statuses hook + repo
     safety/                "can I enter?" assistant UI
+    push/                  web-push subscribe/notify UI
   shared/
     components/            UI (shadcn/ui), dialogs, forms
     hooks/                 geolocation, media query, online status
     lib/
-      bdl/                 BDL sync (external I/O lives here)
-      geo/                 spatial helpers + PostGIS queries
+      bdl/, kmzb/          external sync (I/O) - slated to move to features/core (R6)
+      geo/                 spatial math + PostGIS queries
+      api/fetch.ts         typed fetch + ApiError (slice apis live on each slice)
       prisma.ts            DB client (adapter-pg)
-    store/                 Zustand stores
+    store/                 Zustand stores (cross-feature coordination channels)
 prisma/                    multi-file schema + SQL migrations
 scripts/                   seed/sync/export CLIs (tsx)
 docs/                      this documentation
@@ -40,10 +50,11 @@ docs/                      this documentation
 
 ## The pure-core rule
 
-Domain logic - `features/risk` (the scoring engine) and `shared/lib/geo` math helpers - performs
-**no I/O**: no `fetch`, no DB, not even `Date.now()`. It takes plain data and returns a result, so
-it is deterministic and unit-tested. All I/O lives in `shared/lib/bdl`, `shared/lib/prisma`, and
-the route handlers, which orchestrate but contain no business rules.
+Domain logic - `features/core/risk` (the scoring engine) and `shared/lib/geo` math helpers -
+performs **no I/O**: no `fetch`, no DB, not even `Date.now()`. It takes plain data and returns a
+result, so it is deterministic and unit-tested. All I/O lives in `shared/lib/bdl`,
+`shared/lib/prisma`, the feature repos (`*/queries`), and the route handlers, which orchestrate but
+contain no business rules.
 
 See [business-rules.md](./business-rules.md) for what the engine actually computes.
 

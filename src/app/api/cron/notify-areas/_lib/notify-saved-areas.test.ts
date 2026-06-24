@@ -6,7 +6,7 @@ import { listAreasForAlerts, updateAlertSignature } from '@/features/saved-areas
 import { sendPush } from '@/shared/lib/push/send';
 import { notifySavedAreas } from './notify-saved-areas';
 
-vi.mock('@/app/api/risk/_lib/assess-point', () => ({ assessPoint: vi.fn().mockResolvedValue({}) }));
+vi.mock('@/app/_lib/assess-point', () => ({ assessPoint: vi.fn().mockResolvedValue({}) }));
 vi.mock('@/features/safety/area-alert', () => ({
   activeHazards: vi.fn(() => ['ban']),
   signatureOf: vi.fn(() => 'ban:1'),

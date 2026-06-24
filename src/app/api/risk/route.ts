@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { assessPoint } from '@/app/_lib/assess-point';
 import { DEFAULT_RADIUS_METERS, MAX_RADIUS_METERS } from '@/features/core/risk';
 import { prisma } from '@/shared/lib/prisma';
-import { assessPoint } from './_lib/assess-point';
 
 export const runtime = 'nodejs'; // Prisma pg adapter requires Node, not Edge.
 export const dynamic = 'force-dynamic'; // reads live data; never cache.

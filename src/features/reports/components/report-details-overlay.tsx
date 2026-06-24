@@ -1,4 +1,6 @@
-import type { PopupInfo } from '@/features/core/report';
+'use client';
+
+import { useReportPopupStore } from '@/features/core/report';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -10,14 +12,17 @@ import {
 import { ReportPopupContent } from './report-popup-content';
 
 // Details for the report(s) under a map tap - roomy enough for long descriptions, multiple
-// stacked reports and the confirm/flag actions (Dialog on desktop, bottom Drawer on mobile).
-export function ReportDetailsOverlay({ info, onClose }: { info: PopupInfo | null; onClose: () => void }) {
+// stacked reports and the confirm/flag actions (Dialog on desktop, bottom Drawer on mobile). The
+// map writes the tapped report(s) to the popup store; this renders as a route-level sibling.
+export function ReportDetailsOverlay() {
+  const info = useReportPopupStore((state) => state.popup);
+  const closePopup = useReportPopupStore((state) => state.closePopup);
   const count = info?.reports.length ?? 0;
   const title = count > 1 ? `Zgłoszenia w tym miejscu (${count})` : 'Szczegóły zgłoszenia';
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {
-      onClose();
+      closePopup();
     }
   };
 

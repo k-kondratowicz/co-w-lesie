@@ -1,10 +1,13 @@
 import { Suspense } from 'react';
 import { ForestMap } from '@/features/map/components/forest-map';
+import { PushToggle } from '@/features/push/components/push-toggle';
 import { CreateReportAction } from '@/features/reports/components/create-report-action';
 import { LocationRefreshAction } from '@/features/reports/components/location-refresh-action';
 import { OfflineReportSync } from '@/features/reports/components/offline-report-sync';
+import { ReportDetailsOverlay } from '@/features/reports/components/report-details-overlay';
 import { ReportFilter } from '@/features/reports/components/report-filter';
 import { SafetyAssistant } from '@/features/safety/components/safety-assistant';
+import { SavedAreasPicker } from '@/features/saved-areas/components/saved-areas-picker';
 import { SavedAreasSheet } from '@/features/saved-areas/components/saved-areas-sheet';
 import { SavedAreasWarmer } from '@/features/saved-areas/components/saved-areas-warmer';
 import { AppLogoBox } from '@/shared/components/app-logo-box';
@@ -37,6 +40,8 @@ export default function Home() {
         />
       </Suspense>
 
+      <ReportDetailsOverlay />
+
       <div className="absolute bottom-4 left-4 z-30 sm:bottom-6 sm:left-6">
         <DataInfoButton />
       </div>
@@ -44,9 +49,9 @@ export default function Home() {
       {/* Primary actions in the thumb zone (bottom-right), hero "safety" closest to the corner. */}
       <div className="pointer-events-auto absolute right-4 bottom-4 z-30 flex flex-col items-end gap-2 sm:right-6 sm:bottom-6 [&>*:not(:first-child)]:relative">
         <ReportFilter />
-        <SavedAreasSheet />
+        <SavedAreasSheet footer={<PushToggle />} />
         <CreateReportAction />
-        <SafetyAssistant />
+        <SafetyAssistant savedAreas={<SavedAreasPicker />} />
       </div>
     </div>
   );

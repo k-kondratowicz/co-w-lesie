@@ -1,10 +1,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// crypto.randomUUID only exists in secure contexts (https/localhost), not over plain http on a
-// LAN IP - so fall back to a good-enough local id. Mirrors useOfflineReportStore's createId.
+// This id is an unguessable bearer that scopes a visitor's saved areas and push subscriptions, so
+// it must be high-entropy. crypto.randomUUID needs a secure context (missing over plain http on a
+// LAN IP), but crypto.getRandomValues does not - so we fall back to a full 128-bit random hex id
+// there rather than a guessable Date.now()+Math.random() value. Math.random is only a last resort
+// for a crypto-less runtime that should not occur in a browser.
 function createVisitorId(): string {
-  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const webCrypto = globalThis.crypto;
+
+  if (webCrypto?.randomUUID) {
+    return webCrypto.randomUUID();
+  }
+
+  if (webCrypto?.getRandomValues) {
+    const bytes = webCrypto.getRandomValues(new Uint8Array(16));
+
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  const rand = () => Math.random().toString(36).slice(2);
+
+  return `${Date.now()}-${rand()}-${rand()}-${rand()}`;
 }
 
 type VisitorIdState = {

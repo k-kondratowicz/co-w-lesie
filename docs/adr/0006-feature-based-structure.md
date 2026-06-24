@@ -51,10 +51,12 @@ Every `core` slice exposes an `index.ts`; other modules import it by its folder
 
 A slice with a `'use client'` member that server code must not pull into its graph splits its
 surface: `index.ts` stays server-safe (types, schema, constants, pure helpers, isomorphic api) and
-a sibling `client.ts` carries the client-only exports. `saved-area` does this - the `/api/saved-areas`
-route imports the barrel for schema/constants, while `useSavedAreas` (react-query + sonner) is
-reached via `@/features/core/saved-area/client`, so the client runtime never enters the server
-bundle graph. `core-public-api-only` permits both `index.` and `client.` as entry points.
+a sibling `index.client.ts` carries the client-only exports. `saved-area` does this - the
+`/api/saved-areas` route imports the barrel for schema/constants, while `useSavedAreas` (react-query
++ sonner) is reached via `@/features/core/saved-area/index.client`, so the client runtime never
+enters the server bundle graph. The `index.client.ts` name (not `client.ts`) avoids colliding with
+the `bdl`/`kmzb` `client.ts`, which is an HTTP API client. `core-public-api-only` already allows it:
+it shares the `index.` prefix.
 
 Plain features deliberately do **not** carry a barrel yet: `no-sibling-feature` bans
 feature-to-feature imports outright, so a feature has no external consumer to expose a public API

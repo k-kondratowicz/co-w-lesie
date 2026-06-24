@@ -3,7 +3,7 @@
 import { ShieldQuestion, Star, StarPlus } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { findDuplicateSavedArea } from '@/features/core/saved-area';
-import { useSavedAreas } from '@/features/core/saved-area/client';
+import { useSavedAreas } from '@/features/core/saved-area/index.client';
 import { useRiskAssessment } from '@/features/safety/hooks/use-risk-assessment';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Button } from '@/shared/components/ui/button';

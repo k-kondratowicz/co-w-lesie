@@ -7,3 +7,5 @@ Add a new numbered file when making a decision that's expensive to reverse.
 - [0002 - Local-PostGIS-only query model](./0002-local-postgis-query-model.md)
 - [0003 - GitHub Actions for scheduled BDL sync](./0003-github-actions-cron.md)
 - [0004 - Offline support scope](./0004-offline-support.md)
+- [0005 - Web push notifications](./0005-web-push-notifications.md)
+- [0006 - Feature-based structure: isolation, public API, enforcement](./0006-feature-based-structure.md)

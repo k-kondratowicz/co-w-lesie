@@ -10,23 +10,33 @@ afterEach(() => {
 
 describe('fetchTileJson', () => {
   it('retries a transient failure then succeeds', async () => {
+    vi.useFakeTimers();
     const fetchMock = vi.fn().mockRejectedValueOnce(new TypeError('fetch failed')).mockResolvedValueOnce(okResponse());
     vi.stubGlobal('fetch', fetchMock);
 
     const { fetchTileJson } = await import('./client');
-    const data = await fetchTileJson('https://example.test/tile');
+
+    // Drive the exponential-backoff setTimeout instantly instead of waiting out the real delay.
+    const promise = fetchTileJson('https://example.test/tile');
+    await vi.runAllTimersAsync();
+    const data = await promise;
 
     expect(data).toEqual({ features: [], clusters: [] });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('throws after exhausting every attempt', async () => {
+    vi.useFakeTimers();
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
     vi.stubGlobal('fetch', fetchMock);
 
     const { fetchTileJson } = await import('./client');
 
-    await expect(fetchTileJson('https://example.test/tile')).rejects.toThrow('fetch failed');
+    const promise = fetchTileJson('https://example.test/tile');
+    const assertion = expect(promise).rejects.toThrow('fetch failed');
+    await vi.runAllTimersAsync();
+    await assertion;
+
     expect(fetchMock).toHaveBeenCalledTimes(KMZB_FETCH_RETRIES + 1);
   });
 });

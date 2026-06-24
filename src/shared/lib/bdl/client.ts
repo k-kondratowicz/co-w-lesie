@@ -49,6 +49,10 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
       returnGeometry: 'true',
       resultRecordCount: String(PAGE_SIZE),
       resultOffset: String(page * PAGE_SIZE),
+      // BDL's edge serves a stale cached response on the first hit, then revalidates - so a
+      // sync run right after the afternoon forecast re-issue reads the morning data. A unique
+      // param per request makes the URL a cache miss; ArcGIS ignores params it doesn't know.
+      _: String(Date.now()),
     });
 
     if (options.maxAllowableOffset !== undefined) {
@@ -64,6 +68,7 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
 
     const response = await fetch(`${layerUrl}/query?${params.toString()}`, {
       cache: 'no-store', // always fresh from BDL; we sync to our DB for caching
+      headers: { 'Cache-Control': 'no-cache' }, // ask BDL's edge to revalidate, not serve stale
     });
     if (!response.ok) {
       throw new Error(`BDL query failed (${response.status} ${response.statusText}) for ${layerUrl}`);

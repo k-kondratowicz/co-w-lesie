@@ -60,10 +60,11 @@ module.exports = {
     },
     {
       name: 'shared-no-upward',
-      severity: 'warn',
-      comment: 'shared is infrastructure with no domain; it must not import features or app. Remaining hits clear in R6.',
+      severity: 'error',
+      comment:
+        'shared is infrastructure with no domain; it must not import features/app at runtime. Type-only imports are allowed - they are erased at build time, so no runtime/domain coupling (e.g. a shared store typing its payload with a core type).',
       from: { path: '^src/shared/' },
-      to: { path: '^src/(features|app)/' },
+      to: { path: '^src/(features|app)/', dependencyTypesNot: ['type-only'] },
     },
   ],
   options: {

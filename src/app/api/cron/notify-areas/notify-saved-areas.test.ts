@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { deleteSubscriptionByEndpoint, listSubscriptions } from '@/features/push/queries/push-repo';
 import { buildAreaAlert, newHazards, signatureOf } from '@/features/safety/area-alert';
 import { listAreasForAlerts, updateAlertSignature } from '@/features/saved-areas/queries/saved-areas-repo';
-import { notifySavedAreas } from '@/shared/lib/push/notify-areas';
 import { sendPush } from '@/shared/lib/push/send';
+import { notifySavedAreas } from './notify-saved-areas';
 
-vi.mock('@/shared/lib/risk/assess-point', () => ({ assessPoint: vi.fn().mockResolvedValue({}) }));
+vi.mock('@/app/api/risk/assess-point', () => ({ assessPoint: vi.fn().mockResolvedValue({}) }));
 vi.mock('@/features/safety/area-alert', () => ({
   activeHazards: vi.fn(() => ['ban']),
   signatureOf: vi.fn(() => 'ban:1'),

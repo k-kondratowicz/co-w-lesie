@@ -56,13 +56,18 @@ to, and the `app` composition layer may deep-import a feature's components. A fe
 
 ### `shared/lib` cleanup
 
-Domain code moves out of `shared/lib` into `features/core`:
-`bdl`, `kmzb` -> `features/core/{bdl,kmzb}` (composed by the cron routes in `app/`);
-`sync-freshness` -> `features/core`. `push/send` (generic web-push transport) stays in `shared`.
-
 `risk/assess-point` and `push/notify-areas` are **impure composition** (they query reports/areas
 and run the engine), so they are not `core` - `core` may not import a feature. They move up to the
-orchestration layer: the `app` route / cron handler that owns the request (see R3/R6).
+orchestration layer, co-located with the route that owns the request:
+`app/api/risk/assess-point.ts` and `app/api/cron/notify-areas/notify-saved-areas.ts`.
+
+What stays in `shared`:
+- `push/send` (web-push transport) and `store/use-offline-report-store` reference a feature/core
+  type but only via `import type` - erased at build, no runtime coupling, so they are allowed (see
+  the type-only exception below).
+- `bdl`/`kmzb` sync: a single background job that writes many domain tables. It imports no feature
+  (so it does not break the dependency rule); treating it as ingest infrastructure is a deliberate
+  choice over splitting it across `core` slices.
 
 ### Enforcement
 
@@ -77,8 +82,11 @@ orchestration layer: the `app` route / cron handler that owns the request (see R
 - `core-no-app` - `features/core` may not import the `app` layer.
 - `no-feature-circular` - no dependency cycles within `src/features` (the pre-existing benign
   barrel cycles inside `shared/` are out of scope).
-- `shared-no-upward` (`warn` until R6) - `shared` may not import `features`/`app`. The remaining
-  hits are domain still living in `shared/lib` (`risk/assess-point`, `push/*`), cleared in R6.
+- `shared-no-upward` - `shared` may not import `features`/`app` at runtime. **Type-only exception:**
+  `import type` is allowed (erased at build, no runtime coupling), so a shared store may type its
+  payload with a core type.
+
+As of R6, all rules are `error` and `lint:arch` reports zero violations.
 
 ## Consequences
 

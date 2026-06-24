@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueries } from '@tanstack/react-query';
-import type { RiskLevel } from '@/features/risk/types';
+import type { RiskLevel } from '@/features/core/risk';
 import { riskQueryOptions } from '@/features/safety/risk-query';
 import { useSavedAreas } from '@/features/saved-areas/hooks/use-saved-areas';
 import type { SavedArea } from '@/features/saved-areas/types';

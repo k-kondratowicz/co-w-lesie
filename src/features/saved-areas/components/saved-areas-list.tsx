@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react';
-import { RISK_LEVEL_PRESENTATION } from '@/features/risk/presentation';
+import { RISK_LEVEL_PRESENTATION } from '@/features/core/risk';
 import { useSavedAreaStatuses } from '@/features/saved-areas/hooks/use-saved-area-statuses';
 import type { SavedArea } from '@/features/saved-areas/types';
 import { Button } from '@/shared/components/ui/button';

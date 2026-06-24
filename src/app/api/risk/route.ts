@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { DEFAULT_RADIUS_METERS, MAX_RADIUS_METERS } from '@/features/risk/config';
+import { DEFAULT_RADIUS_METERS, MAX_RADIUS_METERS } from '@/features/core/risk';
 import { prisma } from '@/shared/lib/prisma';
 import { assessPoint } from '@/shared/lib/risk/assess-point';
 

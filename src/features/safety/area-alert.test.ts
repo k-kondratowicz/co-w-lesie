@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RiskResult } from '@/features/risk/types';
+import type { RiskResult } from '@/features/core/risk';
 import { activeHazards, buildAreaAlert, newHazards, signatureOf } from './area-alert';
 
 function signals(overrides: Partial<RiskResult['signals']>): Pick<RiskResult, 'signals'> {

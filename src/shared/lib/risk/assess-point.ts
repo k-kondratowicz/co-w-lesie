@@ -1,9 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
+import type { RiskResult } from '@/features/core/risk';
+import { assessRisk, buildRiskMessage, RECENCY_WINDOW_DAYS } from '@/features/core/risk';
 import { queryReportsInRadius } from '@/features/reports/queries/reports-in-radius';
-import { RECENCY_WINDOW_DAYS } from '@/features/risk/config';
-import { assessRisk } from '@/features/risk/engine';
-import { buildRiskMessage } from '@/features/risk/message';
-import type { RiskResult } from '@/features/risk/types';
 import { DAY_MS } from '@/shared/lib/date/time';
 import { queryKmzbAdvisory } from '@/shared/lib/geo/queries/kmzb-advisory';
 import { queryNearbyBans } from '@/shared/lib/geo/queries/nearby-bans';

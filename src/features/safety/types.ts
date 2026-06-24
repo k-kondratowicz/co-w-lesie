@@ -1,4 +1,4 @@
-import type { RiskResult } from '@/features/risk/types';
+import type { RiskResult } from '@/features/core/risk';
 import type { KmzbAdvisory } from '@/shared/lib/geo/queries/kmzb-advisory';
 
 // Shape returned by GET /api/risk: the engine result plus the assistant message and freshness.

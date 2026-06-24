@@ -1,5 +1,5 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
-import { DEFAULT_RADIUS_METERS } from '@/features/risk/config';
+import { DEFAULT_RADIUS_METERS } from '@/features/core/risk';
 import type { RiskAssessment } from '@/features/safety/types';
 import { api } from '@/shared/lib/api/client';
 

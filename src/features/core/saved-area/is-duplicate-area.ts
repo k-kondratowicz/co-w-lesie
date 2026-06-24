@@ -1,6 +1,6 @@
-import { DUPLICATE_BUFFER_MIN_METERS, DUPLICATE_BUFFER_RADIUS_FRACTION } from '@/features/saved-areas/constants';
-import type { SavedArea } from '@/features/saved-areas/types';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
+import { DUPLICATE_BUFFER_MIN_METERS, DUPLICATE_BUFFER_RADIUS_FRACTION } from './constants';
+import type { SavedArea } from './types';
 
 export function duplicateBufferMeters(radiusMeters: number): number {
   return Math.max(DUPLICATE_BUFFER_MIN_METERS, radiusMeters * DUPLICATE_BUFFER_RADIUS_FRACTION);

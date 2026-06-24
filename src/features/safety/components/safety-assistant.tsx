@@ -2,10 +2,9 @@
 
 import { ShieldQuestion, Star, StarPlus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { findDuplicateSavedArea, useSavedAreas } from '@/features/core/saved-area';
 import { useRiskAssessment } from '@/features/safety/hooks/use-risk-assessment';
 import { SavedAreasList } from '@/features/saved-areas/components/saved-areas-list';
-import { useSavedAreas } from '@/features/saved-areas/hooks/use-saved-areas';
-import { findDuplicateSavedArea } from '@/features/saved-areas/is-duplicate-area';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Button } from '@/shared/components/ui/button';
 import {

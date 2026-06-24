@@ -1,6 +1,6 @@
 import { CloudOff } from 'lucide-react';
+import type { RiskAssessment } from '@/features/core/risk';
 import { fireDegreeRoman, RISK_LEVEL_PRESENTATION } from '@/features/core/risk';
-import type { RiskAssessment } from '@/features/safety/types';
 import { formatDate, formatDateTime } from '@/shared/lib/date/format-date';
 import { formatRelativeTime } from '@/shared/lib/date/format-relative-time';
 import { formatDistance } from '@/shared/lib/geo/format-distance';

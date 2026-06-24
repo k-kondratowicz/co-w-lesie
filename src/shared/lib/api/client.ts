@@ -1,8 +1,8 @@
 import { reportsApi } from '@/features/core/report';
+import { riskApi } from '@/features/core/risk';
+import { savedAreasApi } from '@/features/core/saved-area';
 import { bansApi, contextApi, kmzbApi } from '@/features/map/api';
 import { pushApi } from '@/features/push/api';
-import { riskApi } from '@/features/safety/api';
-import { savedAreasApi } from '@/features/saved-areas/api';
 
 export { ApiError } from './fetch';
 

@@ -2,9 +2,9 @@
 
 import { useQueries } from '@tanstack/react-query';
 import type { RiskLevel } from '@/features/core/risk';
-import { riskQueryOptions } from '@/features/safety/risk-query';
-import { useSavedAreas } from '@/features/saved-areas/hooks/use-saved-areas';
-import type { SavedArea } from '@/features/saved-areas/types';
+import { riskQueryOptions } from '@/features/core/risk';
+import type { SavedArea } from '@/features/core/saved-area';
+import { useSavedAreas } from '@/features/core/saved-area';
 
 export type SavedAreaStatus = {
   /** undefined until a risk result is cached for this area (offline before first fetch). */

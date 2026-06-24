@@ -1,7 +1,7 @@
-import type { CreateSavedAreaInput } from '@/features/saved-areas/schemas/saved-area.schema';
-import type { SavedArea } from '@/features/saved-areas/types';
 import { del, get, patch, post } from '@/shared/lib/api/fetch';
 import { VISITOR_ID_HEADER } from '@/shared/lib/security/visitor-id';
+import type { CreateSavedAreaInput } from './schema';
+import type { SavedArea } from './types';
 
 const BASE = '/api/saved-areas';
 

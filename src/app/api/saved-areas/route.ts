@@ -1,12 +1,11 @@
 import { z } from 'zod';
-import { MAX_SAVED_AREAS_PER_VISITOR } from '@/features/saved-areas/constants';
+import { createSavedAreaSchema, MAX_SAVED_AREAS_PER_VISITOR } from '@/features/core/saved-area';
 import {
   countSavedAreas,
   createSavedArea,
   findDuplicateArea,
   listSavedAreas,
 } from '@/features/saved-areas/queries/saved-areas-repo';
-import { createSavedAreaSchema } from '@/features/saved-areas/schemas/saved-area.schema';
 import { prisma } from '@/shared/lib/prisma';
 import { clientIp } from '@/shared/lib/security/client-ip';
 import { checkRateLimit } from '@/shared/lib/security/rate-limit';

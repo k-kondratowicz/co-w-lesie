@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { MAX_SAVED_AREAS_PER_VISITOR } from '@/features/saved-areas/constants';
+import { MAX_SAVED_AREAS_PER_VISITOR } from '@/features/core/saved-area';
 import { prisma } from '@/shared/lib/prisma';
 import { VISITOR_ID_HEADER } from '@/shared/lib/security/visitor-id';
 import { DELETE, PATCH } from './[id]/route';

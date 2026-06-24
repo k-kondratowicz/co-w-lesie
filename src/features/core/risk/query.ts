@@ -1,7 +1,7 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
-import { DEFAULT_RADIUS_METERS } from '@/features/core/risk';
-import type { RiskAssessment } from '@/features/safety/types';
-import { api } from '@/shared/lib/api/client';
+import { riskApi } from './api';
+import type { RiskAssessment } from './assessment';
+import { DEFAULT_RADIUS_METERS } from './config';
 
 // Single source for the risk query key + fetcher, shared by the assistant (one point) and the
 // saved-areas list (one per area). They MUST resolve to the same cache entry: opening a saved
@@ -19,7 +19,7 @@ export function riskQueryOptions(
 
   return {
     queryKey: ['risk', lat, lng, radius],
-    queryFn: () => api.risk.assess(lat, lng, radius),
+    queryFn: () => riskApi.assess(lat, lng, radius),
     networkMode: 'offlineFirst',
   };
 }

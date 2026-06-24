@@ -1,6 +1,6 @@
 import { z } from 'zod';
+import { renameSavedAreaSchema } from '@/features/core/saved-area';
 import { deleteSavedArea, renameSavedArea } from '@/features/saved-areas/queries/saved-areas-repo';
-import { renameSavedAreaSchema } from '@/features/saved-areas/schemas/saved-area.schema';
 import { prisma } from '@/shared/lib/prisma';
 import { readVisitorId } from '@/shared/lib/security/visitor-id';
 

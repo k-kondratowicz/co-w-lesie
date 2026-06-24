@@ -1,7 +1,7 @@
 import { Trash2 } from 'lucide-react';
 import { RISK_LEVEL_PRESENTATION } from '@/features/core/risk';
+import type { SavedArea } from '@/features/core/saved-area';
 import { useSavedAreaStatuses } from '@/features/saved-areas/hooks/use-saved-area-statuses';
-import type { SavedArea } from '@/features/saved-areas/types';
 import { Button } from '@/shared/components/ui/button';
 import { Spinner } from '@/shared/components/ui/spinner';
 import { formatRelativeTime } from '@/shared/lib/date/format-relative-time';

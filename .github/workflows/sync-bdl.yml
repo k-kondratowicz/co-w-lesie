@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger BDL sync
-        if: github.event.schedule != '15 0,6,12,18 * * *'
+        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 */6 * * *'
         run: |
           dataset=fire
           case "${{ github.event.schedule }}" in
@@ -28,10 +28,11 @@ jobs:
           curl -fsS "${{ vars.APP_URL }}/api/cron/sync-bdl?dataset=${dataset}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 
-      # Runs after a BDL sync so saved areas are checked against fresh fire/ban data. Onset-only
-      # dedup means extra runs (e.g. on the health tick) never re-alert a standing hazard.
+      # Runs after a BDL sync so saved areas are checked against fresh fire/ban data. Skips the
+      # KMZB and watchdog ticks: the watchdog must not touch sync state, and KMZB does not change
+      # fire/ban signals. Onset-only dedup means the remaining extra runs never re-alert a standing hazard.
       - name: Notify saved areas
-        if: github.event.schedule != '15 0,6,12,18 * * *'
+        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 */6 * * *'
         run: |
           curl -fsS "${{ vars.APP_URL }}/api/cron/notify-areas" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

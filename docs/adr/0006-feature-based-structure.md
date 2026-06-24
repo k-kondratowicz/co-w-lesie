@@ -46,8 +46,13 @@ flowing **downward only**. A feature may import `features/core`; `core` may not 
 
 ### Public API
 
-Every feature and every `core` slice exposes an `index.ts`. Other modules import the slice by its
-folder (`@/features/core/risk`), never a deep internal path. Deep imports are forbidden.
+Every `core` slice exposes an `index.ts`; other modules import it by its folder
+(`@/features/core/risk`), never a deep internal path. Deep imports of a core slice are forbidden.
+
+Plain features deliberately do **not** carry a barrel yet: `no-sibling-feature` bans
+feature-to-feature imports outright, so a feature has no external consumer to expose a public API
+to, and the `app` composition layer may deep-import a feature's components. A feature gains an
+`index.ts` only if a genuine cross-feature need ever appears - we don't add unused barrels.
 
 ### `shared/lib` cleanup
 
@@ -62,13 +67,18 @@ orchestration layer: the `app` route / cron handler that owns the request (see R
 ### Enforcement
 
 `dependency-cruiser` (structure-agnostic, no ESLint needed - keeps the Biome-only setup), wired as
-`npm run lint:arch` and run in CI. Rules:
+`npm run lint:arch` and run in CI. Rules (all `error` except where noted):
 
 - `no-sibling-feature` - a `features/<a>/` module may not import `features/<b>/` (a != b),
   except `features/core`.
-- `no-deep-import` - imports of a feature must resolve to its `index.ts`, not an internal path.
+- `core-public-api-only` / `core-cross-slice-public-api-only` - a core slice is imported only
+  through its `index.ts`, never a deep internal path (from outside core, and between core slices).
 - `core-no-feature-dep` - `features/core` may not import a concrete (non-core) feature.
-- `no-upward` - `shared` may not import `features`; `features/core` may not import `app`.
+- `core-no-app` - `features/core` may not import the `app` layer.
+- `no-feature-circular` - no dependency cycles within `src/features` (the pre-existing benign
+  barrel cycles inside `shared/` are out of scope).
+- `shared-no-upward` (`warn` until R6) - `shared` may not import `features`/`app`. The remaining
+  hits are domain still living in `shared/lib` (`risk/assess-point`, `push/*`), cleared in R6.
 
 ## Consequences
 

@@ -1,9 +1,9 @@
 'use client';
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import type { ReportsGeoJSON } from '@/features/core/report';
+import { type ReportsGeoJSON, reportsApi } from '@/features/core/report';
+import { bansApi, kmzbApi } from '@/features/map/api';
 import type { BansGeoJSON, KmzbGeoJSON } from '@/features/map/types';
-import { api } from '@/shared/lib/api/client';
 
 type ViewportGeoJSON = ReportsGeoJSON | BansGeoJSON | KmzbGeoJSON;
 
@@ -11,14 +11,14 @@ type EndpointKey = 'reports' | 'bans' | 'kmzb';
 
 function fetchFeatures(endpoint: EndpointKey, bbox: string, since: string | null): Promise<ViewportGeoJSON> {
   if (endpoint === 'bans') {
-    return api.bans.list(bbox);
+    return bansApi.list(bbox);
   }
 
   if (endpoint === 'kmzb') {
-    return api.kmzb.list(bbox);
+    return kmzbApi.list(bbox);
   }
 
-  return api.reports.list(bbox, since);
+  return reportsApi.list(bbox, since);
 }
 
 /**

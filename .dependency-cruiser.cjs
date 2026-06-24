@@ -1,22 +1,24 @@
 /**
  * Feature-based architecture rules - ADR 0006.
- * Layers, import downward only: app -> features/core -> features/* -> shared.
- * Phase R0: every rule is `warn` (informational, build does not fail). They flip to
- * `error` in phase R4 once the cycles are gone and each slice exposes an index.ts.
- * The `no-deep-import` rule is added in R4 (it only makes sense once barrels exist).
+ * Layers, import downward only: app -> features/* -> features/core -> shared.
+ *
+ * The isolation rules are `error` (the R1-R3 refactor brought them to zero). `shared-no-upward`
+ * stays `warn` until R6 moves the remaining domain code (bdl/kmzb/risk/push) out of shared/lib.
+ * `no-circular` is scoped to src/features; the pre-existing shared/ form+dialog barrel cycles are
+ * out of scope for this architecture.
  */
 module.exports = {
   forbidden: [
     {
-      name: 'no-circular',
-      severity: 'warn',
-      comment: 'No cyclic dependencies. Known cycles to remove: map<->reports (R2) and safety<->saved-areas (R3).',
-      from: {},
-      to: { circular: true },
+      name: 'no-feature-circular',
+      severity: 'error',
+      comment: 'No cyclic dependencies between feature/core modules.',
+      from: { path: '^src/features/' },
+      to: { circular: true, path: '^src/features/' },
     },
     {
       name: 'no-sibling-feature',
-      severity: 'warn',
+      severity: 'error',
       comment:
         'A feature must not import a sibling feature. Move shared domain down to features/core, or lift composition up to the app route layer.',
       from: { path: '^src/features/(?!core/)([^/]+)/' },
@@ -27,24 +29,41 @@ module.exports = {
     },
     {
       name: 'core-no-feature-dep',
-      severity: 'warn',
+      severity: 'error',
       comment: 'features/core holds reusable domain; it must not import a concrete (non-core) feature.',
       from: { path: '^src/features/core/' },
       to: { path: '^src/features/(?!core/)' },
     },
     {
-      name: 'shared-no-upward',
-      severity: 'warn',
-      comment: 'shared is infrastructure with no domain; it must not import features or app.',
-      from: { path: '^src/shared/' },
-      to: { path: '^src/(features|app)/' },
-    },
-    {
       name: 'core-no-app',
-      severity: 'warn',
+      severity: 'error',
       comment: 'features/core sits below the app layer; it must not import app.',
       from: { path: '^src/features/core/' },
       to: { path: '^src/app/' },
+    },
+    {
+      name: 'core-public-api-only',
+      severity: 'error',
+      comment: 'Import a core slice through its index.ts, not an internal file.',
+      from: { path: '^src/(app|features)/', pathNot: '^src/features/core/' },
+      to: { path: '^src/features/core/[^/]+/(?!index\\.)..*' },
+    },
+    {
+      name: 'core-cross-slice-public-api-only',
+      severity: 'error',
+      comment: 'A core slice importing another core slice must go through its index.ts.',
+      from: { path: '^src/features/core/([^/]+)/' },
+      to: {
+        path: '^src/features/core/[^/]+/(?!index\\.)..*',
+        pathNot: '^src/features/core/$1/',
+      },
+    },
+    {
+      name: 'shared-no-upward',
+      severity: 'warn',
+      comment: 'shared is infrastructure with no domain; it must not import features or app. Remaining hits clear in R6.',
+      from: { path: '^src/shared/' },
+      to: { path: '^src/(features|app)/' },
     },
   ],
   options: {

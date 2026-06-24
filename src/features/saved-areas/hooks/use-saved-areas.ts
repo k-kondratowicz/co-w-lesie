@@ -7,20 +7,22 @@ import type { SavedArea } from '@/features/saved-areas/types';
 import { api } from '@/shared/lib/api/client';
 import { useVisitorIdStore } from '@/shared/store/use-visitor-id-store';
 
-const QUERY_KEY = ['saved-areas'];
-
 export function useSavedAreas() {
   const visitorId = useVisitorIdStore((state) => state.visitorId);
   const queryClient = useQueryClient();
 
+  // Scope the cache to the visitor: the list is visitor-specific, so a changed visitorId (storage
+  // reset, migration, debug tooling) must not read another visitor's cached areas under one key.
+  const queryKey = ['saved-areas', visitorId];
+
   const list = useQuery({
-    queryKey: QUERY_KEY,
+    queryKey,
     queryFn: () => api.savedAreas.list(visitorId),
     // Serve the persisted list when offline instead of erroring, so saved areas stay browsable.
     networkMode: 'offlineFirst',
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey });
 
   const create = useMutation({
     mutationFn: (input: CreateSavedAreaInput) => api.savedAreas.create(visitorId, input),

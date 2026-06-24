@@ -50,8 +50,8 @@ type Status = 'unsupported' | 'needs-install' | 'denied' | 'subscribed' | 'idle'
 // that blocks the push endpoint. None of that is the user's fault, so we explain it instead of
 // letting the rejection surface as an uncaught promise.
 const PUSH_SERVICE_REFUSED =
-  'Nie udalo sie wlaczyc powiadomien - przegladarka lub siec odmowily polaczenia z usluga push. Sprobuj w Chrome, sprawdz ustawienia powiadomien lub wylacz blokady sieci.';
-const PUSH_GENERIC_ERROR = 'Nie udalo sie wlaczyc powiadomien. Sprobuj ponownie.';
+  'Nie udało się włączyć powiadomień - przeglądarka lub sieć odmówiły połączenia z usługą push. Spróbuj w Chrome, sprawdź ustawienia powiadomień lub wyłącz blokady sieci.';
+const PUSH_GENERIC_ERROR = 'Nie udało się włączyć powiadomień. Spróbuj ponownie.';
 
 export function usePushNotifications() {
   const visitorId = useVisitorIdStore((state) => state.visitorId);

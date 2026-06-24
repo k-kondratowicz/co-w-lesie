@@ -1,7 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { TriangleAlert } from 'lucide-react';
+import { TriangleAlert, X } from 'lucide-react';
+import { useState } from 'react';
+import { Alert, AlertAction, AlertDescription, AlertTitle, Button } from '@/shared/components/ui';
 import { get } from '@/shared/lib/api/fetch';
 import { formatRelativeTime } from '@/shared/lib/date/format-relative-time';
 import type { SyncFreshness } from '@/shared/lib/sync-freshness';
@@ -22,6 +24,8 @@ function lastCriticalUpdate(freshness: SyncFreshness): string | null {
 // Loud, app-wide warning when the safety-critical signals (fire hazard, entry bans) have gone
 // stale - so a dead sync never lets the assistant quietly imply "no known hazards" on old data.
 export function StaleDataBanner() {
+  const [dissmissed, setDismissed] = useState(false);
+
   const { data } = useQuery({
     queryKey: ['sync-status'],
     queryFn: () => get<SyncFreshness>('/api/sync-status'),
@@ -33,18 +37,30 @@ export function StaleDataBanner() {
     return null;
   }
 
+  if (dissmissed) {
+    return null;
+  }
+
   const updatedAt = lastCriticalUpdate(data);
 
   return (
-    <div className="pointer-events-auto absolute top-20 left-1/2 z-30 w-[min(92%,32rem)] -translate-x-1/2">
-      <div className="flex items-start gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm text-white shadow-lg">
-        <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-        <p>
-          Dane o zagrożeniu pożarowym i zakazach wstępu mogą być nieaktualne
-          {updatedAt ? ` (ostatnia aktualizacja ${formatRelativeTime(updatedAt)})` : ''}. Zachowaj szczególną ostrożność i sprawdź
-          komunikaty Lasów Państwowych.
-        </p>
-      </div>
-    </div>
+    <Alert
+      variant="destructive"
+      className="absolute! pointer-events-auto top-20 left-1/2 z-30 w-[min(92%,32rem)] -translate-x-1/2"
+    >
+      <TriangleAlert />
+      <AlertTitle>Dane mogą być nieaktualne</AlertTitle>
+      <AlertDescription>
+        Dane o zagrożeniu pożarowym i zakazach wstępu mogą być nieaktualne
+        {updatedAt ? ` (ostatnia aktualizacja ${formatRelativeTime(updatedAt)})` : ''}. Zachowaj szczególną ostrożność i sprawdź
+        komunikaty Lasów Państwowych.
+      </AlertDescription>
+      <AlertAction>
+        <Button size="icon-sm" variant="destructive" onClick={() => setDismissed(true)}>
+          <X />
+          <span className="sr-only">Zamknij</span>
+        </Button>
+      </AlertAction>
+    </Alert>
   );
 }

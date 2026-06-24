@@ -27,8 +27,8 @@ Design (no `entities`/`widgets`/`segments` taxonomy) - it is more structure than
 
 ## Decision
 
-Adopt the layer model **`app` -> features (`features/core` -> `features/*`) -> `shared`**, with
-imports flowing **downward only**.
+Adopt the layer model **`app` -> `features/*` -> `features/core` -> `shared`**, with imports
+flowing **downward only**. A feature may import `features/core`; `core` may not import a feature.
 
 ### Layers
 
@@ -53,8 +53,11 @@ folder (`@/features/core/risk`), never a deep internal path. Deep imports are fo
 
 Domain code moves out of `shared/lib` into `features/core`:
 `bdl`, `kmzb` -> `features/core/{bdl,kmzb}` (composed by the cron routes in `app/`);
-`risk/assess-point` -> `features/core/risk`; `sync-freshness` and `push/notify-areas` ->
-`features/core`. `push/send` (generic web-push transport) stays in `shared`.
+`sync-freshness` -> `features/core`. `push/send` (generic web-push transport) stays in `shared`.
+
+`risk/assess-point` and `push/notify-areas` are **impure composition** (they query reports/areas
+and run the engine), so they are not `core` - `core` may not import a feature. They move up to the
+orchestration layer: the `app` route / cron handler that owns the request (see R3/R6).
 
 ### Enforcement
 

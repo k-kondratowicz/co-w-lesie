@@ -32,6 +32,11 @@ reassurance.
 - **No "all clear" push, ever.** When a hazard lifts we silently reset the signature (so the next
   onset re-alerts) but send nothing - a "now safe" message would violate the safety rule. The
   notification copy names the hazard and always advises caution + checking official LP notices.
+- **The signature advances only after delivery.** It is updated when there is nothing to send
+  (set unchanged or a hazard cleared) or once at least one notification was delivered (or there are
+  no subscribers). A transient push-service failure (timeout / 5xx) leaves it unchanged, so the
+  next sweep retries the still-standing hazard rather than treating it as already-alerted - the
+  failure mode favours a duplicate alert over a missed one, per the safety rule.
 - Dead subscriptions (push service returns 404/410) are pruned on send, so the table self-heals.
 - Without VAPID env keys the sender fails closed and the subscribe endpoint returns 503 - push is
   simply disabled, the rest of the app is unaffected.

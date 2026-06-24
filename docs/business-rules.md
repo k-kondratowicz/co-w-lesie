@@ -28,14 +28,14 @@ gathers the signals, the engine scores them.
 | Signal | Source |
 |---|---|
 | Nearby reports | reports within the radius, with age in days |
-| Fire-hazard degree (0–3, or unknown) | BDL fire zone containing the point |
+| Fire-hazard degree (0-3, or unknown) | BDL fire zone containing the point |
 | Entry ban (yes/no) | BDL ban polygons containing the point |
 | In forest (in/out/unknown) | `forest_area` PostGIS lookup |
 
 ### Scoring
 
 1. **Report density** - for each report, `typeWeight × recencyDecay`, summed, divided by the
-   saturation constant (**3**), clamped to 0–1.
+   saturation constant (**3**), clamped to 0-1.
    - `recencyDecay = 1 − ageDays / 30`, clamped to 0 - a report contributes nothing after **30 days**.
    - Type weights: `SHOTS 1.0`, `SHOTS_HEARD 0.9`, `HUNTING 0.9`, `AGGRESSIVE_ANIMAL 0.8`,
      `FIRE 0.8`, `BLOOD 0.5`, `DEAD_ANIMAL 0.4`, `BLOCKED_PATH 0.3`, `VACCINATION 0.2`,
@@ -46,12 +46,12 @@ gathers the signals, the engine scores them.
 ### Level
 
 - **Hard RED** when `entryBan` **or** `fireDegree === 3` → score forced to 1.0.
-- Otherwise from the combined 0–1 score:
+- Otherwise from the combined 0-1 score:
   - `< 0.25` → **GREEN** ("no known hazards nearby")
   - `< 0.6` → **YELLOW** ("stay cautious")
   - `≥ 0.6` → **RED** ("we advise against going")
 
-The score is also returned as 0–100 for display.
+The score is also returned as 0-100 for display.
 
 ### Freshness
 
@@ -96,3 +96,26 @@ The crowd curates accuracy:
 - **Voting requires proximity**: a vote is a first-hand claim, so the voter must be within **2 km**
   of the report (the server checks the voter's location against the report). Votes from further away
   are rejected (422), mirroring the "be near a forest" rule for creating a report.
+
+## Saved areas & hazard alerts
+
+A visitor can bookmark areas (center + radius) and opt into push alerts. See
+[ADR 0005](./adr/0005-web-push-notifications.md) for the technical decisions; the rules:
+
+- **Visitor scoping.** Areas and push subscriptions are keyed by an anonymous, client-generated
+  `visitorId` (no accounts), sent as the `x-visitor-id` header. It is an unguessable bearer, so it
+  must be high-entropy: a UUID (or 128-bit random hex in a non-secure context where `randomUUID`
+  is unavailable), persisted client-side. A visitor only ever sees/edits their own areas.
+- **Duplicate buffer.** Saving an area dedupes against an existing same-radius area whose center is
+  within `max(100 m, radius * 10%)` (`DUPLICATE_BUFFER_*` in
+  [`constants.ts`](../src/features/saved-areas/constants.ts)). GPS jitter on a re-save of the same
+  spot is the same area (HTTP 409); a different radius or a genuinely distant point is a new area.
+  Enforced on both the client (button state) and the server (the API is the source of truth).
+- **Onset-only alerts.** The post-sync sweep pushes only when a RED hazard (entry ban or
+  fire-hazard degree III) has **newly appeared** since the last alert, deduped via a
+  `lastAlertSignature` per area. A standing hazard never re-alerts.
+- **Never an "all clear".** When a hazard lifts the signature is reset silently (so a later
+  re-onset alerts again) but nothing is sent - a "now safe" push would violate the safety rule.
+- **Alerts favour re-sending over suppression.** The signature advances only after a notification
+  is actually delivered (or there is no one to notify). A transient push-service failure leaves it
+  unchanged so the next sweep retries, rather than silently dropping a safety alert.

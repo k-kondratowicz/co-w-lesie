@@ -176,19 +176,6 @@ export function SafetyAssistant() {
 
           {data ? (
             <ResponsiveDialogFooter className="sm:flex-col">
-              {target ? (
-                <Button
-                  variant="default"
-                  onClick={() => createArea.mutate({ location: [target.lng, target.lat], radiusMeters: data.radiusMeters })}
-                  disabled={createArea.isPending || !online || isTargetSaved}
-                  className="w-full"
-                  title={online || isTargetSaved ? undefined : 'Zapisywanie obszaru wymaga połączenia z internetem'}
-                >
-                  {createArea.isPending ? <Spinner /> : isTargetSaved ? <StarPlus /> : <Star />}
-                  {online ? (isTargetSaved ? 'Zapisany obszar' : 'Zapisz ten obszar') : 'Zapisz ten obszar (wymaga połączenia)'}
-                </Button>
-              ) : null}
-
               <div className="flex w-full flex-col gap-2 sm:flex-row">
                 <Button variant="outline" onClick={chooseMyLocation} disabled={locating || isFetching} className="sm:flex-1">
                   {locating && <Spinner />}
@@ -198,6 +185,19 @@ export function SafetyAssistant() {
                   Wskaż na mapie
                 </Button>
               </div>
+
+              {target ? (
+                <Button
+                  variant="default"
+                  onClick={() => createArea.mutate({ location: [target.lng, target.lat], radiusMeters: data.radiusMeters })}
+                  disabled={createArea.isPending || !online || isTargetSaved}
+                  className="w-full"
+                  title={online || isTargetSaved ? undefined : 'Zapisywanie obszaru wymaga połączenia z internetem'}
+                >
+                  {createArea.isPending ? <Spinner /> : isTargetSaved ? <StarPlus /> : <Star />}
+                  {online ? (isTargetSaved ? 'Obszar zapisany' : 'Zapisz ten obszar') : 'Zapisz ten obszar (wymaga połączenia)'}
+                </Button>
+              ) : null}
             </ResponsiveDialogFooter>
           ) : null}
         </ResponsiveDialogScrollArea>

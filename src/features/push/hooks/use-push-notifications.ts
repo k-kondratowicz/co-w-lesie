@@ -52,6 +52,7 @@ type Status = 'unsupported' | 'needs-install' | 'denied' | 'subscribed' | 'idle'
 const PUSH_SERVICE_REFUSED =
   'Nie udało się włączyć powiadomień - przeglądarka lub sieć odmówiły połączenia z usługą push. Spróbuj w Chrome, sprawdź ustawienia powiadomień lub wyłącz blokady sieci.';
 const PUSH_GENERIC_ERROR = 'Nie udało się włączyć powiadomień. Spróbuj ponownie.';
+const PUSH_UNSUBSCRIBE_ERROR = 'Nie udało się wyłączyć powiadomień. Spróbuj ponownie.';
 
 export function usePushNotifications() {
   const visitorId = useVisitorIdStore((state) => state.visitorId);
@@ -117,11 +118,15 @@ export function usePushNotifications() {
       const registration = await navigator.serviceWorker.getRegistration();
       const subscription = await registration?.pushManager.getSubscription();
       if (subscription) {
-        await api.push.unsubscribe(visitorId, subscription.endpoint);
+        // Server cleanup is best-effort: a 404 means the row is already gone (e.g. it was saved
+        // under a previous visitorId), which must not stop us unsubscribing the browser locally.
+        await api.push.unsubscribe(visitorId, subscription.endpoint).catch(() => undefined);
         await subscription.unsubscribe();
       }
 
       setStatus('idle');
+    } catch {
+      setError(PUSH_UNSUBSCRIBE_ERROR);
     } finally {
       setPending(false);
     }

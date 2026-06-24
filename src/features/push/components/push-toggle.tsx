@@ -35,6 +35,7 @@ export function PushToggle() {
           {pending ? <Spinner /> : <BellOff />}
           Wyłącz powiadomienia
         </Button>
+        {error ? <p className="text-destructive text-xs">{error}</p> : null}
       </div>
     );
   }

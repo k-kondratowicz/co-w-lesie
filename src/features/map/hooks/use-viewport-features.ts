@@ -1,8 +1,8 @@
 'use client';
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import type { ReportsGeoJSON } from '@/features/core/report';
 import type { BansGeoJSON, KmzbGeoJSON } from '@/features/map/types';
-import type { ReportsGeoJSON } from '@/features/reports/types';
 import { api } from '@/shared/lib/api/client';
 
 type ViewportGeoJSON = ReportsGeoJSON | BansGeoJSON | KmzbGeoJSON;

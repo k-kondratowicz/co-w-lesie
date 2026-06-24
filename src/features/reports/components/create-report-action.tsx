@@ -6,11 +6,7 @@ import { MapPin, PlusIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import {
-  type CreateReportInput,
-  createReportSchema,
-  REPORT_MAX_OFFSET_METERS,
-} from '@/features/reports/schemas/create-report.schema';
+import { type CreateReportInput, createReportSchema, REPORT_MAX_OFFSET_METERS } from '@/features/core/report';
 import { uploadReportPhoto } from '@/features/reports/upload-photo';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';

@@ -1,4 +1,4 @@
-import { reportImageUrl } from '@/features/reports/image';
+import { reportImageUrl } from '@/features/core/report';
 import { isReportVisible } from '@/features/reports/lifecycle';
 import { prisma } from '@/shared/lib/prisma';
 

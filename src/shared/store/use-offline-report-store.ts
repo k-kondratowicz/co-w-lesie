@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CreateReportInput } from '@/features/reports/schemas/create-report.schema';
+import type { CreateReportInput } from '@/features/core/report';
 import { createRandomId } from '@/shared/lib/random-id';
 
 export type QueuedReport = {

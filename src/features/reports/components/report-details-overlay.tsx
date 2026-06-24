@@ -1,4 +1,4 @@
-import type { PopupInfo } from '@/features/map/hooks/use-map-interaction';
+import type { PopupInfo } from '@/features/core/report';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,

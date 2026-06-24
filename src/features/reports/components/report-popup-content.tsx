@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle2, Share2, ThumbsDown } from 'lucide-react';
-import type { PopupReport } from '@/features/map/hooks/use-map-interaction';
+import type { PopupReport } from '@/features/core/report';
 import { ReportImage } from '@/features/reports/components/report-image';
 import { useReportVote } from '@/features/reports/hooks/use-report-vote';
 import { useShareReport } from '@/features/reports/hooks/use-share-report';

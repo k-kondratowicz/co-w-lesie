@@ -4,19 +4,8 @@ import type { ReportType } from '@prisma/client';
 import type { MapLayerMouseEvent, MapRef } from '@vis.gl/react-maplibre';
 import type { GeoJSONSource } from 'maplibre-gl';
 import { type RefObject, useCallback, useState } from 'react';
+import type { PopupInfo, PopupReport } from '@/features/core/report';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
-
-export type PopupReport = {
-  id: string;
-  type: ReportType;
-  description: string | null;
-  createdAt: string;
-  expiresAt: string | null;
-  confirmations: number;
-  flags: number;
-  imageUrl: string | null;
-};
-export type PopupInfo = { lng: number; lat: number; reports: PopupReport[] };
 
 type FeatureLike = { id?: string | number; properties: Record<string, unknown> | null };
 

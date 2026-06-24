@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { isAllowedImageType, reportImageKey } from '@/features/reports/image';
+import { isAllowedImageType, reportImageKey } from '@/features/core/report';
 import { isR2Configured, putObject } from '@/shared/lib/r2';
 import { clientIp } from '@/shared/lib/security/client-ip';
 import { checkRateLimit } from '@/shared/lib/security/rate-limit';

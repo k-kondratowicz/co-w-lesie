@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { locationSchema } from '@/features/reports/schemas/create-report.schema';
+import { locationSchema } from '@/features/core/report';
 import { MAX_AREA_NAME_LENGTH, MAX_AREA_RADIUS_METERS, MIN_AREA_RADIUS_METERS } from '@/features/saved-areas/constants';
 
 export const createSavedAreaSchema = z.object({

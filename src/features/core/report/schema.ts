@@ -1,7 +1,7 @@
 import { ReportType } from '@prisma/client';
 import { z } from 'zod';
-import { isReportImageKey } from '@/features/reports/image';
 import { isWithinBbox, POLAND_BBOX } from '@/shared/lib/geo/bbox';
+import { isReportImageKey } from './image';
 
 export const MAX_DESCRIPTION_LENGTH = 1000;
 

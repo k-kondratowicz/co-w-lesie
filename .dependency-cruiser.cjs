@@ -2,10 +2,9 @@
  * Feature-based architecture rules - ADR 0006.
  * Layers, import downward only: app -> features/* -> features/core -> shared.
  *
- * The isolation rules are `error` (the R1-R3 refactor brought them to zero). `shared-no-upward`
- * stays `warn` until R6 moves the remaining domain code (bdl/kmzb/risk/push) out of shared/lib.
- * `no-circular` is scoped to src/features; the pre-existing shared/ form+dialog barrel cycles are
- * out of scope for this architecture.
+ * All rules are `error` and report zero violations. `shared-no-upward` allows `import type`
+ * (erased at build, no runtime coupling). Circularity is scoped to src/features; the pre-existing
+ * shared/ form+dialog barrel cycles are out of scope for this architecture.
  */
 module.exports = {
   forbidden: [

@@ -1,8 +1,11 @@
 'use client';
 
-import { ShieldQuestion } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ShieldQuestion, Star, StarPlus } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRiskAssessment } from '@/features/safety/hooks/use-risk-assessment';
+import { SavedAreasList } from '@/features/saved-areas/components/saved-areas-list';
+import { useSavedAreas } from '@/features/saved-areas/hooks/use-saved-areas';
+import { findDuplicateSavedArea } from '@/features/saved-areas/is-duplicate-area';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -18,17 +21,23 @@ import {
 import { Spinner } from '@/shared/components/ui/spinner';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { useIsDesktop } from '@/shared/hooks/use-is-desktop';
+import { useOnlineStatus } from '@/shared/hooks/use-online-status';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
+import { useSafetyTargetStore } from '@/shared/store/use-safety-target-store';
 import { RiskResult } from './risk-result';
 
 export function SafetyAssistant() {
   const [open, setOpen] = useState(false);
-  const { target, setTarget, data, isFetching, isError, refetch } = useRiskAssessment(open);
+  const { target, setTarget, data, isFetching, isError, refetch, dataUpdatedAt } = useRiskAssessment(open);
+  const { create: createArea, areas } = useSavedAreas();
+  const online = useOnlineStatus();
   const { position, getCurrentPosition, isFetching: locating, error: locationError, permissionDenied } = useGeolocation();
   const startPicking = useMapPickStore((state) => state.startPicking);
   const pickedPoint = useMapPickStore((state) => state.pickedPoint);
   const clearPicked = useMapPickStore((state) => state.clearPicked);
   const cancelPicking = useMapPickStore((state) => state.cancelPicking);
+  const requestedTarget = useSafetyTargetStore((state) => state.requested);
+  const consumeRequestedTarget = useSafetyTargetStore((state) => state.consume);
   const isDesktop = useIsDesktop();
 
   // A point picked on the map (for safety) becomes the target, reopening the dialog with its result.
@@ -41,6 +50,22 @@ export function SafetyAssistant() {
     setOpen(true);
     clearPicked();
   }, [pickedPoint, setTarget, clearPicked]);
+
+  // A saved area picked from its sheet assesses that exact point + radius, reopening the dialog.
+  useEffect(() => {
+    if (!requestedTarget) {
+      return;
+    }
+
+    setTarget(requestedTarget);
+    setOpen(true);
+    consumeRequestedTarget();
+  }, [requestedTarget, setTarget, consumeRequestedTarget]);
+
+  const isTargetSaved = useMemo(
+    () => (target && data ? findDuplicateSavedArea(areas, target, data.radiusMeters) !== undefined : false),
+    [target, data, areas],
+  );
 
   const chooseMyLocation = async () => {
     try {
@@ -86,6 +111,7 @@ export function SafetyAssistant() {
             Wskaż punkt na mapie
           </Button>
           {!permissionDenied && locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
+          <SavedAreasList onSelect={(area) => setTarget({ lat: area.lat, lng: area.lng, radiusMeters: area.radiusMeters })} />
         </div>
       );
     }
@@ -110,7 +136,7 @@ export function SafetyAssistant() {
     }
 
     if (data) {
-      return <RiskResult assessment={data} />;
+      return <RiskResult assessment={data} isOffline={!online} lastUpdatedAt={dataUpdatedAt} />;
     }
 
     return null;
@@ -139,7 +165,7 @@ export function SafetyAssistant() {
 
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle className="pr-4">Czy mogę dziś bezpiecznie iść do lasu?</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>Czy mogę dziś bezpiecznie iść do lasu?</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             Sprawdź swoją lokalizację GPS albo wskaż dowolny punkt na mapie.
           </ResponsiveDialogDescription>
@@ -149,14 +175,29 @@ export function SafetyAssistant() {
           {renderContent()}
 
           {data ? (
-            <ResponsiveDialogFooter>
-              <Button variant="outline" onClick={chooseMyLocation} disabled={locating || isFetching} className="sm:flex-1">
-                {locating && <Spinner />}
-                Moja lokalizacja
-              </Button>
-              <Button variant="outline" onClick={chooseOnMap} disabled={locating || isFetching} className="sm:flex-1">
-                Wskaż na mapie
-              </Button>
+            <ResponsiveDialogFooter className="sm:flex-col">
+              <div className="flex w-full flex-col gap-2 sm:flex-row">
+                <Button variant="outline" onClick={chooseMyLocation} disabled={locating || isFetching} className="sm:flex-1">
+                  {locating && <Spinner />}
+                  Moja lokalizacja
+                </Button>
+                <Button variant="outline" onClick={chooseOnMap} disabled={locating || isFetching} className="sm:flex-1">
+                  Wskaż na mapie
+                </Button>
+              </div>
+
+              {target ? (
+                <Button
+                  variant="default"
+                  onClick={() => createArea.mutate({ location: [target.lng, target.lat], radiusMeters: data.radiusMeters })}
+                  disabled={createArea.isPending || !online || isTargetSaved}
+                  className="w-full"
+                  title={online || isTargetSaved ? undefined : 'Zapisywanie obszaru wymaga połączenia z internetem'}
+                >
+                  {createArea.isPending ? <Spinner /> : isTargetSaved ? <StarPlus /> : <Star />}
+                  {online ? (isTargetSaved ? 'Obszar zapisany' : 'Zapisz ten obszar') : 'Zapisz ten obszar (wymaga połączenia)'}
+                </Button>
+              ) : null}
             </ResponsiveDialogFooter>
           ) : null}
         </ResponsiveDialogScrollArea>

@@ -1,6 +1,9 @@
 import { DAY_MS } from '@/shared/lib/date/time';
 import {
   KMZB_BASE_URL,
+  KMZB_FETCH_RETRIES,
+  KMZB_FETCH_RETRY_BASE_MS,
+  KMZB_FETCH_TIMEOUT_MS,
   KMZB_MAX_SUBDIVIDE_DEPTH,
   KMZB_PL_BBOX,
   KMZB_SINCE_DAYS,
@@ -13,6 +16,33 @@ import { type KmzbPointFeature, kmzbFeatureSchema, kmzbResponseSchema } from './
 // Network I/O against the iMapLite service. The service returns aggregate clusters instead of
 // raw features when a bbox holds too many points, so we recurse into quadrants until it yields
 // features (or we hit the depth cap). EPSG:2180 throughout; reprojection happens in mappers.
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// One tile fetch, hardened against the service's intermittent timeouts/connection drops: a
+// per-attempt timeout plus bounded exponential backoff. Throws only once every attempt is spent.
+export async function fetchTileJson(url: string): Promise<unknown> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= KMZB_FETCH_RETRIES; attempt += 1) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(KMZB_FETCH_TIMEOUT_MS) });
+      if (!res.ok) {
+        throw new Error(`KMZB HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      return await res.json();
+    } catch (error) {
+      lastError = error;
+
+      if (attempt < KMZB_FETCH_RETRIES) {
+        await delay(KMZB_FETCH_RETRY_BASE_MS * 2 ** attempt);
+      }
+    }
+  }
+
+  throw lastError;
+}
 
 function buildFilter(): string {
   const sinceMs = Date.now() - KMZB_SINCE_DAYS * DAY_MS;
@@ -32,12 +62,7 @@ async function fetchTile(
   depth = 0,
 ): Promise<KmzbPointFeature[]> {
   const url = `${KMZB_BASE_URL}?bbox=${minX},${minY},${maxX},${maxY}&s=1&filtr=${encodeURIComponent(filter)}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`KMZB HTTP ${res.status}: ${res.statusText}`);
-  }
-
-  const data = kmzbResponseSchema.parse(await res.json());
+  const data = kmzbResponseSchema.parse(await fetchTileJson(url));
 
   if (data.clusters.length > 0 && depth < KMZB_MAX_SUBDIVIDE_DEPTH) {
     const midX = (minX + maxX) / 2;

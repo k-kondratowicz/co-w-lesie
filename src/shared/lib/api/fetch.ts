@@ -18,7 +18,7 @@ async function parseErrorMessage(res: Response): Promise<string> {
   }
 }
 
-export async function get<T>(url: string, params?: Record<string, string | undefined>): Promise<T> {
+export async function get<T>(url: string, params?: Record<string, string | undefined>, headers?: HeadersInit): Promise<T> {
   const filtered: Record<string, string> = {};
   if (params) {
     for (const [k, v] of Object.entries(params)) {
@@ -29,7 +29,7 @@ export async function get<T>(url: string, params?: Record<string, string | undef
   }
 
   const search = Object.keys(filtered).length ? `?${new URLSearchParams(filtered)}` : '';
-  const res = await fetch(`${url}${search}`);
+  const res = await fetch(`${url}${search}`, { headers });
 
   if (!res.ok) {
     throw new ApiError(res.status, await parseErrorMessage(res));
@@ -57,6 +57,38 @@ export async function post<T>(url: string, body: unknown, headers?: HeadersInit)
   }
 
   return parseResponseBody<T>(res);
+}
+
+export async function patch<T>(url: string, body: unknown, headers?: HeadersInit): Promise<T> {
+  const mergedHeaders = new Headers(headers);
+  if (!mergedHeaders.has('Content-Type')) {
+    mergedHeaders.set('Content-Type', 'application/json');
+  }
+
+  const res = await fetch(url, { method: 'PATCH', headers: mergedHeaders, body: JSON.stringify(body) });
+
+  if (!res.ok) {
+    throw new ApiError(res.status, await parseErrorMessage(res));
+  }
+
+  return parseResponseBody<T>(res);
+}
+
+export async function del(url: string, headers?: HeadersInit, body?: unknown): Promise<void> {
+  const mergedHeaders = new Headers(headers);
+  if (body !== undefined && !mergedHeaders.has('Content-Type')) {
+    mergedHeaders.set('Content-Type', 'application/json');
+  }
+
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: mergedHeaders,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw new ApiError(res.status, await parseErrorMessage(res));
+  }
 }
 
 async function parseResponseBody<T>(res: Response): Promise<T> {

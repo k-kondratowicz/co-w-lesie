@@ -1,0 +1,18 @@
+/// An area a visitor bookmarked to revisit (center + radius). Keyed by an anonymous, client
+/// generated visitorId (no accounts) - treated as an unguessable bearer. The center+radius is
+/// enough for the safety check; downstream push reuses the /api/risk query, so no geometry here.
+model SavedArea {
+  id           String   @id @default(cuid())
+  visitorId    String
+  name         String?
+  lat          Float
+  lng          Float
+  radiusMeters Int
+  createdAt    DateTime @default(now())
+
+  /// Hazard fingerprint at the last push (e.g. "ban|fire:3"). Onset-only notifications compare
+  /// against this so a standing ban does not re-alert every sync cycle - null = never alerted.
+  lastAlertSignature String?
+
+  @@index([visitorId])
+}

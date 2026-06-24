@@ -92,7 +92,7 @@ export function ResponsiveDialogFooter({ className, ...props }: React.ComponentP
   return (
     <div
       className={cn(
-        '-mx-4 mt-2 -mb-4 flex flex-col gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:justify-end',
+        '-mx-4 mt-2 mb-0 flex flex-col gap-2 border-t bg-muted/50 p-4 sm:-mb-4 sm:flex-row sm:justify-end',
         isDesktop && 'rounded-b-xl',
         className,
       )}
@@ -104,7 +104,7 @@ export function ResponsiveDialogFooter({ className, ...props }: React.ComponentP
 export function ResponsiveDialogTitle({ className, ...props }: React.ComponentProps<typeof DialogTitle>) {
   const Title = useIsDesktopContext() ? DialogTitle : DrawerTitle;
 
-  return <Title className={cn('pr-4', className)} {...props} />;
+  return <Title className={cn('sm:pr-4', className)} {...props} />;
 }
 
 export function ResponsiveDialogDescription(props: React.ComponentProps<typeof DialogDescription>) {

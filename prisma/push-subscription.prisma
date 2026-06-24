@@ -1,0 +1,13 @@
+/// A Web Push subscription for a device, scoped to the same anonymous visitorId as SavedArea.
+/// One visitor may have several (phone, desktop). The endpoint is the push service URL and is
+/// the natural unique key; keys are the client's p256dh/auth used to encrypt the payload.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  visitorId String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([visitorId])
+}

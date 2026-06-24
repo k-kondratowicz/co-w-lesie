@@ -1,21 +1,10 @@
+import { CloudOff } from 'lucide-react';
 import { fireDegreeRoman } from '@/features/risk/format';
+import { RISK_LEVEL_PRESENTATION } from '@/features/risk/presentation';
 import type { RiskAssessment } from '@/features/safety/types';
 import { formatDate, formatDateTime } from '@/shared/lib/date/format-date';
+import { formatRelativeTime } from '@/shared/lib/date/format-relative-time';
 import { formatDistance } from '@/shared/lib/geo/format-distance';
-
-const LEVEL_STYLES = {
-  GREEN: {
-    box: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
-    dot: 'bg-emerald-500',
-    label: 'Niskie ryzyko',
-  },
-  YELLOW: {
-    box: 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
-    dot: 'bg-amber-500',
-    label: 'Zachowaj ostrożność',
-  },
-  RED: { box: 'bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200', dot: 'bg-red-500', label: 'Odradzamy wyjście do lasu' },
-} as const;
 
 function fireLabel(degree: 0 | 1 | 2 | 3 | null): string {
   if (degree === null) {
@@ -46,9 +35,17 @@ function kmzbAdvisoryItems(advisory: RiskAssessment['kmzbAdvisory']): string[] {
     .map((key) => `${KMZB_ADVISORY_LABELS[key]} (${advisory[key]})`);
 }
 
-export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
+export function RiskResult({
+  assessment,
+  isOffline = false,
+  lastUpdatedAt,
+}: {
+  assessment: RiskAssessment;
+  isOffline?: boolean;
+  lastUpdatedAt?: number;
+}) {
   const { level, message, signals, fireAsOf, bansAsOf, kmzbAsOf, ban, nearbyBans, kmzbAdvisory } = assessment;
-  const style = LEVEL_STYLES[level];
+  const style = RISK_LEVEL_PRESENTATION[level];
   const fireUpdatedAt = fireAsOf ? formatDateTime(fireAsOf) : null;
   const bansUpdatedAt = bansAsOf ? formatDateTime(bansAsOf) : null;
   const kmzbUpdatedAt = kmzbAsOf ? formatDateTime(kmzbAsOf) : null;
@@ -57,6 +54,17 @@ export function RiskResult({ assessment }: { assessment: RiskAssessment }) {
 
   return (
     <div className="space-y-4">
+      {isOffline ? (
+        <div className="flex items-start gap-2 rounded-lg bg-amber-100 p-3 text-amber-900 text-sm dark:bg-amber-950 dark:text-amber-200">
+          <CloudOff className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <p>
+            Jesteś offline - to ostatnia zapamiętana ocena
+            {lastUpdatedAt ? ` (pobrana ${formatRelativeTime(lastUpdatedAt)})` : ''}. Warunki mogły się zmienić - zachowaj
+            ostrożność.
+          </p>
+        </div>
+      ) : null}
+
       <div className={`flex items-center gap-3 rounded-lg p-4 ${style.box}`}>
         <span className={`size-3 shrink-0 rounded-full ${style.dot}`} aria-hidden />
         <p className="font-semibold">{style.label}</p>

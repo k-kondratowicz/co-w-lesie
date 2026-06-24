@@ -30,6 +30,14 @@ export const KMZB_STATUSES = ['Weryfikacja', 'Potwierdzone', 'Potwierdzone (prze
 // week is relevant for "is it safe right now" - older police reports add noise without current value.
 export const KMZB_SINCE_DAYS = 7;
 
+// The iMapLite service is unofficial and flaky under the national tile sweep - it intermittently
+// times out or drops the connection ("fetch failed"). Without these a single transient blip on one
+// tile aborts the whole sync. After retries are exhausted we still throw, so a truly-down service
+// keeps the last good data (safety rule), never a partial wipe.
+export const KMZB_FETCH_TIMEOUT_MS = 20_000;
+export const KMZB_FETCH_RETRIES = 3;
+export const KMZB_FETCH_RETRY_BASE_MS = 500;
+
 // KMZB points are imprecise, so we keep a tight buffer to forests on import rather than a strict
 // in-polygon test. Matches the exploration that produced kmzb-forest-reports.csv.
 export const KMZB_FOREST_BUFFER_METERS = 10;

@@ -10,7 +10,7 @@ model SavedArea {
   radiusMeters Int
   createdAt    DateTime @default(now())
 
-  /// Hazard fingerprint at the last push (e.g. "ban:1|fire:3"). Onset-only notifications compare
+  /// Hazard fingerprint at the last push (e.g. "ban|fire:3"). Onset-only notifications compare
   /// against this so a standing ban does not re-alert every sync cycle - null = never alerted.
   lastAlertSignature String?
 

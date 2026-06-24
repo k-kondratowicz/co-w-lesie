@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { isAuthorizedCron } from '@/shared/lib/security/cron-auth';
-import { notifySavedAreas } from './notify-saved-areas';
+import { notifySavedAreas } from './_lib/notify-saved-areas';
 
 // Scheduler-triggered sweep, run shortly after sync-bdl so saved areas are checked against the
 // freshly synced fire/ban data. Never hit on a user request.

@@ -58,8 +58,9 @@ to, and the `app` composition layer may deep-import a feature's components. A fe
 
 `risk/assess-point` and `push/notify-areas` are **impure composition** (they query reports/areas
 and run the engine), so they are not `core` - `core` may not import a feature. They move up to the
-orchestration layer, co-located with the route that owns the request:
-`app/api/risk/assess-point.ts` and `app/api/cron/notify-areas/notify-saved-areas.ts`.
+orchestration layer, co-located with the owning route in a private `_lib/` folder (underscore =
+not routable, signals "not routing logic"): `app/api/risk/_lib/assess-point.ts` and
+`app/api/cron/notify-areas/_lib/notify-saved-areas.ts`.
 
 What stays in `shared`:
 - `push/send` (web-push transport) and `store/use-offline-report-store` reference a feature/core

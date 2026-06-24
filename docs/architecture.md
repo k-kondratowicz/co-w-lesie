@@ -38,7 +38,7 @@ src/
     components/            UI (shadcn/ui), dialogs, forms
     hooks/                 geolocation, media query, online status
     lib/
-      bdl/, kmzb/          external sync (I/O) - slated to move to features/core (R6)
+      bdl/, kmzb/          external sync (I/O); kept here as ingest infra (imports no feature)
       geo/                 spatial math + PostGIS queries
       api/fetch.ts         typed fetch + ApiError (slice apis live on each slice)
       prisma.ts            DB client (adapter-pg)

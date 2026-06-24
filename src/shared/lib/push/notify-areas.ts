@@ -31,21 +31,28 @@ export async function notifySavedAreas(prisma: PrismaClient): Promise<NotifyArea
     const current = activeHazards(assessment);
     const signature = signatureOf(current);
     const onset = newHazards(area.lastAlertSignature, current);
-
-    if (signature !== area.lastAlertSignature) {
-      await updateAlertSignature(prisma, area.id, signature);
-    }
-
     const alert = buildAreaAlert(areaLabel(area), onset);
+
+    // No new hazard to deliver (set unchanged, or a hazard cleared) - recording the current set is
+    // safe: it never suppresses an alert, and resetting after a clear lets a later re-onset fire.
     if (!alert) {
+      if (signature !== area.lastAlertSignature) {
+        await updateAlertSignature(prisma, area.id, signature);
+      }
+
       continue;
     }
 
+    alerted += 1;
+
     const subscriptions = await listSubscriptions(prisma, area.visitorId);
+    let deliveredAny = false;
+
     for (const subscription of subscriptions) {
       const result = await sendPush(subscription, { ...alert, url: '/' });
 
       if (result.delivered) {
+        deliveredAny = true;
         notificationsSent += 1;
       }
 
@@ -55,7 +62,13 @@ export async function notifySavedAreas(prisma: PrismaClient): Promise<NotifyArea
       }
     }
 
-    alerted += 1;
+    // Advance the signature only once the visitor has actually been told (or there is no one to
+    // tell). A transient push-service failure (timeout / 5xx) must not advance it - otherwise the
+    // next sweep would treat the still-standing hazard as already-alerted and skip the retry,
+    // silently dropping a safety alert.
+    if (deliveredAny || subscriptions.length === 0) {
+      await updateAlertSignature(prisma, area.id, signature);
+    }
   }
 
   return {

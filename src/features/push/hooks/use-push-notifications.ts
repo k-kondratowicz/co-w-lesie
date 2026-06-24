@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useState } from 'react';
 import { pushApi } from '@/features/push/api';
 import { useVisitorIdStore } from '@/shared/store/use-visitor-id-store';

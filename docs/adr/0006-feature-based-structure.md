@@ -49,6 +49,13 @@ flowing **downward only**. A feature may import `features/core`; `core` may not 
 Every `core` slice exposes an `index.ts`; other modules import it by its folder
 (`@/features/core/risk`), never a deep internal path. Deep imports of a core slice are forbidden.
 
+A slice with a `'use client'` member that server code must not pull into its graph splits its
+surface: `index.ts` stays server-safe (types, schema, constants, pure helpers, isomorphic api) and
+a sibling `client.ts` carries the client-only exports. `saved-area` does this - the `/api/saved-areas`
+route imports the barrel for schema/constants, while `useSavedAreas` (react-query + sonner) is
+reached via `@/features/core/saved-area/client`, so the client runtime never enters the server
+bundle graph. `core-public-api-only` permits both `index.` and `client.` as entry points.
+
 Plain features deliberately do **not** carry a barrel yet: `no-sibling-feature` bans
 feature-to-feature imports outright, so a feature has no external consumer to expose a public API
 to, and the `app` composition layer may deep-import a feature's components. A feature gains an

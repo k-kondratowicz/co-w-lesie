@@ -43,9 +43,9 @@ module.exports = {
     {
       name: 'core-public-api-only',
       severity: 'error',
-      comment: 'Import a core slice through its index.ts, not an internal file.',
+      comment: 'Import a core slice through its public entry (index.ts, or client.ts for the client-only surface), not an internal file.',
       from: { path: '^src/(app|features)/', pathNot: '^src/features/core/' },
-      to: { path: '^src/features/core/[^/]+/(?!index\\.)..*' },
+      to: { path: '^src/features/core/[^/]+/(?!(index|client)\\.)..*' },
     },
     {
       name: 'core-cross-slice-public-api-only',
@@ -53,7 +53,7 @@ module.exports = {
       comment: 'A core slice importing another core slice must go through its index.ts.',
       from: { path: '^src/features/core/([^/]+)/' },
       to: {
-        path: '^src/features/core/[^/]+/(?!index\\.)..*',
+        path: '^src/features/core/[^/]+/(?!(index|client)\\.)..*',
         pathNot: '^src/features/core/$1/',
       },
     },

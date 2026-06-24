@@ -1,4 +1,5 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
+import { DEFAULT_RADIUS_METERS } from '@/features/risk/config';
 import type { RiskAssessment } from '@/features/safety/types';
 import { api } from '@/shared/lib/api/client';
 
@@ -11,9 +12,14 @@ export function riskQueryOptions(
   lng: number,
   radiusMeters?: number,
 ): Pick<UseQueryOptions<RiskAssessment>, 'queryKey' | 'queryFn' | 'networkMode'> {
+  // The server defaults an omitted radius to DEFAULT_RADIUS_METERS, so undefined and 5000 are the
+  // same request. Normalize before keying/fetching, or the assistant and the saved-areas list cache
+  // the same point under different keys and refetch needlessly.
+  const radius = radiusMeters ?? DEFAULT_RADIUS_METERS;
+
   return {
-    queryKey: ['risk', lat, lng, radiusMeters],
-    queryFn: () => api.risk.assess(lat, lng, radiusMeters),
+    queryKey: ['risk', lat, lng, radius],
+    queryFn: () => api.risk.assess(lat, lng, radius),
     networkMode: 'offlineFirst',
   };
 }

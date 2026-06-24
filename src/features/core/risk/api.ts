@@ -1,5 +1,5 @@
-import type { RiskAssessment } from '@/features/safety/types';
 import { get } from '@/shared/lib/api/fetch';
+import type { RiskAssessment } from './assessment';
 
 export const riskApi = {
   assess(lat: number, lng: number, radius?: number) {

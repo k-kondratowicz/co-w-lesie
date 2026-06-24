@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import type { MapRef } from '@vis.gl/react-maplibre';
 import { useSearchParams } from 'next/navigation';
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import type { PopupInfo } from '@/features/map/hooks/use-map-interaction';
-import { reportsApi } from '@/features/reports/api';
+import type { PopupInfo } from '@/features/core/report';
+import { reportsApi } from '@/features/core/report';
 
 export function useSharedReport(
   mapRef: RefObject<MapRef | null>,

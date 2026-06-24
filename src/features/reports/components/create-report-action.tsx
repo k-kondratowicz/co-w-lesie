@@ -6,11 +6,7 @@ import { MapPin, PlusIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import {
-  type CreateReportInput,
-  createReportSchema,
-  REPORT_MAX_OFFSET_METERS,
-} from '@/features/reports/schemas/create-report.schema';
+import { type CreateReportInput, createReportSchema, REPORT_MAX_OFFSET_METERS, reportsApi } from '@/features/core/report';
 import { uploadReportPhoto } from '@/features/reports/upload-photo';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
@@ -20,7 +16,7 @@ import { SelectItem } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/button';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { useOnlineStatus } from '@/shared/hooks/use-online-status';
-import { ApiError, api } from '@/shared/lib/api/client';
+import { ApiError } from '@/shared/lib/api/fetch';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import { formatDistance } from '@/shared/lib/geo/format-distance';
 import { isTurnstileEnabled } from '@/shared/lib/security/turnstile-client';
@@ -32,7 +28,7 @@ type CreateReportResult = { queued: true } | { queued: false; id: string };
 
 async function createReport(input: CreateReportInput, turnstileToken: string | null): Promise<CreateReportResult> {
   try {
-    const { id } = await api.reports.create(input, turnstileToken);
+    const { id } = await reportsApi.create(input, turnstileToken);
 
     return { queued: false, id };
   } catch (error) {

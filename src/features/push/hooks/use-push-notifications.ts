@@ -1,5 +1,7 @@
+'use client';
+
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/shared/lib/api/client';
+import { pushApi } from '@/features/push/api';
 import { useVisitorIdStore } from '@/shared/store/use-visitor-id-store';
 
 // VAPID keys travel as URL-safe base64, but PushManager.subscribe wants the raw bytes.
@@ -92,7 +94,7 @@ export function usePushNotifications() {
         return;
       }
 
-      const { publicKey } = await api.push.vapidPublicKey();
+      const { publicKey } = await pushApi.vapidPublicKey();
       const registration = await navigator.serviceWorker.register('/sw.js');
       const existing = await registration.pushManager.getSubscription();
       const subscription =
@@ -102,7 +104,7 @@ export function usePushNotifications() {
           applicationServerKey: urlBase64ToUint8Array(publicKey),
         }));
 
-      await api.push.subscribe(visitorId, subscription.toJSON() as Parameters<typeof api.push.subscribe>[1]);
+      await pushApi.subscribe(visitorId, subscription.toJSON() as Parameters<typeof pushApi.subscribe>[1]);
       setStatus('subscribed');
     } catch (cause) {
       setError(cause instanceof DOMException && cause.name === 'AbortError' ? PUSH_SERVICE_REFUSED : PUSH_GENERIC_ERROR);
@@ -120,7 +122,7 @@ export function usePushNotifications() {
       if (subscription) {
         // Server cleanup is best-effort: a 404 means the row is already gone (e.g. it was saved
         // under a previous visitorId), which must not stop us unsubscribing the browser locally.
-        await api.push.unsubscribe(visitorId, subscription.endpoint).catch(() => undefined);
+        await pushApi.unsubscribe(visitorId, subscription.endpoint).catch(() => undefined);
         await subscription.unsubscribe();
       }
 

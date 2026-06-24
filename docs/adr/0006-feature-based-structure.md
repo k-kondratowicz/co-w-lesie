@@ -27,8 +27,8 @@ Design (no `entities`/`widgets`/`segments` taxonomy) - it is more structure than
 
 ## Decision
 
-Adopt the layer model **`app` -> features (`features/core` -> `features/*`) -> `shared`**, with
-imports flowing **downward only**.
+Adopt the layer model **`app` -> `features/*` -> `features/core` -> `shared`**, with imports
+flowing **downward only**. A feature may import `features/core`; `core` may not import a feature.
 
 ### Layers
 
@@ -46,26 +46,58 @@ imports flowing **downward only**.
 
 ### Public API
 
-Every feature and every `core` slice exposes an `index.ts`. Other modules import the slice by its
-folder (`@/features/core/risk`), never a deep internal path. Deep imports are forbidden.
+Every `core` slice exposes an `index.ts`; other modules import it by its folder
+(`@/features/core/risk`), never a deep internal path. Deep imports of a core slice are forbidden.
+
+A slice with a `'use client'` member that server code must not pull into its graph splits its
+surface: `index.ts` stays server-safe (types, schema, constants, pure helpers, isomorphic api) and
+a sibling `index.client.ts` carries the client-only exports. `saved-area` does this - the
+`/api/saved-areas` route imports the barrel for schema/constants, while `useSavedAreas` (react-query
++ sonner) is reached via `@/features/core/saved-area/index.client`, so the client runtime never
+enters the server bundle graph. The `index.client.ts` name (not `client.ts`) avoids colliding with
+the `bdl`/`kmzb` `client.ts`, which is an HTTP API client. `core-public-api-only` already allows it:
+it shares the `index.` prefix.
+
+Plain features deliberately do **not** carry a barrel yet: `no-sibling-feature` bans
+feature-to-feature imports outright, so a feature has no external consumer to expose a public API
+to, and the `app` composition layer may deep-import a feature's components. A feature gains an
+`index.ts` only if a genuine cross-feature need ever appears - we don't add unused barrels.
 
 ### `shared/lib` cleanup
 
-Domain code moves out of `shared/lib` into `features/core`:
-`bdl`, `kmzb` -> `features/core/{bdl,kmzb}` (composed by the cron routes in `app/`);
-`risk/assess-point` -> `features/core/risk`; `sync-freshness` and `push/notify-areas` ->
-`features/core`. `push/send` (generic web-push transport) stays in `shared`.
+`risk/assess-point` and `push/notify-areas` are **impure composition** (they query reports/areas
+and run the engine), so they are not `core` - `core` may not import a feature. They move up to the
+orchestration layer in a private `_lib/` folder (underscore = not routable, signals "not routing
+logic"). `assess-point` has two consumers - the `/api/risk` route and the `notify-areas` cron - so
+it sits in a neutral `app/_lib/assess-point.ts` rather than being owned by one route. The
+single-consumer sweep stays co-located: `app/api/cron/notify-areas/_lib/notify-saved-areas.ts`.
+
+What stays in `shared`:
+- `push/send` (web-push transport) and `store/use-offline-report-store` reference a feature/core
+  type but only via `import type` - erased at build, no runtime coupling, so they are allowed (see
+  the type-only exception below).
+- `bdl`/`kmzb` sync: a single background job that writes many domain tables. It imports no feature
+  (so it does not break the dependency rule); treating it as ingest infrastructure is a deliberate
+  choice over splitting it across `core` slices.
 
 ### Enforcement
 
 `dependency-cruiser` (structure-agnostic, no ESLint needed - keeps the Biome-only setup), wired as
-`npm run lint:arch` and run in CI. Rules:
+`npm run lint:arch` and run in CI. Rules (all `error` except where noted):
 
 - `no-sibling-feature` - a `features/<a>/` module may not import `features/<b>/` (a != b),
   except `features/core`.
-- `no-deep-import` - imports of a feature must resolve to its `index.ts`, not an internal path.
+- `core-public-api-only` / `core-cross-slice-public-api-only` - a core slice is imported only
+  through its `index.ts`, never a deep internal path (from outside core, and between core slices).
 - `core-no-feature-dep` - `features/core` may not import a concrete (non-core) feature.
-- `no-upward` - `shared` may not import `features`; `features/core` may not import `app`.
+- `core-no-app` - `features/core` may not import the `app` layer.
+- `no-feature-circular` - no dependency cycles within `src/features` (the pre-existing benign
+  barrel cycles inside `shared/` are out of scope).
+- `shared-no-upward` - `shared` may not import `features`/`app` at runtime. **Type-only exception:**
+  `import type` is allowed (erased at build, no runtime coupling), so a shared store may type its
+  payload with a core type.
+
+As of R6, all rules are `error` and `lint:arch` reports zero violations.
 
 ## Consequences
 

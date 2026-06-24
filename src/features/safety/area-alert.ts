@@ -1,4 +1,4 @@
-import type { RiskResult } from '@/features/risk/types';
+import type { RiskResult } from '@/features/core/risk';
 
 // Only the two RED triggers notify (survey: people want to be warned, not nagged). Fire alerts
 // fire ONLY at degree III - lower degrees are routine and would train users to ignore the app.

@@ -1,3 +1,5 @@
+'use client';
+
 import { Bell, BellOff } from 'lucide-react';
 import { usePushNotifications } from '@/features/push/hooks/use-push-notifications';
 import { Spinner } from '@/shared/components/ui';

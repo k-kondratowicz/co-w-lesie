@@ -1,7 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
-import { DUPLICATE_BUFFER_MIN_METERS, DUPLICATE_BUFFER_RADIUS_FRACTION } from '@/features/saved-areas/constants';
-import type { CreateSavedAreaInput } from '@/features/saved-areas/schemas/saved-area.schema';
-import type { SavedArea } from '@/features/saved-areas/types';
+import type { CreateSavedAreaInput, SavedArea } from '@/features/core/saved-area';
+import { DUPLICATE_BUFFER_MIN_METERS, DUPLICATE_BUFFER_RADIUS_FRACTION } from '@/features/core/saved-area';
 
 const AREA_SELECT = {
   id: true,

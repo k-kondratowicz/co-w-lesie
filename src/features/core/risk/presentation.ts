@@ -1,4 +1,4 @@
-import type { RiskLevel } from '@/features/risk/types';
+import type { RiskLevel } from './types';
 
 // Single source for how a risk level looks and reads. Shared so a saved area's glanceable status
 // is the same colour and wording as its full assessment - in a safety app one signal must never

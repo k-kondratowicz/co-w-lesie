@@ -1,8 +1,7 @@
 'use client';
 
 import { Bookmark } from 'lucide-react';
-import { useState } from 'react';
-import { PushToggle } from '@/features/push/components/push-toggle';
+import { type ReactNode, useState } from 'react';
 import { SavedAreasList } from '@/features/saved-areas/components/saved-areas-list';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -18,7 +17,7 @@ import { useSafetyTargetStore } from '@/shared/store/use-safety-target-store';
 
 // Standalone surface for the saved areas: lists each with its last-known status. Picking one hands
 // the point to the safety assistant (via the target channel), which opens with the full assessment.
-export function SavedAreasSheet() {
+export function SavedAreasSheet({ footer }: { footer?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const requestTarget = useSafetyTargetStore((state) => state.request);
 
@@ -48,9 +47,7 @@ export function SavedAreasSheet() {
             }}
           />
 
-          <div className="mt-4 border-t pt-3">
-            <PushToggle />
-          </div>
+          {footer ? <div className="mt-4 border-t pt-3">{footer}</div> : null}
         </ResponsiveDialogScrollArea>
       </ResponsiveDialogContent>
     </ResponsiveDialog>

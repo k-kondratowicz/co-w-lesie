@@ -14,7 +14,6 @@ import { useMapInteraction } from '@/features/map/hooks/use-map-interaction';
 import { useSharedReport } from '@/features/map/hooks/use-shared-report';
 import { useViewportFeatures } from '@/features/map/hooks/use-viewport-features';
 import { boundsToBbox } from '@/features/map/utils/bounds-to-bbox';
-import { ReportDetailsOverlay } from '@/features/reports/components/report-details-overlay';
 import { ActionDialog } from '@/shared/components/dialog';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Spinner } from '@/shared/components/ui/spinner';
@@ -49,7 +48,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const isPicking = useMapPickStore((state) => state.isPicking);
   const pickConstraint = useMapPickStore((state) => state.constraint);
 
-  const { popup, setPopup, closePopup, handleClick } = useMapInteraction(mapRef);
+  const { popup, setPopup, handleClick } = useMapInteraction(mapRef);
   const { sharedReportActive, reportShown } = useSharedReport(mapRef, loaded, popup, setPopup);
   const { userPosition, permissionDenied, locationError, permissionDialog } = useLocationPrompt(
     mapRef,
@@ -134,8 +133,6 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
       </MapGL>
 
       {loaded ? null : <MapLoading />}
-
-      <ReportDetailsOverlay info={popup} onClose={closePopup} />
 
       <KmzbDetailsOverlay info={kmzbPopup} onClose={() => setKmzbPopup(null)} />
 

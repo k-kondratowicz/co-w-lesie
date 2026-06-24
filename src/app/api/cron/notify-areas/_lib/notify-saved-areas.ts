@@ -1,9 +1,9 @@
 import type { PrismaClient } from '@prisma/client';
+import { assessPoint } from '@/app/_lib/assess-point';
 import { deleteSubscriptionByEndpoint, listSubscriptions } from '@/features/push/queries/push-repo';
 import { activeHazards, buildAreaAlert, newHazards, signatureOf } from '@/features/safety/area-alert';
 import { type AlertArea, listAreasForAlerts, updateAlertSignature } from '@/features/saved-areas/queries/saved-areas-repo';
 import { sendPush } from '@/shared/lib/push/send';
-import { assessPoint } from '@/shared/lib/risk/assess-point';
 
 function areaLabel(area: AlertArea): string {
   return area.name?.trim() || `${area.lat.toFixed(3)}, ${area.lng.toFixed(3)}`;

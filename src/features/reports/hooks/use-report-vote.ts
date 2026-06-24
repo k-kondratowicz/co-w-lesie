@@ -3,8 +3,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
+import { reportsApi } from '@/features/core/report';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
-import { api } from '@/shared/lib/api/client';
 
 export type VoteKind = 'CONFIRM' | 'FLAG';
 
@@ -31,7 +31,7 @@ function writeVoted(voted: Record<string, VoteKind>) {
 }
 
 async function postVote(id: string, kind: VoteKind, lat: number, lng: number): Promise<void> {
-  await api.reports.vote(id, kind, lat, lng);
+  await reportsApi.vote(id, kind, lat, lng);
 }
 
 // Confirm/flag a report. A vote is a first-hand claim, so we send the voter's location and the

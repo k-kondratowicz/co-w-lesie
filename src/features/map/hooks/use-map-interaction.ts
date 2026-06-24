@@ -3,20 +3,9 @@
 import type { ReportType } from '@prisma/client';
 import type { MapLayerMouseEvent, MapRef } from '@vis.gl/react-maplibre';
 import type { GeoJSONSource } from 'maplibre-gl';
-import { type RefObject, useCallback, useState } from 'react';
+import { type RefObject, useCallback } from 'react';
+import { type PopupReport, useReportPopupStore } from '@/features/core/report';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
-
-export type PopupReport = {
-  id: string;
-  type: ReportType;
-  description: string | null;
-  createdAt: string;
-  expiresAt: string | null;
-  confirmations: number;
-  flags: number;
-  imageUrl: string | null;
-};
-export type PopupInfo = { lng: number; lat: number; reports: PopupReport[] };
 
 type FeatureLike = { id?: string | number; properties: Record<string, unknown> | null };
 
@@ -40,7 +29,9 @@ function featureToReport(feature: FeatureLike): PopupReport {
  * reports when it can't zoom in further), or open the overlay for the report(s) under the click.
  */
 export function useMapInteraction(mapRef: RefObject<MapRef | null>) {
-  const [popup, setPopup] = useState<PopupInfo | null>(null);
+  const popup = useReportPopupStore((state) => state.popup);
+  const setPopup = useReportPopupStore((state) => state.setPopup);
+  const closePopup = useReportPopupStore((state) => state.closePopup);
   const pickPoint = useMapPickStore((state) => state.pickPoint);
 
   const handleClick = useCallback(
@@ -110,10 +101,8 @@ export function useMapInteraction(mapRef: RefObject<MapRef | null>) {
         setPopup({ lng, lat, reports: reportsAtPoint });
       }
     },
-    [pickPoint, mapRef],
+    [pickPoint, mapRef, setPopup],
   );
-
-  const closePopup = useCallback(() => setPopup(null), []);
 
   return { popup, setPopup, closePopup, handleClick };
 }

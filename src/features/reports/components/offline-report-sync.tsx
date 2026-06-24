@@ -3,7 +3,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { ApiError, api } from '@/shared/lib/api/client';
+import { reportsApi } from '@/features/core/report';
+import { ApiError } from '@/shared/lib/api/fetch';
 import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/security/turnstile-client';
 import { type QueuedReport, useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 
@@ -16,7 +17,7 @@ async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | '
   }
 
   try {
-    await api.reports.create(report.payload, turnstileToken);
+    await reportsApi.create(report.payload, turnstileToken);
 
     return 'sent';
   } catch (error) {

@@ -1,11 +1,10 @@
 'use client';
 
 import { ShieldQuestion, Star, StarPlus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { findDuplicateSavedArea } from '@/features/core/saved-area';
+import { useSavedAreas } from '@/features/core/saved-area/index.client';
 import { useRiskAssessment } from '@/features/safety/hooks/use-risk-assessment';
-import { SavedAreasList } from '@/features/saved-areas/components/saved-areas-list';
-import { useSavedAreas } from '@/features/saved-areas/hooks/use-saved-areas';
-import { findDuplicateSavedArea } from '@/features/saved-areas/is-duplicate-area';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -26,7 +25,7 @@ import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useSafetyTargetStore } from '@/shared/store/use-safety-target-store';
 import { RiskResult } from './risk-result';
 
-export function SafetyAssistant() {
+export function SafetyAssistant({ savedAreas }: { savedAreas?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const { target, setTarget, data, isFetching, isError, refetch, dataUpdatedAt } = useRiskAssessment(open);
   const { create: createArea, areas } = useSavedAreas();
@@ -111,7 +110,7 @@ export function SafetyAssistant() {
             Wskaż punkt na mapie
           </Button>
           {!permissionDenied && locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
-          <SavedAreasList onSelect={(area) => setTarget({ lat: area.lat, lng: area.lng, radiusMeters: area.radiusMeters })} />
+          {savedAreas}
         </div>
       );
     }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DUPLICATE_BUFFER_MIN_METERS } from '@/features/saved-areas/constants';
-import { duplicateBufferMeters, findDuplicateSavedArea } from '@/features/saved-areas/is-duplicate-area';
-import type { SavedArea } from '@/features/saved-areas/types';
+import { DUPLICATE_BUFFER_MIN_METERS } from './constants';
+import { duplicateBufferMeters, findDuplicateSavedArea } from './is-duplicate-area';
+import type { SavedArea } from './types';
 
 function area(overrides: Partial<SavedArea>): SavedArea {
   return {

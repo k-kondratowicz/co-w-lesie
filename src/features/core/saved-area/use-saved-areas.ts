@@ -2,10 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { CreateSavedAreaInput } from '@/features/saved-areas/schemas/saved-area.schema';
-import type { SavedArea } from '@/features/saved-areas/types';
-import { api } from '@/shared/lib/api/client';
 import { useVisitorIdStore } from '@/shared/store/use-visitor-id-store';
+import { savedAreasApi } from './api';
+import type { CreateSavedAreaInput } from './schema';
+import type { SavedArea } from './types';
 
 export function useSavedAreas() {
   const visitorId = useVisitorIdStore((state) => state.visitorId);
@@ -17,7 +17,7 @@ export function useSavedAreas() {
 
   const list = useQuery({
     queryKey,
-    queryFn: () => api.savedAreas.list(visitorId),
+    queryFn: () => savedAreasApi.list(visitorId),
     // Serve the persisted list when offline instead of erroring, so saved areas stay browsable.
     networkMode: 'offlineFirst',
   });
@@ -25,7 +25,7 @@ export function useSavedAreas() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey });
 
   const create = useMutation({
-    mutationFn: (input: CreateSavedAreaInput) => api.savedAreas.create(visitorId, input),
+    mutationFn: (input: CreateSavedAreaInput) => savedAreasApi.create(visitorId, input),
     onSuccess: () => {
       invalidate();
       toast.success('Zapisano obszar.');
@@ -36,7 +36,7 @@ export function useSavedAreas() {
   });
 
   const remove = useMutation({
-    mutationFn: (id: string) => api.savedAreas.remove(visitorId, id),
+    mutationFn: (id: string) => savedAreasApi.remove(visitorId, id),
     onSuccess: () => {
       invalidate();
       toast.success('Usunięto obszar.');
@@ -47,7 +47,7 @@ export function useSavedAreas() {
   });
 
   const rename = useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string | null }) => api.savedAreas.rename(visitorId, id, name),
+    mutationFn: ({ id, name }: { id: string; name: string | null }) => savedAreasApi.rename(visitorId, id, name),
     onSuccess: () => invalidate(),
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Nie udało się zmienić nazwy.');

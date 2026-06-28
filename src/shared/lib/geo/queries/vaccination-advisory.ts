@@ -26,7 +26,7 @@ export async function queryVaccinationAdvisory(prisma: PrismaClient, lng: number
     SELECT v."name" AS voivodeship, c."start_date", c."end_date"
     FROM "voivodeship" v
     JOIN "vaccination_campaign" c ON c."voivodeship" = v."name"
-    WHERE ST_Contains(v."geom", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326))
+    WHERE ST_Intersects(v."geom", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326))
       AND CURRENT_DATE BETWEEN c."start_date" - (${VACCINATION_WINDOW_DAYS} || ' days')::interval
                            AND c."end_date" + (${VACCINATION_WINDOW_DAYS} || ' days')::interval
     ORDER BY c."start_date"

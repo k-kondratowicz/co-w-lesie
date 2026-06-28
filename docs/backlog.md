@@ -69,10 +69,43 @@ Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
   distinct map layer, feeds `assessRisk` (active hunt nearby today raises the level). Safety rule
   still applies: absence of a listed hunt is not proof none is happening - never imply "no hunts
   = safe", surface coverage limits. Start with one region's published schedule to prove the flow.
-- **Rabies-vaccine drops (szczepionki dla dzikich zwierzat).** `[survey: frequent ask]` LP/
-  veterinary authorities publish aerial vaccine-drop campaigns (area + date window, "don't touch
-  baits, keep dogs leashed"). Cheap, distinctive layer nobody surfaces well. Synced/manual table,
-  distinct layer, informational (advisory, not a RED trigger).
+- ~~**Rabies-vaccine drops (szczepionki dla dzikich zwierzat).**~~ `[survey: frequent ask]` Done
+  (advisory): fox oral-rabies baiting schedule scraped from `lisy.info/harmonogram.php` (no API
+  exists). Monthly background sync (`/api/cron/sync-vaccination`, `src/shared/lib/lisy/`) parses the
+  static HTML table into `vaccination_campaign {year, start_date, end_date, voivodeship}`,
+  zod-validated, truncate+insert, empty-parse refuses to wipe the table (missing != safe). The page
+  gives voivodeship names only, so granularity is whole-voivodeship: GUS PRG boundaries loaded once
+  into a static `voivodeship` table (`scripts/seed-voivodeships.ts`, ogr2ogr 2180->4326, NOT synced)
+  for a point-in-voivodeship lookup. `queryVaccinationAdvisory` flags active when today is within
+  `[start - 14d, end + 14d]`; surfaced as an informational banner in the safety assistant (don't
+  touch baits, leash dog) with source + freshness, **deliberately not scored / never a RED trigger**
+  (like the KMZB advisory). Monthly cron wired into `.github/workflows/sync-bdl.yml` (1st of the
+  month + manual `workflow_dispatch`). The `wojewodztwa` SHP + `seed-voivodeships.ts` stay
+  uncommitted (run once against each DB by hand). WetGIW outbreaks/ogniska (a separate, prose/PDF
+  source) remain deferred.
+  **Source decided (spike done 2026-06-28): `lisy.info/harmonogram.php`.** Run by Aeroklub Ziemi
+  Lubuskiej with GIW - a clean structured HTML table of the current-year baiting schedule: one
+  card per season, rows of `date-range | comma-separated voivodeships`. Spike scraper
+  (scratchpad) parsed all 4 rows with 0 problems - dates and the 16 canonical voivodeship names
+  validate cleanly. **No prose->geo, no PDF, no LLM** - far cheaper than the WetGIW portal or the
+  hunting layer. (WetGIW `wetgiw.gov.pl/main/wscieklizna` was the first source checked: paginated
+  news/PDF portal, prose powiat/gmina zones, same blocker that paused the hunting layer - rejected
+  in favour of lisy.info. WetGIW still the only place for rabies *outbreaks/ogniska*, deferred.)
+  **Build shape (decided):**
+  - Table `vaccination_campaign { year, startDate, endDate, voivodeship }` (one row per
+    voivodeship per date-range; the page lists names only, no finer area).
+  - **Granularity: voivodeship + banner only** - no rendered map polygon. Load the 16 national
+    voivodeship polygons fresh (GUS/PRG SHP -> PostGIS via `shp2pgsql`) purely for a
+    point-in-voivodeship lookup of the user's location.
+  - **Display window: campaign active when `today` in `[startDate - 14d, endDate + 14d]`.**
+    Advisory banner only ("trwa akcja szczepień lisów - nie dotykaj przynet, trzymaj psa na
+    smyczy"), informational - **NOT a RED trigger**, deliberately not scored (like KMZB advisories).
+  - **Sync: monthly cron** (`/api/cron/sync-lisy`-ish) re-scrapes the page; picks up mid-year
+    schedule edits. zod-validate the scraped rows; an empty/failed scrape must not wipe the table.
+  - Season label parsing has a known nested-`<div>` boundary bug in the spike - irrelevant
+    (activity is date-driven), real parser splits on `<h2>`.
+  Safety: dates carry a validity window -> lifecycle expiry, not a static layer; stale/missing
+  resolves to caution (missing != safe), never imply "clear". Branch: `feature/vaccinations`.
 - ~~**KMZB sync (Krajowa Mapa Zagrożeń Bezpieczeństwa).**~~ Done (display layer): background cron
   (`/api/cron/sync-kmzb`, daily) into `kmzb_report`, shown as a distinct blue map layer (not mixed
   with user reports), filtered to within 10 m of `forest_area` on import. **Data source:**

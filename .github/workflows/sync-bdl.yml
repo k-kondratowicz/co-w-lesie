@@ -11,6 +11,7 @@ on:
     - cron: '30 3 * * *' # entry bans, daily 03:30 (UTC)
     - cron: '15 0,6,12,18 * * *' # KMZB police incidents, 4x/day - rolling 7-day window, off the BDL hours
     - cron: '45 */6 * * *' # sync-health watchdog, every 6h - catches a dead cron before users do
+    - cron: '0 4 1 * *' # fox-vaccine schedule (lisy.info), monthly on the 1st - it changes a few times a year
   workflow_dispatch: {} # manual "run now" → syncs everything
 
 jobs:
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger BDL sync
-        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 */6 * * *'
+        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 */6 * * *' && github.event.schedule != '0 4 1 * *'
         run: |
           dataset=fire
           case "${{ github.event.schedule }}" in
@@ -32,7 +33,7 @@ jobs:
       # KMZB and watchdog ticks: the watchdog must not touch sync state, and KMZB does not change
       # fire/ban signals. Onset-only dedup means the remaining extra runs never re-alert a standing hazard.
       - name: Notify saved areas
-        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 */6 * * *'
+        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 */6 * * *' && github.event.schedule != '0 4 1 * *'
         run: |
           curl -fsS "${{ vars.APP_URL }}/api/cron/notify-areas" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
@@ -41,6 +42,12 @@ jobs:
         if: github.event.schedule == '15 0,6,12,18 * * *' || github.event_name == 'workflow_dispatch'
         run: |
           curl -fsS "${{ vars.APP_URL }}/api/cron/sync-kmzb" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+      - name: Trigger vaccination sync
+        if: github.event.schedule == '0 4 1 * *' || github.event_name == 'workflow_dispatch'
+        run: |
+          curl -fsS "${{ vars.APP_URL }}/api/cron/sync-vaccination" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 
       # Returns 503 when a safety-critical dataset is stale; -f makes curl exit non-zero so the

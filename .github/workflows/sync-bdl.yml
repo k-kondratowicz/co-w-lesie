@@ -10,7 +10,9 @@ on:
     - cron: '0 6-16 * * *'
     - cron: '30 3 * * *' # entry bans, daily 03:30 (UTC)
     - cron: '15 0,6,12,18 * * *' # KMZB police incidents, 4x/day - rolling 7-day window, off the BDL hours
-    - cron: '45 */6 * * *' # sync-health watchdog, every 6h - catches a dead cron before users do
+    - cron: '45 6,12,18 * * *' # sync-health watchdog - only during/after the fire sync window (06-16 UTC);
+      # a 00:45 tick would fall in the overnight gap where fire is legitimately >6h old and false-fail.
+    - cron: '0 4 1 * *' # fox-vaccine schedule (lisy.info), monthly on the 1st - it changes a few times a year
   workflow_dispatch: {} # manual "run now" → syncs everything
 
 jobs:
@@ -18,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger BDL sync
-        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 */6 * * *'
+        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 6,12,18 * * *' && github.event.schedule != '0 4 1 * *'
         run: |
           dataset=fire
           case "${{ github.event.schedule }}" in
@@ -32,7 +34,7 @@ jobs:
       # KMZB and watchdog ticks: the watchdog must not touch sync state, and KMZB does not change
       # fire/ban signals. Onset-only dedup means the remaining extra runs never re-alert a standing hazard.
       - name: Notify saved areas
-        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 */6 * * *'
+        if: github.event.schedule != '15 0,6,12,18 * * *' && github.event.schedule != '45 6,12,18 * * *' && github.event.schedule != '0 4 1 * *'
         run: |
           curl -fsS "${{ vars.APP_URL }}/api/cron/notify-areas" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
@@ -43,10 +45,16 @@ jobs:
           curl -fsS "${{ vars.APP_URL }}/api/cron/sync-kmzb" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 
+      - name: Trigger vaccination sync
+        if: github.event.schedule == '0 4 1 * *' || github.event_name == 'workflow_dispatch'
+        run: |
+          curl -fsS "${{ vars.APP_URL }}/api/cron/sync-vaccination" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
       # Returns 503 when a safety-critical dataset is stale; -f makes curl exit non-zero so the
       # job fails and GitHub notifies us (Sentry alerts too). A dead cron is caught here, not by a user.
       - name: Check sync health
-        if: github.event.schedule == '45 */6 * * *' || github.event_name == 'workflow_dispatch'
+        if: github.event.schedule == '45 6,12,18 * * *' || github.event_name == 'workflow_dispatch'
         run: |
           curl -fsS "${{ vars.APP_URL }}/api/cron/sync-health" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

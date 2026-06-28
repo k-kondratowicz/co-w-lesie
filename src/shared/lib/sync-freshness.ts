@@ -5,7 +5,7 @@ import { DAY_MS, HOUR_MS } from '@/shared/lib/date/time';
 // (most sources have no inherent timestamp of their own). Shared by every sync job (BDL, KMZB)
 // so the freshness contract lives in one place. Backed by the BdlSync table (named for its
 // first use; now generic).
-export type SyncDataset = 'fire' | 'bans' | 'forest' | 'kmzb';
+export type SyncDataset = 'fire' | 'bans' | 'forest' | 'kmzb' | 'vaccination';
 
 export function recordSync(prisma: PrismaClient, dataset: SyncDataset) {
   const now = new Date();
@@ -24,13 +24,14 @@ const STALE_THRESHOLD_MS: Record<SyncDataset, number> = {
   bans: 2 * DAY_MS,
   kmzb: 2 * DAY_MS,
   forest: 90 * DAY_MS, // effectively static; monitored only against a long-dead pipeline
+  vaccination: 45 * DAY_MS, // scraped monthly; a couple of cadences out, not safety-critical
 };
 
 // Datasets that can flip the assessment to RED (fire degree III, entry ban). When these go stale
 // we warn loudly and page ourselves - the safety rule means missing/old here is never "safe".
 export const CRITICAL_DATASETS: SyncDataset[] = ['fire', 'bans'];
 
-const MONITORED_DATASETS: SyncDataset[] = ['fire', 'bans', 'kmzb'];
+const MONITORED_DATASETS: SyncDataset[] = ['fire', 'bans', 'kmzb', 'vaccination'];
 
 export type DatasetFreshness = { syncedAt: string | null; ageMs: number | null; stale: boolean };
 export type SyncFreshness = {

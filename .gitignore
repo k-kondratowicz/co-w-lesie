@@ -45,3 +45,8 @@ next-env.d.ts
 forest_dissolved.geojsonl
 poland_forests.pmtiles
 public/poland_forests.pmtiles
+
+# GUS PRG voivodeship shapefile - seeded once via scripts/seed-voivodeships.ts, not committed
+/wojewodztwa/
+/wojewodztwa.*
+/scripts/seed-voivodeships.ts

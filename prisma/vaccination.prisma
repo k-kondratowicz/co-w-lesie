@@ -1,0 +1,27 @@
+// Fox rabies-vaccine baiting layer, managed by raw-SQL migration + the monthly lisy.info sync and
+// read via $queryRaw. Declared here (with @@ignore) solely so `prisma migrate dev` does not treat
+// the raw-SQL-managed tables as drift. Do NOT use via Prisma CRUD.
+
+// Static GUS PRG boundaries, seeded once via ogr2ogr. Point-in-voivodeship lookup only.
+model voivodeship {
+  teryt String                                      @id
+  name  String                                      @unique
+  geom  Unsupported("geometry(MultiPolygon, 4326)")
+
+  @@index([geom], type: Gist, map: "voivodeship_geom_idx")
+  @@ignore
+}
+
+model vaccination_campaign {
+  id          String   @id
+  year        Int
+  start_date  DateTime @db.Date
+  end_date    DateTime @db.Date
+  voivodeship String
+  source      String
+  fetched_at  DateTime @db.Timestamptz(6)
+
+  @@index([voivodeship], map: "vaccination_campaign_voivodeship_idx")
+  @@index([start_date, end_date], map: "vaccination_campaign_dates_idx")
+  @@ignore
+}

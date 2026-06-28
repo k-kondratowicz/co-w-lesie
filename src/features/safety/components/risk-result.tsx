@@ -138,9 +138,7 @@ export function RiskResult({
         {bansUpdatedAt ? `Zakazy wstępu - dane z: ${bansUpdatedAt}. ` : ''}
         {kmzbUpdatedAt ? `Zgłoszenia policyjne (KMZB) - dane z: ${kmzbUpdatedAt}. ` : ''}
         {vaccinationUpdatedAt ? `Szczepienia lisów - dane z: ${vaccinationUpdatedAt}. ` : ''}
-        {!fireUpdatedAt && !bansUpdatedAt && !kmzbUpdatedAt && !vaccinationUpdatedAt
-          ? 'Aktualność danych nieznana - zachowaj ostrożność. '
-          : ''}
+        {!fireUpdatedAt && !bansUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
         To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.
       </p>
     </div>

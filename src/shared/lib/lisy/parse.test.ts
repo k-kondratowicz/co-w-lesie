@@ -67,6 +67,18 @@ describe('parseSchedule', () => {
     expect(result.problems).toContain('unknown voivodeship "atlantyda" in "1-2 maja"');
   });
 
+  it('tolerates attributes on tr/td so a markup restyle does not silently empty the dataset', () => {
+    const html = `
+      <h1>Harmonogram szczepień lisów - 2026</h1>
+      <table><tr class="row"><td colspan="1">1-2 maja</td><td data-x="y">Mazowieckie</td></tr></table>
+    `;
+
+    const result = parseSchedule(html);
+
+    expect(result.rows).toEqual([{ year: 2026, voivodeship: 'mazowieckie', startDate: '2026-05-01', endDate: '2026-05-02' }]);
+    expect(result.problems).toEqual([]);
+  });
+
   it('fails loudly with no rows when the year heading is missing (page restyle)', () => {
     const result = parseSchedule('<table><tr><td>1-2 maja</td><td>Mazowieckie</td></tr></table>');
 

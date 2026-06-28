@@ -96,7 +96,7 @@ export function parseSchedule(html: string): ParseResult {
   const rows: ScheduleRow[] = [];
   const problems: string[] = [];
 
-  const dataRows = html.matchAll(/<tr>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/g);
+  const dataRows = html.matchAll(/<tr[^>]*>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<\/tr>/g);
   for (const [, dateCell, voivCell] of dataRows) {
     const dateText = stripTags(dateCell);
     const range = parseDateRange(dateText, year);

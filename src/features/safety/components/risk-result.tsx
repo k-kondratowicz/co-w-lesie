@@ -43,13 +43,30 @@ export function RiskResult({
   isOffline?: boolean;
   lastUpdatedAt?: number;
 }) {
-  const { level, message, signals, fireAsOf, bansAsOf, kmzbAsOf, ban, nearbyBans, kmzbAdvisory } = assessment;
+  const {
+    level,
+    message,
+    signals,
+    fireAsOf,
+    bansAsOf,
+    kmzbAsOf,
+    vaccinationAsOf,
+    ban,
+    nearbyBans,
+    kmzbAdvisory,
+    vaccinationAdvisory,
+  } = assessment;
   const style = RISK_LEVEL_PRESENTATION[level];
   const fireUpdatedAt = fireAsOf ? formatDateTime(fireAsOf) : null;
   const bansUpdatedAt = bansAsOf ? formatDateTime(bansAsOf) : null;
   const kmzbUpdatedAt = kmzbAsOf ? formatDateTime(kmzbAsOf) : null;
+  const vaccinationUpdatedAt = vaccinationAsOf ? formatDateTime(vaccinationAsOf) : null;
   const banUntil = ban?.until ? formatDate(ban.until) : null;
   const kmzbItems = kmzbAdvisoryItems(kmzbAdvisory);
+  const vaccinationWindow =
+    vaccinationAdvisory.active && vaccinationAdvisory.startDate && vaccinationAdvisory.endDate
+      ? `${formatDate(vaccinationAdvisory.startDate)} - ${formatDate(vaccinationAdvisory.endDate)}`
+      : null;
 
   return (
     <div className="space-y-4">
@@ -105,11 +122,25 @@ export function RiskResult({
         </div>
       ) : null}
 
+      {vaccinationAdvisory.active ? (
+        <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-amber-800 text-sm dark:bg-amber-950 dark:text-amber-200">
+          <p className="font-medium">Akcja szczepienia lisów przeciw wściekliźnie</p>
+          <p>
+            W województwie {vaccinationAdvisory.voivodeship} trwa wykładanie przynęt ze szczepionką
+            {vaccinationWindow ? ` (akcja: ${vaccinationWindow})` : ''}. Nie dotykaj znalezionych przynęt i trzymaj psa na smyczy.
+          </p>
+          <p>Źródło: lisy.info (Aeroklub Ziemi Lubuskiej / GIW).</p>
+        </div>
+      ) : null}
+
       <p className="text-muted-foreground text-xs">
         {fireUpdatedAt ? `Zagrożenie pożarowe - dane z: ${fireUpdatedAt}. ` : ''}
         {bansUpdatedAt ? `Zakazy wstępu - dane z: ${bansUpdatedAt}. ` : ''}
         {kmzbUpdatedAt ? `Zgłoszenia policyjne (KMZB) - dane z: ${kmzbUpdatedAt}. ` : ''}
-        {!fireUpdatedAt && !bansUpdatedAt && !kmzbUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
+        {vaccinationUpdatedAt ? `Szczepienia lisów - dane z: ${vaccinationUpdatedAt}. ` : ''}
+        {!fireUpdatedAt && !bansUpdatedAt && !kmzbUpdatedAt && !vaccinationUpdatedAt
+          ? 'Aktualność danych nieznana - zachowaj ostrożność. '
+          : ''}
         To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.
       </p>
     </div>

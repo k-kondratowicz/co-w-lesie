@@ -1,4 +1,5 @@
 import type { KmzbAdvisory } from '@/shared/lib/geo/queries/kmzb-advisory';
+import type { VaccinationAdvisory } from '@/shared/lib/geo/queries/vaccination-advisory';
 import type { RiskResult } from './types';
 
 // Shape returned by GET /api/risk: the engine result plus the assistant message and freshness.
@@ -16,4 +17,8 @@ export type RiskAssessment = RiskResult & {
   nearbyBans: { count: number; nearestMeters: number | null };
   /** Police-reported poaching / grass-burning nearby (last week). Informational only, not scored. */
   kmzbAdvisory: KmzbAdvisory;
+  /** When the fox-vaccine schedule was last scraped, or null if unknown. */
+  vaccinationAsOf: string | null;
+  /** Active fox-vaccine baiting in this voivodeship today. Informational only, not scored. */
+  vaccinationAdvisory: VaccinationAdvisory;
 };

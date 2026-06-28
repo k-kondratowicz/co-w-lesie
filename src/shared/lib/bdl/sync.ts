@@ -27,35 +27,38 @@ export async function syncFireHazard(prisma: PrismaClient): Promise<SyncResult> 
     maxAllowableOffset: 0.0005,
   });
 
-  let inserted = 0;
   let skipped = 0;
+  const rows: Prisma.Sql[] = [];
+
+  for (const { properties, geometry } of features) {
+    const degree = fireKodToDegree(properties.kod);
+    const updatedAt = fireUpdatedAt(properties.data, properties.godz);
+    // Skip areas not covered by the forecast (degree null) so they read as UNKNOWN.
+    if (degree === null || !updatedAt) {
+      skipped++;
+      continue;
+    }
+
+    rows.push(Prisma.sql`(${properties.strefa}, ${degree}, ${updatedAt}, ${geomFromGeoJson(geometry)})`);
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe('TRUNCATE TABLE "fire_hazard_zone"');
 
-    for (const { properties, geometry } of features) {
-      const degree = fireKodToDegree(properties.kod);
-      const updatedAt = fireUpdatedAt(properties.data, properties.godz);
-      // Skip areas not covered by the forecast (degree null) so they read as UNKNOWN.
-      if (degree === null || !updatedAt) {
-        skipped++;
-        continue;
-      }
-
+    if (rows.length > 0) {
       await tx.$executeRaw`
         INSERT INTO "fire_hazard_zone" ("id", "degree", "updated_at", "geom")
-        VALUES (${properties.strefa}, ${degree}, ${updatedAt}, ${geomFromGeoJson(geometry)})
+        VALUES ${Prisma.join(rows)}
         ON CONFLICT ("id") DO UPDATE
           SET "degree" = EXCLUDED."degree",
               "updated_at" = EXCLUDED."updated_at",
               "geom" = EXCLUDED."geom"
       `;
-      inserted++;
     }
   }, TX_OPTIONS);
 
   await recordSync(prisma, 'fire');
-  return { fetched: features.length, inserted, skipped };
+  return { fetched: features.length, inserted: rows.length, skipped };
 }
 
 export async function syncEntryBans(prisma: PrismaClient): Promise<SyncResult> {
@@ -66,39 +69,39 @@ export async function syncEntryBans(prisma: PrismaClient): Promise<SyncResult> {
   });
 
   const now = Date.now();
-  let inserted = 0;
   let skipped = 0;
+  const rows: Prisma.Sql[] = [];
+
+  for (const { properties, geometry } of features) {
+    const until = parseBdlDateTime(properties.data_koncowa);
+    // Drop bans that have already ended; presence of a row means an active ban.
+    if (until && until.getTime() < now) {
+      skipped++;
+      continue;
+    }
+
+    rows.push(
+      Prisma.sql`(${String(properties.objectid)}, ${banReason(properties.kod, properties.opis)}, ${until}, ${geomFromGeoJson(geometry)})`,
+    );
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe('TRUNCATE TABLE "forest_entry_ban"');
 
-    for (const { properties, geometry } of features) {
-      const until = parseBdlDateTime(properties.data_koncowa);
-      // Drop bans that have already ended; presence of a row means an active ban.
-      if (until && until.getTime() < now) {
-        skipped++;
-        continue;
-      }
-
+    if (rows.length > 0) {
       await tx.$executeRaw`
         INSERT INTO "forest_entry_ban" ("id", "reason", "until", "geom")
-        VALUES (
-          ${String(properties.objectid)},
-          ${banReason(properties.kod, properties.opis)},
-          ${until},
-          ${geomFromGeoJson(geometry)}
-        )
+        VALUES ${Prisma.join(rows)}
         ON CONFLICT ("id") DO UPDATE
           SET "reason" = EXCLUDED."reason",
               "until" = EXCLUDED."until",
               "geom" = EXCLUDED."geom"
       `;
-      inserted++;
     }
   }, TX_OPTIONS);
 
   await recordSync(prisma, 'bans');
-  return { fetched: features.length, inserted, skipped };
+  return { fetched: features.length, inserted: rows.length, skipped };
 }
 
 export type Bbox = [minLng: number, minLat: number, maxLng: number, maxLat: number];

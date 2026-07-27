@@ -26,7 +26,10 @@ export async function queryReportsInBbox(
   maxLng: number,
   maxLat: number,
   since: Date | null,
+  types: ReportType[] = [],
 ): Promise<ReportsGeoJSON> {
+  const typeFilter = types.length ? Prisma.sql`AND "type"::text IN (${Prisma.join(types)})` : Prisma.empty;
+
   const rows = await prisma.$queryRaw<ReportRow[]>`
     SELECT "id", "type", "description", "createdAt", "lastConfirmedAt", "expiresAt", "confirmations", "flags", "imageKey", "lng", "lat"
     FROM "Report"
@@ -34,6 +37,7 @@ export async function queryReportsInBbox(
       AND ("expiresAt" IS NULL OR "expiresAt" > now())
       AND ("flags" - "confirmations") < ${DISPUTE_CASE}
       AND (${since}::timestamptz IS NULL OR "createdAt" > ${since}::timestamptz)
+      ${typeFilter}
     ORDER BY "createdAt" DESC
     LIMIT 2000
   `;

@@ -7,10 +7,11 @@ export const reportsApi = {
     return get<SingleReportResponse>(`/api/reports/${id}`);
   },
 
-  list(bbox: string, since?: string | null) {
+  list(bbox: string, since?: string | null, types?: string | null) {
     return get<ReportsGeoJSON>('/api/reports', {
       bbox,
       since: since ?? undefined,
+      types: types ?? undefined,
     });
   },
 

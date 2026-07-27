@@ -1,3 +1,4 @@
+import { ReportType } from '@prisma/client';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createReportSchema } from '@/features/core/report';
@@ -68,6 +69,11 @@ export async function POST(request: Request) {
 const querySchema = z.object({
   bbox: bboxParamSchema,
   since: z.iso.datetime({ offset: true }).optional(),
+  types: z
+    .string()
+    .transform((value) => value.split(','))
+    .pipe(z.array(z.enum(ReportType)).nonempty())
+    .optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -75,6 +81,7 @@ export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse({
     bbox: params.get('bbox') ?? undefined,
     since: params.get('since') ?? undefined,
+    types: params.get('types') ?? undefined,
   });
 
   if (!parsed.success) {
@@ -83,6 +90,7 @@ export async function GET(request: NextRequest) {
 
   const [minLng, minLat, maxLng, maxLat] = parsed.data.bbox;
   const since = parsed.data.since ? new Date(parsed.data.since) : null;
+  const types = parsed.data.types ?? [];
 
-  return Response.json(await queryReportsInBbox(prisma, minLng, minLat, maxLng, maxLat, since));
+  return Response.json(await queryReportsInBbox(prisma, minLng, minLat, maxLng, maxLat, since, types));
 }

@@ -45,7 +45,7 @@ export function KmzbDetailsOverlay({ info, onClose }: { info: KmzbPopupInfo | nu
 
         {info ? (
           <ResponsiveDialogScrollArea>
-            <div className="space-y-3 pb-4">
+            <div className="space-y-3 max-sm:pb-4">
               <div className="rounded-lg border border-border/60 px-3">
                 <Row label="Status" value={info.status} />
                 {info.eventAt ? (

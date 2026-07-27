@@ -20,7 +20,7 @@ import { Spinner } from '@/shared/components/ui/spinner';
 import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useMapViewStore } from '@/shared/store/use-map-view-store';
-import { reportsSinceIso, useReportFilterStore } from '@/shared/store/use-report-filter-store';
+import { reportsSinceIso, reportTypesParam, useReportFilterStore } from '@/shared/store/use-report-filter-store';
 import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
 
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
@@ -39,8 +39,10 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const [zoom, setZoom] = useState(restoredView?.zoom ?? 6);
 
   const sinceDays = useReportFilterStore((state) => state.sinceDays);
+  const reportTypes = useReportFilterStore((state) => state.types);
   const reportsSince = useMemo(() => reportsSinceIso(sinceDays), [sinceDays]);
-  const reports = useViewportFeatures('reports', 'reports', debouncedBbox, true, reportsSince);
+  const reportsTypes = useMemo(() => reportTypesParam(reportTypes), [reportTypes]);
+  const reports = useViewportFeatures('reports', 'reports', debouncedBbox, true, reportsSince, reportsTypes);
   const bans = useViewportFeatures('bans', 'bans', debouncedBbox, zoom >= BANS_MIN_ZOOM);
   const kmzb = useViewportFeatures('kmzb', 'kmzb', debouncedBbox, zoom >= KMZB_MIN_ZOOM);
   const [kmzbPopup, setKmzbPopup] = useState<KmzbPopupInfo | null>(null);

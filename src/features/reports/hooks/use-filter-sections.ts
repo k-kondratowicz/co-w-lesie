@@ -1,5 +1,3 @@
-'use client';
-
 import type { ReportType } from '@prisma/client';
 import { REPORT_TYPE_LABELS } from '@/features/reports/utils/report-type-labels';
 import { useReportFilterStore } from '@/shared/store/use-report-filter-store';

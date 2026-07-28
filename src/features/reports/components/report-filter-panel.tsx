@@ -1,5 +1,3 @@
-'use client';
-
 import type { FilterSection } from '@/features/reports/hooks/use-filter-sections';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/shared/components/ui/accordion';
 import { Button } from '@/shared/components/ui/button';

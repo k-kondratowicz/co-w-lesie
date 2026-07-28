@@ -71,7 +71,12 @@ const querySchema = z.object({
   since: z.iso.datetime({ offset: true }).optional(),
   types: z
     .string()
-    .transform((value) => value.split(','))
+    .transform((value) =>
+      value
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean),
+    )
     .pipe(z.array(z.enum(ReportType)).nonempty())
     .optional(),
 });

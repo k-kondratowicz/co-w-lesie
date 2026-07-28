@@ -19,7 +19,7 @@ export default function Home() {
   return (
     <div className="absolute inset-0 h-full w-full bg-zinc-50 font-sans dark:bg-black">
       <header className="pointer-events-none absolute top-0 z-20 w-full px-4 py-4 sm:px-6">
-        <div className="mx-auto flex flex-row items-start justify-between gap-4">
+        <div className="mx-auto flex flex-row items-center justify-between gap-4">
           <AppLogoBox />
           <div className="pointer-events-auto">
             <LocationRefreshAction />

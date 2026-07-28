@@ -9,7 +9,12 @@ type ViewportGeoJSON = ReportsGeoJSON | BansGeoJSON | KmzbGeoJSON;
 
 type EndpointKey = 'reports' | 'bans' | 'kmzb';
 
-function fetchFeatures(endpoint: EndpointKey, bbox: string, since: string | null): Promise<ViewportGeoJSON> {
+function fetchFeatures(
+  endpoint: EndpointKey,
+  bbox: string,
+  since: string | null,
+  types: string | null,
+): Promise<ViewportGeoJSON> {
   if (endpoint === 'bans') {
     return bansApi.list(bbox);
   }
@@ -18,7 +23,7 @@ function fetchFeatures(endpoint: EndpointKey, bbox: string, since: string | null
     return kmzbApi.list(bbox);
   }
 
-  return reportsApi.list(bbox, since);
+  return reportsApi.list(bbox, since, types);
 }
 
 /**
@@ -33,10 +38,11 @@ export function useViewportFeatures(
   bbox: string | null,
   enabled = true,
   since: string | null = null,
+  types: string | null = null,
 ): ViewportGeoJSON | null {
   const { data } = useQuery({
-    queryKey: [queryKey, endpoint, bbox, since],
-    queryFn: () => fetchFeatures(endpoint, bbox as string, since),
+    queryKey: [queryKey, endpoint, bbox, since, types],
+    queryFn: () => fetchFeatures(endpoint, bbox as string, since, types),
     enabled: enabled && bbox !== null,
     placeholderData: keepPreviousData,
   });

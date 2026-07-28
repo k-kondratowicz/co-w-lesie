@@ -103,4 +103,31 @@ describe('GET /api/reports', () => {
     const allIds = all.features.map((feature: { properties: { id: string } }) => feature.properties.id).sort();
     expect(allIds).toEqual([recent.id, old.id].sort());
   });
+
+  it('honours the `types` filter (shows only selected types)', async () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000);
+
+    const fire = await prisma.report.create({
+      data: { type: 'FIRE', lat: HERE.lat, lng: HERE.lng, expiresAt: future },
+      select: { id: true },
+    });
+    const dump = await prisma.report.create({
+      data: { type: 'ILLEGAL_DUMP', lat: HERE.lat, lng: HERE.lng, expiresAt: future },
+      select: { id: true },
+    });
+    await prisma.report.create({ data: { type: 'BLOOD', lat: HERE.lat, lng: HERE.lng, expiresAt: future } });
+
+    const filtered = await (
+      await GET(new NextRequest(`http://localhost/api/reports?bbox=${BBOX}&types=FIRE,ILLEGAL_DUMP`))
+    ).json();
+    const ids = filtered.features.map((feature: { properties: { id: string } }) => feature.properties.id).sort();
+
+    expect(ids).toEqual([fire.id, dump.id].sort());
+  });
+
+  it('rejects an unknown report type', async () => {
+    const response = await GET(new NextRequest(`http://localhost/api/reports?bbox=${BBOX}&types=NOT_A_TYPE`));
+
+    expect(response.status).toBe(400);
+  });
 });

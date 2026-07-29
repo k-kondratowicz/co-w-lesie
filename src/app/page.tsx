@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { ForestMap } from '@/features/map/components/forest-map';
+import { MapLayerControl } from '@/features/map/components/map-layer-control';
 import { PushToggle } from '@/features/push/components/push-toggle';
 import { CreateReportAction } from '@/features/reports/components/create-report-action';
 import { LocationRefreshAction } from '@/features/reports/components/location-refresh-action';
@@ -48,6 +49,7 @@ export default function Home() {
 
       {/* Primary actions in the thumb zone (bottom-right), hero "safety" closest to the corner. */}
       <div className="pointer-events-auto absolute right-4 bottom-4 z-30 flex flex-col items-end gap-2 sm:right-6 sm:bottom-6 [&>*:not(:first-child)]:relative">
+        <MapLayerControl />
         <ReportFilter />
         <SavedAreasSheet footer={<PushToggle />} />
         <CreateReportAction />

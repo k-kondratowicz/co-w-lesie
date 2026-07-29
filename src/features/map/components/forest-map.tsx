@@ -7,17 +7,26 @@ import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { KmzbDetailsOverlay, type KmzbPopupInfo } from '@/features/map/components/kmzb-details-overlay';
-import { BANS_MIN_ZOOM, KMZB_MIN_ZOOM, MapLayers } from '@/features/map/components/map-layers';
+import {
+  BANS_MIN_ZOOM,
+  KMZB_MIN_ZOOM,
+  MapLayers,
+  OVERNIGHT_ZONES_MIN_ZOOM,
+  TOURISM_MIN_ZOOM,
+} from '@/features/map/components/map-layers';
 import { MapPickBanner } from '@/features/map/components/map-pick-banner';
 import { useLocationPrompt } from '@/features/map/hooks/use-location-prompt';
 import { useMapInteraction } from '@/features/map/hooks/use-map-interaction';
 import { useSharedReport } from '@/features/map/hooks/use-shared-report';
 import { useViewportFeatures } from '@/features/map/hooks/use-viewport-features';
 import { boundsToBbox } from '@/features/map/utils/bounds-to-bbox';
+import { createParkingMarkerImage, PARKING_MARKER_IMAGE, PARKING_MARKER_PIXEL_RATIO } from '@/features/map/utils/parking-marker';
 import { ActionDialog } from '@/shared/components/dialog';
 import { LocationPermissionHelp } from '@/shared/components/location-permission-help';
 import { Spinner } from '@/shared/components/ui/spinner';
 import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
+import { CAMPING_KINDS, PARKING_KINDS } from '@/shared/lib/tourism/types';
+import { useMapLayerStore } from '@/shared/store/use-map-layer-store';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 import { useMapViewStore } from '@/shared/store/use-map-view-store';
 import { reportsSinceIso, reportTypesParam, useReportFilterStore } from '@/shared/store/use-report-filter-store';
@@ -45,6 +54,30 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const reports = useViewportFeatures('reports', 'reports', debouncedBbox, true, reportsSince, reportsTypes);
   const bans = useViewportFeatures('bans', 'bans', debouncedBbox, zoom >= BANS_MIN_ZOOM);
   const kmzb = useViewportFeatures('kmzb', 'kmzb', debouncedBbox, zoom >= KMZB_MIN_ZOOM);
+
+  const optionalLayers = useMapLayerStore((state) => state.visible);
+  const overnightZones = useViewportFeatures(
+    'overnight-zones',
+    'overnight-zones',
+    debouncedBbox,
+    optionalLayers.overnightZones && zoom >= OVERNIGHT_ZONES_MIN_ZOOM,
+  );
+  const parking = useViewportFeatures(
+    'tourism',
+    'tourism-parking',
+    debouncedBbox,
+    optionalLayers.parking && zoom >= TOURISM_MIN_ZOOM,
+    null,
+    PARKING_KINDS.join(','),
+  );
+  const camping = useViewportFeatures(
+    'tourism',
+    'tourism-camping',
+    debouncedBbox,
+    optionalLayers.camping && zoom >= TOURISM_MIN_ZOOM,
+    null,
+    CAMPING_KINDS.join(','),
+  );
   const [kmzbPopup, setKmzbPopup] = useState<KmzbPopupInfo | null>(null);
   const riskOverlay = useRiskOverlayStore((state) => state.overlay);
   const isPicking = useMapPickStore((state) => state.isPicking);
@@ -72,6 +105,19 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   if (!mounted) {
     return <MapLoading />;
   }
+
+  // The parking marker is a canvas-drawn rounded square (no sprite in the Carto style provides one),
+  // so it has to be registered on the map instance before its symbol layer can draw.
+  const registerParkingMarker = (map: maplibregl.Map) => {
+    if (map.hasImage(PARKING_MARKER_IMAGE)) {
+      return;
+    }
+
+    const image = createParkingMarkerImage();
+    if (image) {
+      map.addImage(PARKING_MARKER_IMAGE, image, { pixelRatio: PARKING_MARKER_PIXEL_RATIO });
+    }
+  };
 
   const syncViewport = (map: maplibregl.Map) => {
     const center = map.getCenter();
@@ -116,6 +162,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
         attributionControl={{ compact: false }}
         style={{ width: '100%', height: '100svh' }}
         onLoad={(event) => {
+          registerParkingMarker(event.target);
           syncViewport(event.target);
           setLoaded(true);
         }}
@@ -127,6 +174,9 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
           reports={reports}
           bans={bans}
           kmzb={kmzb}
+          overnightZones={overnightZones}
+          parking={parking}
+          camping={camping}
           riskOverlay={riskOverlay}
           pickConstraint={pickConstraint}
           userPosition={userPosition}

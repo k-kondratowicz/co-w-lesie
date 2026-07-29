@@ -60,6 +60,11 @@ export function DataInfoButton() {
             Dane o zagrożeniu pożarowym i zakazach wstępu pochodzą z Lasów Państwowych i są synchronizowane okresowo. Gdy dla
             danego miejsca brakuje danych, pokazujemy „nie wiadomo" i zalecamy ostrożność.
           </InfoItem>
+          <InfoItem title="Warstwy turystyczne">
+            Obszary programu „Zanocuj w lesie", parkingi, miejsca postoju i pola biwakowe pochodzą z Banku Danych o Lasach i są
+            synchronizowane raz w miesiącu. Brak obiektu na mapie nie oznacza, że postój lub nocleg jest w danym miejscu dozwolony
+            - zawsze obowiązują zakazy wstępu i zasady nadleśnictwa.
+          </InfoItem>
           <InfoItem title="To ocena pomocnicza">
             Aplikacja nie zastępuje oficjalnych komunikatów Lasów Państwowych ani decyzji służb. W razie wątpliwości zawsze
             zachowaj ostrożność.

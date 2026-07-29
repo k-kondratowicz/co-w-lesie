@@ -1,3 +1,5 @@
+import type { TourismPoiKind } from '@/shared/lib/tourism/types';
+
 export type BanFeatureProperties = {
   id: string;
   reason: string | null;
@@ -15,3 +17,18 @@ export type KmzbFeatureProperties = {
 };
 
 export type KmzbGeoJSON = GeoJSON.FeatureCollection<GeoJSON.Geometry, KmzbFeatureProperties>;
+
+export type TourismFeatureProperties = {
+  id: string;
+  kind: TourismPoiKind;
+  name: string | null;
+};
+
+export type TourismGeoJSON = GeoJSON.FeatureCollection<GeoJSON.Geometry, TourismFeatureProperties>;
+
+export type OvernightZoneFeatureProperties = {
+  id: string;
+  name: string | null;
+};
+
+export type OvernightZonesGeoJSON = GeoJSON.FeatureCollection<GeoJSON.Geometry, OvernightZoneFeatureProperties>;

@@ -1,6 +1,7 @@
 import { CloudOff } from 'lucide-react';
 import type { RiskAssessment } from '@/features/core/risk';
 import { fireDegreeRoman, RISK_LEVEL_PRESENTATION } from '@/features/core/risk';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/shared/components/ui/accordion';
 import { formatDate, formatDateTime } from '@/shared/lib/date/format-date';
 import { formatRelativeTime } from '@/shared/lib/date/format-relative-time';
 import { formatDistance } from '@/shared/lib/geo/format-distance';
@@ -59,8 +60,14 @@ export function RiskResult({
   const style = RISK_LEVEL_PRESENTATION[level];
   const fireUpdatedAt = fireAsOf ? formatDateTime(fireAsOf) : null;
   const bansUpdatedAt = bansAsOf ? formatDateTime(bansAsOf) : null;
-  const kmzbUpdatedAt = kmzbAsOf ? formatDateTime(kmzbAsOf) : null;
-  const vaccinationUpdatedAt = vaccinationAsOf ? formatDateTime(vaccinationAsOf) : null;
+  const freshnessSources = [
+    { label: 'Zagrożenie pożarowe', asOf: fireAsOf },
+    { label: 'Zakazy wstępu', asOf: bansAsOf },
+    { label: 'Zgłoszenia policyjne (KMZB)', asOf: kmzbAsOf },
+    { label: 'Szczepienia lisów', asOf: vaccinationAsOf },
+  ].filter((source): source is { label: string; asOf: string } => source.asOf !== null);
+  // The weakest link decides how stale the whole assessment is, so the collapsed summary shows the oldest sync.
+  const oldestSyncAt = Math.min(...freshnessSources.map((source) => new Date(source.asOf).getTime()));
   const banUntil = ban?.until ? formatDate(ban.until) : null;
   const kmzbItems = kmzbAdvisoryItems(kmzbAdvisory);
   const vaccinationWindow =
@@ -133,14 +140,29 @@ export function RiskResult({
         </div>
       ) : null}
 
-      <p className="text-muted-foreground text-xs">
-        {fireUpdatedAt ? `Zagrożenie pożarowe - dane z: ${fireUpdatedAt}. ` : ''}
-        {bansUpdatedAt ? `Zakazy wstępu - dane z: ${bansUpdatedAt}. ` : ''}
-        {kmzbUpdatedAt ? `Zgłoszenia policyjne (KMZB) - dane z: ${kmzbUpdatedAt}. ` : ''}
-        {vaccinationUpdatedAt ? `Szczepienia lisów - dane z: ${vaccinationUpdatedAt}. ` : ''}
-        {!fireUpdatedAt && !bansUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
-        To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.
-      </p>
+      <div className="space-y-2">
+        {freshnessSources.length > 0 ? (
+          <Accordion type="single" collapsible className="rounded-lg border border-border/60 px-3">
+            <AccordionItem value="freshness">
+              <AccordionTrigger className="font-normal text-muted-foreground text-xs">
+                Źródła danych - najstarsze: {formatDateTime(oldestSyncAt)} ({formatRelativeTime(oldestSyncAt)})
+              </AccordionTrigger>
+              <AccordionContent className="space-y-0.5 text-muted-foreground text-xs">
+                {freshnessSources.map((source) => (
+                  <p key={source.label}>
+                    {source.label} - dane z: {formatDateTime(source.asOf)}.
+                  </p>
+                ))}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        ) : null}
+
+        <p className="text-muted-foreground text-xs">
+          {!fireUpdatedAt && !bansUpdatedAt ? 'Aktualność danych nieznana - zachowaj ostrożność. ' : ''}
+          To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.
+        </p>
+      </div>
     </div>
   );
 }

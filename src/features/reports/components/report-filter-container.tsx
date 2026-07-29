@@ -22,15 +22,16 @@ export function ReportFilterContainer({ open, onOpenChange, trigger, actions, ch
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent side="right" showCloseButton={false} className="w-full gap-0 sm:max-w-md">
-          <SheetHeader className="flex-row items-center justify-between border-b">
+        <SheetContent side="right" showCloseButton={false} className="w-full gap-0 rounded-l-xl sm:max-w-md">
+          <SheetHeader className="relative flex-row items-center justify-center border-b">
             <SheetClose asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="Zamknij filtry">
+              <Button variant="ghost" size="icon-sm" className="absolute top-1/2 left-4 -translate-y-1/2">
                 <X />
+                <span className="sr-only">Zamknij filtry</span>
               </Button>
             </SheetClose>
             <SheetTitle>Filtry</SheetTitle>
-            {actions}
+            <div className="absolute top-1/2 right-4 -translate-y-1/2">{actions}</div>
           </SheetHeader>
           <ScrollArea className="max-h-full px-4">{children}</ScrollArea>
         </SheetContent>

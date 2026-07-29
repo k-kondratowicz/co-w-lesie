@@ -145,7 +145,7 @@ export function RiskResult({
           <Accordion type="single" collapsible className="rounded-lg border border-border/60 px-3">
             <AccordionItem value="freshness">
               <AccordionTrigger className="font-normal text-muted-foreground text-xs">
-                Źródła danych - najstarsze {formatRelativeTime(oldestSyncAt)}
+                Źródła danych - najstarsze: {formatDateTime(oldestSyncAt)} ({formatRelativeTime(oldestSyncAt)})
               </AccordionTrigger>
               <AccordionContent className="space-y-0.5 text-muted-foreground text-xs">
                 {freshnessSources.map((source) => (

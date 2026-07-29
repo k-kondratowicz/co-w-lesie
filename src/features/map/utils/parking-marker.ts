@@ -11,6 +11,20 @@ const FOREGROUND = '#ffffff';
 export const PARKING_MARKER_IMAGE = 'parking-marker';
 export const PARKING_MARKER_PIXEL_RATIO = 2;
 
+// Traced with arcTo rather than roundRect: the latter is missing on iOS Safari below 16, where an
+// unguarded call would throw during map load and take the whole map down with it.
+function traceRoundedSquare(context: CanvasRenderingContext2D, offset: number, size: number, radius: number) {
+  const end = offset + size;
+
+  context.beginPath();
+  context.moveTo(offset + radius, offset);
+  context.arcTo(end, offset, end, end, radius);
+  context.arcTo(end, end, offset, end, radius);
+  context.arcTo(offset, end, offset, offset, radius);
+  context.arcTo(offset, offset, end, offset, radius);
+  context.closePath();
+}
+
 /** Blue rounded square with a white "P" - returns null when a 2D context is unavailable. */
 export function createParkingMarkerImage(): ImageData | null {
   const canvas = document.createElement('canvas');
@@ -22,8 +36,7 @@ export function createParkingMarkerImage(): ImageData | null {
     return null;
   }
 
-  context.beginPath();
-  context.roundRect(BORDER / 2, BORDER / 2, SIZE - BORDER, SIZE - BORDER, CORNER_RADIUS);
+  traceRoundedSquare(context, BORDER / 2, SIZE - BORDER, CORNER_RADIUS);
   context.fillStyle = FILL;
   context.fill();
   context.lineWidth = BORDER;

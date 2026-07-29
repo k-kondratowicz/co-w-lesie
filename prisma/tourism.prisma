@@ -1,0 +1,23 @@
+// BDL tourism layers (forest parking / camping spots, "Zanocuj w lesie" areas), populated only by
+// the background tourism sync job and read via $queryRaw. Declared here (with @@ignore) solely so
+// `prisma migrate dev` does not treat the raw-SQL-managed tables as drift. Do NOT use via Prisma CRUD.
+
+model tourism_poi {
+  id   String                               @id
+  kind String
+  name String?
+  geom Unsupported("geometry(Point, 4326)")
+
+  @@index([kind], map: "tourism_poi_kind_idx")
+  @@index([geom], type: Gist, map: "tourism_poi_geom_idx")
+  @@ignore
+}
+
+model overnight_zone {
+  id   String                                      @id
+  name String?
+  geom Unsupported("geometry(MultiPolygon, 4326)")
+
+  @@index([geom], type: Gist, map: "overnight_zone_geom_idx")
+  @@ignore
+}

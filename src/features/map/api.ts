@@ -1,4 +1,4 @@
-import type { BansGeoJSON, KmzbGeoJSON } from '@/features/map/types';
+import type { BansGeoJSON, KmzbGeoJSON, OvernightZonesGeoJSON, TourismGeoJSON } from '@/features/map/types';
 import { get } from '@/shared/lib/api/fetch';
 import type { PointContext } from '@/shared/lib/geo/queries/point-context';
 
@@ -11,6 +11,18 @@ export const bansApi = {
 export const kmzbApi = {
   list(bbox: string) {
     return get<KmzbGeoJSON>('/api/kmzb', { bbox });
+  },
+};
+
+export const tourismApi = {
+  list(bbox: string, kinds: string) {
+    return get<TourismGeoJSON>('/api/tourism', { bbox, kinds });
+  },
+};
+
+export const overnightZonesApi = {
+  list(bbox: string) {
+    return get<OvernightZonesGeoJSON>('/api/overnight-zones', { bbox });
   },
 };
 

@@ -2,12 +2,12 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { type ReportsGeoJSON, reportsApi } from '@/features/core/report';
-import { bansApi, kmzbApi } from '@/features/map/api';
-import type { BansGeoJSON, KmzbGeoJSON } from '@/features/map/types';
+import { bansApi, kmzbApi, overnightZonesApi, tourismApi } from '@/features/map/api';
+import type { BansGeoJSON, KmzbGeoJSON, OvernightZonesGeoJSON, TourismGeoJSON } from '@/features/map/types';
 
-type ViewportGeoJSON = ReportsGeoJSON | BansGeoJSON | KmzbGeoJSON;
+type ViewportGeoJSON = ReportsGeoJSON | BansGeoJSON | KmzbGeoJSON | TourismGeoJSON | OvernightZonesGeoJSON;
 
-type EndpointKey = 'reports' | 'bans' | 'kmzb';
+type EndpointKey = 'reports' | 'bans' | 'kmzb' | 'tourism' | 'overnight-zones';
 
 function fetchFeatures(
   endpoint: EndpointKey,
@@ -23,6 +23,15 @@ function fetchFeatures(
     return kmzbApi.list(bbox);
   }
 
+  if (endpoint === 'overnight-zones') {
+    return overnightZonesApi.list(bbox);
+  }
+
+  // `types` doubles as the tourism kind filter (PARKING,VEHICLE_STOP / CAMP_SITE,CAMP_FIELD).
+  if (endpoint === 'tourism') {
+    return tourismApi.list(bbox, types ?? '');
+  }
+
   return reportsApi.list(bbox, since, types);
 }
 
@@ -30,7 +39,9 @@ function fetchFeatures(
  * GeoJSON features for the current map viewport. Re-fetches when the bbox changes (the map owns
  * the bbox and updates it on load/moveend) and whenever something invalidates [`queryKey`, ...].
  * Keeps the previous result while refetching so the layer doesn't flicker on pan. `enabled` lets
- * callers skip the fetch (e.g. hide a heavy layer below a zoom threshold).
+ * callers skip the fetch (e.g. hide a heavy layer below a zoom threshold); disabling also returns
+ * null right away, otherwise the cached collection would keep the layer drawn after a user
+ * switches it off.
  */
 export function useViewportFeatures(
   endpoint: EndpointKey,
@@ -47,5 +58,5 @@ export function useViewportFeatures(
     placeholderData: keepPreviousData,
   });
 
-  return data ?? null;
+  return enabled ? (data ?? null) : null;
 }

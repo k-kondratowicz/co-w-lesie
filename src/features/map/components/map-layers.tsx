@@ -1,6 +1,8 @@
 'use client';
 
 import { Layer, Marker, Source } from '@vis.gl/react-maplibre';
+import type { DataDrivenPropertyValueSpecification } from 'maplibre-gl';
+import { PARKING_MARKER_IMAGE } from '@/features/map/utils/parking-marker';
 import { circlePolygon } from '@/shared/lib/geo/circle';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import type { PickConstraint } from '@/shared/store/use-map-pick-store';
@@ -11,12 +13,40 @@ const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', feature
 const RISK_COLORS = { GREEN: '#16a34a', YELLOW: '#f59e0b', RED: '#dc2626' } as const;
 export const BANS_MIN_ZOOM = 9; // only fetch/draw ban polygons once zoomed into a region
 export const KMZB_MIN_ZOOM = 9; // police incidents are dense nationwide - draw once zoomed in
+export const OVERNIGHT_ZONES_MIN_ZOOM = 8; // ~1200 programme areas nationwide - readable from a region view
+export const TOURISM_MIN_ZOOM = 10; // ~4700 parking/camping points - a country-wide draw is unreadable
+
+// Tourism points grow with zoom: a fixed dot that reads fine among many markers at z10 becomes a
+// speck once the user is zoomed into a single forest, where the "P" has to stay legible inside it.
+const TOURISM_POINT_RADIUS: DataDrivenPropertyValueSpecification<number> = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  TOURISM_MIN_ZOOM,
+  6,
+  16,
+  13,
+];
+// Icon sizes are a multiplier of the registered image (32 CSS px at pixelRatio 2), so the marker
+// tracks the camping dots: ~18 px at the layer's min zoom, ~29 px when zoomed into a forest.
+const PARKING_ICON_SIZE: DataDrivenPropertyValueSpecification<number> = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  TOURISM_MIN_ZOOM,
+  0.55,
+  16,
+  0.9,
+];
 
 interface MapLayersProps {
   pmtilesUrl: string;
   reports: GeoJSON.FeatureCollection | null;
   bans: GeoJSON.FeatureCollection | null;
   kmzb: GeoJSON.FeatureCollection | null;
+  overnightZones: GeoJSON.FeatureCollection | null;
+  parking: GeoJSON.FeatureCollection | null;
+  camping: GeoJSON.FeatureCollection | null;
   riskOverlay: RiskOverlay | null;
   pickConstraint: PickConstraint | null;
   userPosition: GeolocationPosition['coords'] | null;
@@ -29,6 +59,9 @@ export function MapLayers({
   reports,
   bans,
   kmzb,
+  overnightZones,
+  parking,
+  camping,
   riskOverlay,
   pickConstraint,
   userPosition,
@@ -97,6 +130,66 @@ export function MapLayers({
       <Source id="risk-circle" type="geojson" data={circleData}>
         <Layer id="risk-circle-fill" type="fill" paint={{ 'fill-color': circleColor, 'fill-opacity': 0.15 }} />
         <Layer id="risk-circle-line" type="line" paint={{ 'line-color': circleColor, 'line-width': 2 }} />
+      </Source>
+
+      {/* Optional BDL tourism layers. Mounted before the hazard layers because MapLibre draws in
+          layer order - a convenience marker must never cover an incident. Each is fetched only
+          while its toggle is on (see ForestMap). */}
+      <Source id="overnight-zones" type="geojson" data={overnightZones ?? EMPTY_FC}>
+        <Layer
+          id="overnight-zone-fill"
+          type="fill"
+          minzoom={OVERNIGHT_ZONES_MIN_ZOOM}
+          paint={{ 'fill-color': '#15803d', 'fill-opacity': 0.12 }}
+        />
+        <Layer
+          id="overnight-zone-outline"
+          type="line"
+          minzoom={OVERNIGHT_ZONES_MIN_ZOOM}
+          paint={{ 'line-color': '#ec6224', 'line-width': 2, 'line-opacity': 0.8 }}
+        />
+        <Layer
+          id="overnight-zone-outline2"
+          type="line"
+          minzoom={OVERNIGHT_ZONES_MIN_ZOOM}
+          paint={{ 'line-color': '#f3ad3d', 'line-width': 2, 'line-offset': 2, 'line-opacity': 0.8 }}
+        />
+      </Source>
+
+      <Source id="parking" type="geojson" data={parking ?? EMPTY_FC}>
+        <Layer
+          id="parking-point"
+          type="symbol"
+          minzoom={TOURISM_MIN_ZOOM}
+          layout={{
+            'icon-image': PARKING_MARKER_IMAGE,
+            'icon-size': PARKING_ICON_SIZE,
+            // Parking sits in clusters along a forest road - hiding the colliding ones would drop
+            // most of them, so they are allowed to overlap like the other point layers.
+            'icon-allow-overlap': true,
+          }}
+        />
+      </Source>
+
+      <Source id="camping" type="geojson" data={camping ?? EMPTY_FC}>
+        <Layer
+          id="camping-point"
+          type="circle"
+          minzoom={TOURISM_MIN_ZOOM}
+          paint={{
+            'circle-color': '#0d9488',
+            'circle-radius': TOURISM_POINT_RADIUS,
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+          }}
+        />
+        <Layer
+          id="camping-label"
+          type="symbol"
+          minzoom={13}
+          layout={{ 'text-field': ['coalesce', ['get', 'name'], ''], 'text-size': 11, 'text-offset': [0, 1.1] }}
+          paint={{ 'text-color': '#115e59', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 }}
+        />
       </Source>
 
       {/* KMZB police incidents near forests (live GeoJSON from /api/kmzb). A distinct layer from

@@ -117,7 +117,7 @@ export function SafetyAssistant({ savedAreas }: { savedAreas?: ReactNode }) {
 
     if (isFetching && !data) {
       return (
-        <div className="flex items-center gap-2 py-2 text-muted-foreground text-sm">
+        <div className="flex items-center gap-2 pt-2 pb-4 text-muted-foreground text-sm md:pb-2">
           <Spinner /> Sprawdzam warunki w okolicy...
         </div>
       );
@@ -125,7 +125,7 @@ export function SafetyAssistant({ savedAreas }: { savedAreas?: ReactNode }) {
 
     if (isError) {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 pb-4 md:pb-0">
           <p className="text-destructive text-sm">Nie udało się pobrać oceny. Spróbuj ponownie.</p>
           <Button variant="outline" onClick={() => refetch()} className="w-full">
             Spróbuj ponownie

@@ -132,26 +132,9 @@ export function MapLayers({
         <Layer id="risk-circle-line" type="line" paint={{ 'line-color': circleColor, 'line-width': 2 }} />
       </Source>
 
-      {/* KMZB police incidents near forests (live GeoJSON from /api/kmzb). A distinct layer from
-          user reports - police-sourced - so it reads as a different, higher-trust signal. */}
-      <Source id="kmzb" type="geojson" data={kmzb ?? EMPTY_FC}>
-        <Layer
-          id="kmzb-point"
-          type="circle"
-          minzoom={KMZB_MIN_ZOOM}
-          paint={{
-            'circle-color': '#4338ca',
-            'circle-radius': 5,
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-            'circle-opacity': 0.9,
-            'circle-stroke-opacity': 0.9,
-          }}
-        />
-      </Source>
-
-      {/* Optional BDL tourism layers, drawn under the reports so a hazard is never hidden by a
-          convenience marker. Each is fetched only while its toggle is on (see ForestMap). */}
+      {/* Optional BDL tourism layers. Mounted before the hazard layers because MapLibre draws in
+          layer order - a convenience marker must never cover an incident. Each is fetched only
+          while its toggle is on (see ForestMap). */}
       <Source id="overnight-zones" type="geojson" data={overnightZones ?? EMPTY_FC}>
         <Layer
           id="overnight-zone-fill"
@@ -206,6 +189,24 @@ export function MapLayers({
           minzoom={13}
           layout={{ 'text-field': ['coalesce', ['get', 'name'], ''], 'text-size': 11, 'text-offset': [0, 1.1] }}
           paint={{ 'text-color': '#115e59', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 }}
+        />
+      </Source>
+
+      {/* KMZB police incidents near forests (live GeoJSON from /api/kmzb). A distinct layer from
+          user reports - police-sourced - so it reads as a different, higher-trust signal. */}
+      <Source id="kmzb" type="geojson" data={kmzb ?? EMPTY_FC}>
+        <Layer
+          id="kmzb-point"
+          type="circle"
+          minzoom={KMZB_MIN_ZOOM}
+          paint={{
+            'circle-color': '#4338ca',
+            'circle-radius': 5,
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+            'circle-opacity': 0.9,
+            'circle-stroke-opacity': 0.9,
+          }}
         />
       </Source>
 

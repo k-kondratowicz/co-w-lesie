@@ -99,8 +99,14 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
     const hasMore =
       parsed.exceededTransferLimit ?? parsed.properties?.exceededTransferLimit ?? parsed.features.length === PAGE_SIZE;
 
-    if (!hasMore || parsed.features.length === 0) {
+    if (!hasMore) {
       return;
+    }
+
+    if (parsed.features.length === 0) {
+      throw new Error(
+        `BDL page at offset ${offset} was empty but reported more results - refusing a partial layer (${layerUrl})`,
+      );
     }
   }
 

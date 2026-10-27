@@ -19,6 +19,18 @@ describe('fireCodeToDegree', () => {
     expect(fireCodeToDegree('')).toBeNull();
     expect(fireCodeToDegree('abc')).toBeNull();
   });
+
+  it('rejects numeric prefixes and decimals instead of truncating them to a lower degree', () => {
+    expect(fireCodeToDegree('0unknown')).toBeNull();
+    expect(fireCodeToDegree('2.5')).toBeNull();
+    expect(fireCodeToDegree('3x')).toBeNull();
+    expect(fireCodeToDegree('03')).toBeNull();
+    expect(fireCodeToDegree('+1')).toBeNull();
+  });
+
+  it('tolerates surrounding whitespace around an exact code', () => {
+    expect(fireCodeToDegree(' 3 ')).toBe(3);
+  });
 });
 
 describe('isNoForecastCode', () => {

@@ -3,15 +3,16 @@
 /**
  * Fire-hazard degree lives in the layer's `kod` field as a string (per the layer's legend):
  * "-2" = no data (e.g. outside the fire season), "-1" = area not covered by the forecast,
- * "0".."3" = hazard level. Returns null for anything outside 0..3, so those areas become UNKNOWN
- * (no row stored) rather than being treated as "no hazard".
+ * "0".."3" = hazard level. Returns null for anything but an exact 0..3 - a lenient parse would read
+ * "2.5" or "0unknown" as a valid lower degree and could overwrite a degree-III zone.
  */
 export function fireCodeToDegree(code: string): number | null {
-  const degree = Number.parseInt(code, 10);
-  if (!Number.isInteger(degree) || degree < 0 || degree > 3) {
+  const normalizedCode = code.trim();
+  if (!/^[0-3]$/.test(normalizedCode)) {
     return null;
   }
-  return degree;
+
+  return Number(normalizedCode);
 }
 
 const NO_FORECAST_CODES = new Set(['-1', '-2']);

@@ -6,7 +6,7 @@ import { formatDate, formatDateTime } from '@/shared/lib/date/format-date';
 import { formatRelativeTime } from '@/shared/lib/date/format-relative-time';
 import { formatDistance } from '@/shared/lib/geo/format-distance';
 
-function fireLabel(degree: 0 | 1 | 2 | 3 | null): string {
+function fireDegreeLabel(degree: 0 | 1 | 2 | 3 | null): string {
   if (degree === null) {
     return 'Brak danych';
   }
@@ -14,6 +14,29 @@ function fireLabel(degree: 0 | 1 | 2 | 3 | null): string {
     return 'Brak';
   }
   return `Stopień ${fireDegreeRoman(degree)}`;
+}
+
+function fireLabel({ degree, state }: RiskAssessment['signals']['fire']): string {
+  if (state !== 'STALE') {
+    return fireDegreeLabel(degree);
+  }
+
+  return degree === null ? 'Brak aktualnych danych' : `${fireDegreeLabel(degree)} (nieaktualne)`;
+}
+
+// A stale or unpublished ban layer must not read as "Nie" - that is the answer we cannot give.
+function entryBanLabel({ active, state }: RiskAssessment['signals']['entryBan']): string {
+  if (active) {
+    return 'Tak';
+  }
+  if (state === 'STALE') {
+    return 'Brak aktualnych danych';
+  }
+  if (state === 'NO_DATA') {
+    return 'Nie wiadomo';
+  }
+
+  return 'Nie';
 }
 
 const IN_FOREST_LABEL = { IN: 'Tak', OUT: 'Nie', UNKNOWN: 'Nie wiadomo' } as const;
@@ -97,8 +120,8 @@ export function RiskResult({
 
       <div className="rounded-lg border border-border/60 px-3">
         <Row label="Zgłoszenia w pobliżu" value={String(signals.reports.count)} />
-        <Row label="Zagrożenie pożarowe" value={fireLabel(signals.fire.degree)} />
-        <Row label="Zakaz wstępu" value={signals.entryBan.active ? 'Tak' : 'Nie'} />
+        <Row label="Zagrożenie pożarowe" value={fireLabel(signals.fire)} />
+        <Row label="Zakaz wstępu" value={entryBanLabel(signals.entryBan)} />
         <Row label="W lesie" value={IN_FOREST_LABEL[signals.inForest]} />
       </div>
 

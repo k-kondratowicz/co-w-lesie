@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { assessRisk, recencyDecay, reportDensityScore, typeWeight } from './engine';
+import { assessRisk, recencyDecay, reportDensityScore, signalState, typeWeight } from './engine';
 import type { RiskInput } from './types';
 
-const base: RiskInput = { reports: [], fireDegree: null, entryBan: false, inForest: 'OUT', radiusMeters: 5000 };
+const base: RiskInput = {
+  reports: [],
+  fireDegree: null,
+  entryBan: false,
+  fireState: 'NO_DATA',
+  entryBanState: 'CURRENT',
+  inForest: 'OUT',
+  radiusMeters: 5000,
+};
 
 describe('typeWeight', () => {
   it('ranks gunfire above littering', () => {
@@ -68,5 +76,48 @@ describe('assessRisk', () => {
     expect(r.signals.fire.degree).toBe(2);
     expect(r.signals.reports.count).toBe(1);
     expect(r.signals.entryBan.active).toBe(false);
+  });
+});
+
+describe('signalState', () => {
+  it('is CURRENT for synced data and NO_DATA when BDL published nothing for the point', () => {
+    expect(signalState(true, false)).toBe('CURRENT');
+    expect(signalState(false, false)).toBe('NO_DATA');
+  });
+
+  it('is STALE whenever our sync is stale, with or without a row', () => {
+    expect(signalState(true, true)).toBe('STALE');
+    expect(signalState(false, true)).toBe('STALE');
+  });
+});
+
+describe('assessRisk with stale signals', () => {
+  it('turns GREEN into UNKNOWN when the ban sync is stale', () => {
+    const r = assessRisk({ ...base, entryBanState: 'STALE' });
+    expect(r.level).toBe('UNKNOWN');
+    expect(r.signals.entryBan).toEqual({ active: false, state: 'STALE' });
+  });
+
+  it('turns GREEN into UNKNOWN when the fire sync is stale', () => {
+    const r = assessRisk({ ...base, fireDegree: 0, fireState: 'STALE' });
+    expect(r.level).toBe('UNKNOWN');
+    expect(r.signals.fire.state).toBe('STALE');
+  });
+
+  // BDL not forecasting (off-season "-2") is a fact about the world, not a failed sync.
+  it('keeps GREEN when BDL simply publishes no forecast for the point', () => {
+    expect(assessRisk({ ...base, fireState: 'NO_DATA' }).level).toBe('GREEN');
+  });
+
+  it('keeps a stale entry ban RED', () => {
+    expect(assessRisk({ ...base, entryBan: true, entryBanState: 'STALE' }).level).toBe('RED');
+  });
+
+  it('keeps a stale fire degree III RED', () => {
+    expect(assessRisk({ ...base, fireDegree: 3, fireState: 'STALE' }).level).toBe('RED');
+  });
+
+  it('never softens YELLOW into UNKNOWN', () => {
+    expect(assessRisk({ ...base, fireDegree: 2, fireState: 'STALE' }).level).toBe('YELLOW');
   });
 });

@@ -3,7 +3,15 @@ import { assessRisk } from './engine';
 import { buildRiskMessage } from './message';
 import type { RiskInput } from './types';
 
-const base: RiskInput = { reports: [], fireDegree: null, entryBan: false, inForest: 'OUT', radiusMeters: 5000 };
+const base: RiskInput = {
+  reports: [],
+  fireDegree: null,
+  entryBan: false,
+  fireState: 'NO_DATA',
+  entryBanState: 'CURRENT',
+  inForest: 'OUT',
+  radiusMeters: 5000,
+};
 const known = { fireKnown: true, banKnown: true };
 
 describe('buildRiskMessage', () => {
@@ -44,5 +52,13 @@ describe('buildRiskMessage', () => {
     );
     expect(one).toMatch(/1 zgłoszenie /);
     expect(few).toMatch(/2 zgłoszenia /);
+  });
+});
+
+describe('buildRiskMessage for an UNKNOWN level', () => {
+  it('stays cautious even if the caller reports the signals as known', () => {
+    const msg = buildRiskMessage(assessRisk({ ...base, entryBanState: 'STALE' }), known);
+    expect(msg).toMatch(/Nie udało się potwierdzić/);
+    expect(msg).not.toMatch(/Brak znanych zagrożeń/);
   });
 });

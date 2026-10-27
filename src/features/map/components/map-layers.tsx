@@ -10,7 +10,7 @@ import type { RiskOverlay } from '@/shared/store/use-risk-overlay-store';
 
 const FOREST_SOURCE_LAYER = 'forests'; // matches tippecanoe `-l forests`
 const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
-const RISK_COLORS = { GREEN: '#16a34a', YELLOW: '#f59e0b', RED: '#dc2626' } as const;
+const RISK_COLORS = { GREEN: '#16a34a', YELLOW: '#f59e0b', RED: '#dc2626', UNKNOWN: '#71717a' } as const;
 export const BANS_MIN_ZOOM = 9; // only fetch/draw ban polygons once zoomed into a region
 export const KMZB_MIN_ZOOM = 9; // police incidents are dense nationwide - draw once zoomed in
 export const OVERNIGHT_ZONES_MIN_ZOOM = 8; // ~1200 programme areas nationwide - readable from a region view

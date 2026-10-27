@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { RiskResult } from '@/features/core/risk';
-import { assessRisk, buildRiskMessage, RECENCY_WINDOW_DAYS } from '@/features/core/risk';
+import { assessRisk, buildRiskMessage, RECENCY_WINDOW_DAYS, signalState } from '@/features/core/risk';
 import { queryReportsInRadius } from '@/features/reports/queries/reports-in-radius';
 import { DAY_MS } from '@/shared/lib/date/time';
 import { queryKmzbAdvisory } from '@/shared/lib/geo/queries/kmzb-advisory';
@@ -44,14 +44,15 @@ export async function assessPoint(prisma: PrismaClient, lat: number, lng: number
     })),
     fireDegree: context.fire.status === 'OK' ? context.fire.degree : null,
     entryBan: context.entryBan.status === 'BAN',
+    fireState: signalState(context.fire.status === 'OK', freshness.datasets.fire.stale),
+    entryBanState: signalState(context.entryBan.status !== 'UNKNOWN', freshness.datasets.bans.stale),
     inForest: context.inForest.status,
     radiusMeters: radius,
   });
 
-  // Stale data keeps a ban or fire III RED - buildRiskMessage checks those before the known flags.
   const message = buildRiskMessage(result, {
-    fireKnown: context.fire.status === 'OK' && !freshness.datasets.fire.stale,
-    banKnown: context.entryBan.status !== 'UNKNOWN' && !freshness.datasets.bans.stale,
+    fireKnown: result.signals.fire.state === 'CURRENT',
+    banKnown: result.signals.entryBan.state === 'CURRENT',
   });
 
   // Honest freshness, reported per signal: fire and bans refresh on different cadences, so we

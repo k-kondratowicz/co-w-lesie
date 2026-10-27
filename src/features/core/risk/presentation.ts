@@ -19,4 +19,9 @@ export const RISK_LEVEL_PRESENTATION: Record<RiskLevel, { label: string; dot: st
     dot: 'bg-red-500',
     box: 'bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200',
   },
+  UNKNOWN: {
+    label: 'Dane nieaktualne - zachowaj ostrożność',
+    dot: 'bg-zinc-400',
+    box: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200',
+  },
 } as const;

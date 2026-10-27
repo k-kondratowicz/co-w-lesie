@@ -33,23 +33,30 @@ export async function syncFireHazard(prisma: PrismaClient): Promise<SyncResult> 
   }
 
   let skipped = 0;
+  const unrecognised: string[] = [];
   const rows: Prisma.Sql[] = [];
 
   for (const { properties, geometry } of features) {
+    if (isNoForecastCode(properties.kod)) {
+      skipped++;
+      continue;
+    }
+
     const degree = fireCodeToDegree(properties.kod);
     const updatedAt = fireUpdatedAt(properties.data, properties.godz);
-    // Skip areas not covered by the forecast (degree null) so they read as UNKNOWN.
     if (degree === null || !updatedAt) {
-      skipped++;
+      unrecognised.push(`${properties.strefa} (kod "${properties.kod}", data "${properties.data}")`);
       continue;
     }
 
     rows.push(Prisma.sql`(${properties.strefa}, ${degree}, ${updatedAt}, ${geomFromGeoJson(geometry)})`);
   }
 
-  // Anything else means the code or timestamp format changed and every zone was dropped as unknown.
-  if (rows.length === 0 && !features.every(({ properties }) => isNoForecastCode(properties.kod))) {
-    throw new Error(`BDL fire-hazard zones unrecognised (${features.length} fetched, none usable) - refusing to wipe the table`);
+  // Dropping even one zone would erase its hazard (a lost III is a lost RED) while the sync reads fresh.
+  if (unrecognised.length > 0) {
+    throw new Error(
+      `BDL fire-hazard zones unrecognised (${unrecognised.length} of ${features.length}, e.g. ${unrecognised.slice(0, 3).join('; ')}) - refusing to replace the table`,
+    );
   }
 
   await prisma.$transaction(async (tx) => {

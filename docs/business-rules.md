@@ -92,9 +92,10 @@ A sync replaces its table only with a plausible result; otherwise it fails, keep
 data, and leaves the freshness timestamp to go visibly stale (so the rule above takes over).
 
 - **Fire hazard** - BDL publishes every zone (~60) year-round, outside the season as code `-2`
-  ("no data"). An empty response is refused. A response with no usable zone is accepted only when
-  every zone carries an explicit "nothing forecast" code (`-1` not covered, `-2` no data); otherwise
-  the codes or timestamps changed format and the run is refused.
+  ("no data"). An empty response is refused. Only zones with an explicit "nothing forecast" code
+  (`-1` not covered, `-2` no data) are skipped. Any other zone with an unrecognised code or an
+  unparseable date fails the whole run: dropping it would read as "no forecast" there, which stays
+  GREEN, and could silently erase a degree-III RED.
 - **Entry bans** - a result with no active ban is refused. Nationwide that is implausible: in late
   October 2026, outside the fire season, BDL still published 789 bans, all coded "inne przyczyny"
   (non-fire). Zero signals a broken fetch or date-format drift, not every ban being lifted.

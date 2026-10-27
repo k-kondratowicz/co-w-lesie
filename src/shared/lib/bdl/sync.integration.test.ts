@@ -35,8 +35,8 @@ function banFeature(objectid: number, dataKoncowa: string | null) {
   return { properties, geometry: KRAKOW_SQUARE };
 }
 
-function fireFeature(zone: string, code: string) {
-  const properties: FireHazardProps = { strefa: zone, kod: code, data: '2026-06-10', godz: '13' };
+function fireFeature(zone: string, code: string, date = '2026-06-10') {
+  const properties: FireHazardProps = { strefa: zone, kod: code, data: date, godz: '13' };
 
   return { properties, geometry: KRAKOW_SQUARE };
 }
@@ -128,11 +128,22 @@ describe('syncFireHazard', () => {
     expect(await syncedAt('fire')).toEqual(LAST_GOOD_SYNC);
   });
 
-  it('refuses when no zone carries a recognised code (format drift)', async () => {
+  // A drifted zone read as "no forecast" would turn a degree-III RED into GREEN.
+  it('refuses when one forecast zone has an unrecognised code, even if others are usable', async () => {
     await seedLastGoodFireZone();
-    vi.mocked(fetchAllFeatures).mockResolvedValue([fireFeature('A', 'III'), fireFeature('B', '-2')]);
+    vi.mocked(fetchAllFeatures).mockResolvedValue([fireFeature('A', '2'), fireFeature('B', 'III'), fireFeature('C', '-2')]);
 
-    await expect(syncFireHazard(prisma)).rejects.toThrow('none usable');
+    await expect(syncFireHazard(prisma)).rejects.toThrow('unrecognised (1 of 3');
+
+    expect(await ids('fire_hazard_zone')).toEqual(['last-good']);
+    expect(await syncedAt('fire')).toEqual(LAST_GOOD_SYNC);
+  });
+
+  it('refuses when a forecast zone has an unparseable date', async () => {
+    await seedLastGoodFireZone();
+    vi.mocked(fetchAllFeatures).mockResolvedValue([fireFeature('A', '2'), fireFeature('B', '3', '10.06.2026')]);
+
+    await expect(syncFireHazard(prisma)).rejects.toThrow('B (kod "3", data "10.06.2026")');
 
     expect(await ids('fire_hazard_zone')).toEqual(['last-good']);
     expect(await syncedAt('fire')).toEqual(LAST_GOOD_SYNC);

@@ -21,6 +21,9 @@ export function featureCollectionSchema<T extends z.ZodTypeAny>(properties: T) {
         geometry: geometrySchema,
       }),
     ),
+    // BDL sends the capped-page flag both top-level and under `properties`.
+    exceededTransferLimit: z.boolean().optional(),
+    properties: z.object({ exceededTransferLimit: z.boolean().optional() }).optional(),
   });
 }
 

@@ -1,17 +1,24 @@
 // Pure transforms from raw BDL attribute strings to our domain shapes. No I/O - unit-testable.
 
 /**
- * Fire-hazard degree lives in the layer's `kod` field as a string:
- * "-1" = area not covered by the forecast, "0".."3" = hazard level.
- * Returns null for "-1" and anything outside 0..3, so uncovered areas become UNKNOWN
+ * Fire-hazard degree lives in the layer's `kod` field as a string (per the layer's legend):
+ * "-2" = no data (e.g. outside the fire season), "-1" = area not covered by the forecast,
+ * "0".."3" = hazard level. Returns null for anything outside 0..3, so those areas become UNKNOWN
  * (no row stored) rather than being treated as "no hazard".
  */
-export function fireKodToDegree(kod: string): number | null {
-  const degree = Number.parseInt(kod, 10);
+export function fireCodeToDegree(code: string): number | null {
+  const degree = Number.parseInt(code, 10);
   if (!Number.isInteger(degree) || degree < 0 || degree > 3) {
     return null;
   }
   return degree;
+}
+
+const NO_FORECAST_CODES = new Set(['-1', '-2']);
+
+/** BDL's explicit "nothing forecast here" codes - unlike an unrecognised code, a legitimate gap. */
+export function isNoForecastCode(code: string): boolean {
+  return NO_FORECAST_CODES.has(code.trim());
 }
 
 /**
@@ -96,20 +103,20 @@ function makeWarsawDate(year: number, month: number, day: number, hours: number,
 }
 
 /** Combines the fire layer's `data` (date) + `godz` (hour) into the forecast timestamp. */
-export function fireUpdatedAt(data: string, godz: string): Date | null {
-  const hour = Number.parseInt(godz, 10);
+export function fireUpdatedAt(date: string, rawHour: string): Date | null {
+  const hour = Number.parseInt(rawHour, 10);
   if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
-    return parseBdlDateTime(`${data} 00:00:00`);
+    return parseBdlDateTime(`${date} 00:00:00`);
   }
-  return parseBdlDateTime(`${data} ${String(hour).padStart(2, '0')}:00:00`);
+  return parseBdlDateTime(`${date} ${String(hour).padStart(2, '0')}:00:00`);
 }
 
 /** Human-readable ban reason: prefer the free-text `opis`, fall back to the coded `kod`. */
-export function banReason(kod: string | null, opis: string | null): string | null {
-  const trimmedOpis = opis?.trim();
-  if (trimmedOpis) {
-    return trimmedOpis;
+export function banReason(code: string | null, description: string | null): string | null {
+  const trimmedDescription = description?.trim();
+  if (trimmedDescription) {
+    return trimmedDescription;
   }
-  const trimmedKod = kod?.trim();
-  return trimmedKod || null;
+  const trimmedCode = code?.trim();
+  return trimmedCode || null;
 }

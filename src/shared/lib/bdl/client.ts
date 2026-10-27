@@ -1,10 +1,11 @@
 import type { z } from 'zod';
+import { BDL_FETCH_TIMEOUT_MS } from './config';
 import { featureCollectionSchema } from './schemas';
 
 // Thin ArcGIS REST query client. I/O only: fetch + paginate + zod-validate.
 // Returns features with non-null geometry; the server reprojects to EPSG:4326.
 
-const PAGE_SIZE = 1000; // <= every BDL layer's maxRecordCount
+const PAGE_SIZE = 1000;
 const MAX_PAGES = 1000; // safety bound against runaway pagination
 
 export type QueryOptions = {
@@ -38,6 +39,7 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
   options: QueryOptions,
 ): AsyncGenerator<ValidatedFeature<z.infer<T>>[]> {
   const collectionSchema = featureCollectionSchema(propsSchema);
+  let offset = 0;
 
   for (let page = 0; page < MAX_PAGES; page++) {
     const params = new URLSearchParams({
@@ -48,7 +50,7 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
       outSR: '4326',
       returnGeometry: 'true',
       resultRecordCount: String(PAGE_SIZE),
-      resultOffset: String(page * PAGE_SIZE),
+      resultOffset: String(offset),
       // BDL's edge serves a stale cached response on the first hit, then revalidates - so a
       // sync run right after the afternoon forecast re-issue reads the morning data. A unique
       // param per request makes the URL a cache miss; ArcGIS ignores params it doesn't know.
@@ -69,6 +71,7 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
     const response = await fetch(`${layerUrl}/query?${params.toString()}`, {
       cache: 'no-store', // always fresh from BDL; we sync to our DB for caching
       headers: { 'Cache-Control': 'no-cache' }, // ask BDL's edge to revalidate, not serve stale
+      signal: AbortSignal.timeout(BDL_FETCH_TIMEOUT_MS),
     });
     if (!response.ok) {
       throw new Error(`BDL query failed (${response.status} ${response.statusText}) for ${layerUrl}`);
@@ -78,6 +81,8 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
     // generic ZodObject so `feature.properties` / `feature.geometry` resolve cleanly.
     const parsed = collectionSchema.parse(await response.json()) as unknown as {
       features: { properties: z.infer<T>; geometry: { type: string; coordinates: unknown[] } | null }[];
+      exceededTransferLimit?: boolean;
+      properties?: { exceededTransferLimit?: boolean };
     };
 
     const validFeatures: ValidatedFeature<z.infer<T>>[] = [];
@@ -88,10 +93,19 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
     }
     yield validFeatures;
 
-    if (parsed.features.length < PAGE_SIZE) {
-      break;
+    offset += parsed.features.length;
+
+    // BDL caps pages at its own maxRecordCount, so a short page is not the end while it says so.
+    const hasMore =
+      parsed.exceededTransferLimit ?? parsed.properties?.exceededTransferLimit ?? parsed.features.length === PAGE_SIZE;
+
+    if (!hasMore || parsed.features.length === 0) {
+      return;
     }
   }
+
+  // Returning here would hand the sync a partial layer that looks complete.
+  throw new Error(`BDL pagination exceeded ${MAX_PAGES} pages for ${layerUrl}`);
 }
 
 /** Collects every matching feature into an array (for small layers - fire, bans). */

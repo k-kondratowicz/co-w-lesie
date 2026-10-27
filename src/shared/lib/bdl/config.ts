@@ -4,6 +4,9 @@
 
 export const BDL_BASE = 'https://mapserver.bdl.lasy.gov.pl/arcgis/rest/services';
 
+/** Per-page bound, so a hung BDL edge fails the sync instead of eating the cron's whole maxDuration. */
+export const BDL_FETCH_TIMEOUT_MS = 60_000;
+
 /** "Strefy zagrożenia pożarowego" - fire-hazard forecast zones (small, ~60 features). */
 export const FIRE_HAZARD_LAYER = `${BDL_BASE}/WMS_zagrozenie_pozarowe_w_lasach/MapServer/0`;
 

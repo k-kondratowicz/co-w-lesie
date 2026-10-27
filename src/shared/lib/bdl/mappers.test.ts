@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { banReason, fireCodeToDegree, fireUpdatedAt, isNoForecastCode, parseBdlDateTime } from './mappers';
+import { banEndsAt, banReason, fireCodeToDegree, fireUpdatedAt, isNoForecastCode, parseBdlDateTime } from './mappers';
 
 describe('fireCodeToDegree', () => {
   it('maps valid hazard codes 0..3 to their degree', () => {
@@ -93,6 +93,28 @@ describe('fireUpdatedAt', () => {
 
   it('falls back to midnight when the hour is invalid', () => {
     expect(fireUpdatedAt('2026-06-10', 'xx')?.toISOString()).toBe('2026-06-09T22:00:00.000Z');
+  });
+});
+
+describe('banEndsAt', () => {
+  it('holds a ban through its whole end day in Warsaw (winter, +01:00)', () => {
+    expect(banEndsAt(Date.UTC(2026, 11, 31))?.toISOString()).toBe('2026-12-31T22:59:59.999Z');
+    expect(banEndsAt('31-12-2026 00:00:00')?.toISOString()).toBe('2026-12-31T22:59:59.999Z');
+  });
+
+  it('ends at Warsaw midnight on a DST-change day, not 24 h after the day starts', () => {
+    expect(banEndsAt(Date.UTC(2026, 9, 25))?.toISOString()).toBe('2026-10-25T22:59:59.999Z');
+    expect(banEndsAt(Date.UTC(2026, 2, 29))?.toISOString()).toBe('2026-03-29T21:59:59.999Z');
+  });
+
+  it('rolls over month and year ends', () => {
+    expect(banEndsAt(Date.UTC(2026, 10, 30))?.toISOString()).toBe('2026-11-30T22:59:59.999Z');
+  });
+
+  it('returns null - an open-ended ban - for a missing date or the no-end sentinel', () => {
+    expect(banEndsAt(null)).toBeNull();
+    expect(banEndsAt(undefined)).toBeNull();
+    expect(banEndsAt(-62135596800000)).toBeNull();
   });
 });
 

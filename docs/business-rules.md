@@ -91,6 +91,16 @@ issuing (e.g. at the end of the fire season). So fire is also `STALE` when the f
 time (`fireAsOf`) is older than **24 h** - long enough to carry the ~13:00 issue through to the
 next morning's (~20 h), short enough to catch a forecast that is days old.
 
+### Entry-ban end date
+
+A ban's `data_koncowa` is a calendar date, not an instant: every value BDL serves is 00:00 UTC with
+no time zone declared, and they cluster on month ends (31.10, 30.11, 31.12). A ban therefore holds
+**through the whole end day, Polish time** - "do 31.12.2026" ends at 23:59:59.999 Warsaw time, which
+is also what the UI's "Obowiązuje do: 31.12.2026" promises. This is the latest instant any reading
+of the field allows (exclusive end, UTC instant, or inclusive day), so if LP means the ban ends at
+the start of that day, we only stay cautious a day longer. A ban with no end date - null, or BDL's
+`0001-01-01` sentinel that GeoJSON omits - is active until BDL stops publishing it.
+
 ### Sync safeguards
 
 A sync replaces its table only with a plausible result; otherwise it fails, keeps the last good

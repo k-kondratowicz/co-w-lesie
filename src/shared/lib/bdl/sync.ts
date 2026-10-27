@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { recordSync } from '@/shared/lib/sync-freshness';
 import { fetchAllFeatures, fetchFeaturePages } from './client';
 import { ENTRY_BAN_LAYER, FIRE_HAZARD_LAYER, FOREST_LAYERS } from './config';
-import { banReason, fireCodeToDegree, fireUpdatedAt, isNoForecastCode, parseBdlDateTime } from './mappers';
+import { banEndsAt, banReason, fireCodeToDegree, fireUpdatedAt, isNoForecastCode } from './mappers';
 import { entryBanProps, fireHazardProps, forestCompartmentProps } from './schemas';
 
 // Background sync: pull from BDL, validate, and refresh our local PostGIS tables.
@@ -92,7 +92,7 @@ export async function syncEntryBans(prisma: PrismaClient): Promise<SyncResult> {
   const rows: Prisma.Sql[] = [];
 
   for (const { properties, geometry } of features) {
-    const until = parseBdlDateTime(properties.data_koncowa);
+    const until = banEndsAt(properties.data_koncowa);
     // Drop bans that have already ended; presence of a row means an active ban.
     if (until && until.getTime() < now) {
       skipped++;

@@ -135,6 +135,26 @@ export function fireUpdatedAt(date: string, rawHour: string): Date | null {
   return parseBdlDateTime(`${date} ${String(hour).padStart(2, '0')}:00:00`);
 }
 
+/**
+ * Last instant a ban holds: the end of its `data_koncowa` calendar day in Poland (see
+ * docs/business-rules.md, "Entry-ban end date"). Null - no end date - keeps the ban open-ended.
+ */
+export function banEndsAt(value: string | number | null | undefined): Date | null {
+  const endDay = parseBdlDateTime(value);
+  if (!endDay) {
+    return null;
+  }
+
+  const { year, month, day } = warsawWallClock(endDay.getTime());
+  const nextDay = new Date(Date.UTC(year, month - 1, day + 1));
+  const nextMidnight = makeWarsawDate(nextDay.getUTCFullYear(), nextDay.getUTCMonth() + 1, nextDay.getUTCDate(), 0, 0, 0);
+  if (!nextMidnight) {
+    return null;
+  }
+
+  return new Date(nextMidnight.getTime() - 1);
+}
+
 /** Human-readable ban reason: prefer the free-text `opis`, fall back to the coded `kod`. */
 export function banReason(code: string | null, description: string | null): string | null {
   const trimmedDescription = description?.trim();

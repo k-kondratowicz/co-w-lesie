@@ -81,6 +81,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 afterAll(async () => {
@@ -127,7 +128,18 @@ describe('syncEntryBans', () => {
     const rows = await prisma.$queryRaw<{ id: string; until: Date }[]>`SELECT "id", "until" FROM "forest_entry_ban"`;
 
     expect(result).toEqual({ fetched: 2, inserted: 1, skipped: 1 });
-    expect(rows).toEqual([{ id: '7', until: new Date('2099-12-30T23:00:00.000Z') }]);
+    expect(rows).toEqual([{ id: '7', until: new Date('2099-12-31T22:59:59.999Z') }]);
+  });
+
+  it('keeps a ban on its last day, dropping it only once that day has passed in Poland', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-12-31T20:00:00Z'));
+    vi.mocked(fetchAllFeatures).mockResolvedValue([banFeature(7, Date.UTC(2026, 11, 31)), banFeature(8, Date.UTC(2026, 11, 30))]);
+
+    const result = await syncEntryBans(prisma);
+
+    expect(result).toEqual({ fetched: 2, inserted: 1, skipped: 1 });
+    expect(await ids('forest_entry_ban')).toEqual(['7']);
   });
 
   it('keeps a ban whose end date GeoJSON omitted as an open-ended ban', async () => {

@@ -93,13 +93,20 @@ next morning's (~20 h), short enough to catch a forecast that is days old.
 
 ### Entry-ban end date
 
-A ban's `data_koncowa` is a calendar date, not an instant: every value BDL serves is 00:00 UTC with
-no time zone declared, and they cluster on month ends (31.10, 30.11, 31.12). A ban therefore holds
-**through the whole end day, Polish time** - "do 31.12.2026" ends at 23:59:59.999 Warsaw time, which
-is also what the UI's "Obowiązuje do: 31.12.2026" promises. This is the latest instant any reading
-of the field allows (exclusive end, UTC instant, or inclusive day), so if LP means the ban ends at
-the start of that day, we only stay cautious a day longer. A ban with no end date - null, or BDL's
-`0001-01-01` sentinel that GeoJSON omits - is active until BDL stops publishing it.
+A ban's `data_koncowa` is the calendar date from the forest district's order, and the ban holds
+**through that whole day, Polish time** - "do 31.12.2026" ends at 23:59:59.999 Warsaw time, which is
+also what the UI's "Obowiązuje do: 31.12.2026" promises. BDL serves the date as 00:00 UTC with no
+time zone declared, so it must not be read as an instant.
+
+Checked in Oct 2026 against Zarządzenie nr 46/25 Nadleśniczego Nadleśnictwa Białowieża: the ban
+"obowiązuje od 01 stycznia 2026 r. do 31 grudnia 2026 r." in leśnictwa Stoczek, Grudki, Podcerkiew,
+Teremiski, Nowe and Batorówka, and the order it replaced (also "do 31 grudnia 2025") lost force
+"z upływem dnia 31 grudnia 2025 r." - i.e. at the end of the day. BDL publishes exactly those six
+leśnictwa (133 polygons) with `data_koncowa` = 2026-12-31T00:00:00Z. The ban layer's `data` field
+is not the ban start (2025 dates there), so it is not used.
+
+A ban with no end date - null, or BDL's `0001-01-01` sentinel that GeoJSON omits - is active until
+BDL stops publishing it.
 
 ### Sync safeguards
 

@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/shared/lib/prisma';
 import { fetchAllFeatures } from './client';
 import type { EntryBanProps, FireHazardProps } from './schemas';
@@ -77,6 +77,10 @@ beforeEach(async () => {
       { dataset: 'bans', syncedAt: LAST_GOOD_SYNC },
     ],
   });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 afterAll(async () => {
@@ -168,5 +172,48 @@ describe('syncFireHazard', () => {
 
     expect(result).toEqual({ fetched: 2, inserted: 1, skipped: 1 });
     expect(await ids('fire_hazard_zone')).toEqual(['A']);
+  });
+});
+
+describe('null geometry from BDL', () => {
+  // The real client runs against a stubbed BDL response, covering fetch -> guard -> table end to end.
+  async function serveFromBdl(features: unknown[]) {
+    const actual = await vi.importActual<typeof import('./client')>('./client');
+    vi.mocked(fetchAllFeatures).mockImplementation(actual.fetchAllFeatures);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({ type: 'FeatureCollection', features, exceededTransferLimit: false }),
+      }),
+    );
+  }
+
+  it('keeps the last good bans when one ban arrives without geometry', async () => {
+    await seedLastGoodBan();
+    await serveFromBdl([
+      { type: 'Feature', ...banFeature(7, null) },
+      { type: 'Feature', properties: banFeature(8, null).properties, geometry: null },
+    ]);
+
+    await expect(syncEntryBans(prisma)).rejects.toThrow('without geometry');
+
+    expect(await ids('forest_entry_ban')).toEqual(['last-good']);
+    expect(await syncedAt('bans')).toEqual(LAST_GOOD_SYNC);
+  });
+
+  it('keeps the last good fire zones when one zone arrives without geometry', async () => {
+    await seedLastGoodFireZone();
+    await serveFromBdl([
+      { type: 'Feature', ...fireFeature('A', '1') },
+      { type: 'Feature', properties: fireFeature('B', '3').properties, geometry: null },
+    ]);
+
+    await expect(syncFireHazard(prisma)).rejects.toThrow('without geometry');
+
+    expect(await ids('fire_hazard_zone')).toEqual(['last-good']);
+    expect(await syncedAt('fire')).toEqual(LAST_GOOD_SYNC);
   });
 });

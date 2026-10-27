@@ -37,6 +37,7 @@ export async function syncTourismPois(prisma: PrismaClient): Promise<TourismSync
       outFields: ['obj_id', 'nzw_ob', 'tur_obj_desc'],
       orderByField: 'obj_id',
       where: descriptionFilter(layer.descriptions),
+      nullGeometry: 'skip',
     });
     fetched += features.length;
 
@@ -98,6 +99,7 @@ export async function syncOvernightZones(prisma: PrismaClient): Promise<TourismS
     // Programme areas are whole forest ranges drawn in fine detail; ~55 m is far below what the
     // map shows and keeps the layer light enough to page.
     maxAllowableOffset: 0.0005,
+    nullGeometry: 'skip',
   });
 
   const rows = features.map(

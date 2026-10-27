@@ -99,7 +99,8 @@ data, and leaves the freshness timestamp to go visibly stale (so the rule above 
   October 2026, outside the fire season, BDL still published 789 bans, all coded "inne przyczyny"
   (non-fire). Zero signals a broken fetch or date-format drift, not every ban being lifted.
 - **Paging** - the client keeps paging while the server reports `exceededTransferLimit`, and fails
-  instead of storing a partial set when the page cap is hit. Each page request times out after 60 s.
+  instead of storing a partial set when the page cap is hit or an empty page still reports more
+  results. Each page request times out after 60 s.
 
 ## Reports
 

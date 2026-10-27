@@ -67,6 +67,31 @@ describe('fetchAllFeatures paging', () => {
     expect(requestedOffsets(fetchMock)).toEqual(['0', '1000']);
   });
 
+  it('rejects an empty page that still reports more results instead of returning the pages so far', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(page([1, 2], { exceededTransferLimit: true }))
+      .mockResolvedValueOnce(page([], { exceededTransferLimit: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchAllFeatures('https://example.test/layer', props, options)).rejects.toThrow(
+      'empty but reported more results',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('ends cleanly on an empty last page when the server says it is done', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(page([1, 2], { exceededTransferLimit: true }))
+      .mockResolvedValueOnce(page([], { exceededTransferLimit: false }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const features = await fetchAllFeatures('https://example.test/layer', props, options);
+
+    expect(features).toHaveLength(2);
+  });
+
   it('fails the sync on an HTTP error instead of returning what it has', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ ok: false, status: 503, statusText: 'Service Unavailable' }));
 

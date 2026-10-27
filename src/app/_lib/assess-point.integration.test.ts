@@ -13,10 +13,10 @@ const COULD_NOT_CONFIRM = /^Nie udało się potwierdzić wszystkich warunków/;
 
 const hoursAgo = (hours: number) => new Date(Date.now() - hours * HOUR_MS);
 
-function insertFireZone(degree: number) {
+function insertFireZone(degree: number, issuedAt: Date = new Date()) {
   return prisma.$executeRaw`
     INSERT INTO "fire_hazard_zone" ("id", "degree", "updated_at", "geom")
-    VALUES ('zone', ${degree}, NOW(), ST_GeomFromText(${SQUARE_WKT}, 4326))
+    VALUES ('zone', ${degree}, ${issuedAt}, ST_GeomFromText(${SQUARE_WKT}, 4326))
   `;
 }
 
@@ -94,6 +94,28 @@ describe('assessPoint - sync freshness', () => {
     expect(assessment.fireAsOf).not.toBeNull();
   });
 
+  // BDL stops issuing off-season, so a sync can succeed today while carrying a days-old forecast.
+  it('treats an old forecast as stale even when the sync is fresh', async () => {
+    await insertFireZone(0, hoursAgo(48));
+    await setSyncedAt(hoursAgo(1), hoursAgo(1));
+
+    const assessment = await assessHere();
+
+    expect(assessment.level).toBe('UNKNOWN');
+    expect(assessment.signals.fire.state).toBe('STALE');
+    expect(assessment.message).toMatch(COULD_NOT_CONFIRM);
+  });
+
+  it('keeps the previous afternoon forecast current through the morning', async () => {
+    await insertFireZone(0, hoursAgo(20));
+    await setSyncedAt(hoursAgo(1), hoursAgo(1));
+
+    const assessment = await assessHere();
+
+    expect(assessment.signals.fire.state).toBe('CURRENT');
+    expect(assessment.message).toMatch(NO_KNOWN_HAZARDS);
+  });
+
   it('stops confirming "no hazards" once the ban sync is stale, and reports its real age', async () => {
     const staleBanSync = hoursAgo(72);
     await insertFireZone(0);
@@ -138,5 +160,15 @@ describe('assessPoint - sync freshness', () => {
 
     expect(assessment.level).toBe('RED');
     expect(assessment.message).toMatch(/^Ekstremalne zagrożenie pożarowe/);
+  });
+
+  it('keeps an old degree III forecast RED', async () => {
+    await insertFireZone(3, hoursAgo(48));
+    await setSyncedAt(hoursAgo(1), hoursAgo(1));
+
+    const assessment = await assessHere();
+
+    expect(assessment.level).toBe('RED');
+    expect(assessment.signals.fire.state).toBe('STALE');
   });
 });

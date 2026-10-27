@@ -67,7 +67,7 @@ last ban sync). Either may be `null` (unknown) - see the safety rule.
 |---|---|---|
 | `CURRENT` | synced within the threshold, BDL has data for the point | none |
 | `NO_DATA` | synced, but BDL publishes nothing here (fire `-1`/`-2`, outside Poland) | cautious message, level unchanged |
-| `STALE` | our last successful sync is older than the threshold, or never ran | cautious message, GREEN becomes UNKNOWN |
+| `STALE` | our last successful sync is older than the threshold or never ran, or (fire) BDL's forecast for the point is older than 24 h | cautious message, GREEN becomes UNKNOWN |
 
 Only `STALE` changes the level, because it is our pipeline failing - the data may be wrong. `NO_DATA`
 is BDL telling us nothing is forecast (most of Poland outside the fire season), so the result keeps
@@ -85,6 +85,11 @@ The two fire thresholds answer different questions. BDL issues no new forecast o
 16:00 UTC sync stays current until the next morning: a user-facing threshold must span that 14 h
 gap or every assessment would turn cautious at night. The watchdog runs only inside the sync
 window, where 6 h without a sync already means a dead cron.
+
+A fresh sync does not make the forecast fresh: BDL keeps serving its last forecast after it stops
+issuing (e.g. at the end of the fire season). So fire is also `STALE` when the forecast's own issue
+time (`fireAsOf`) is older than **24 h** - long enough to carry the ~13:00 issue through to the
+next morning's (~20 h), short enough to catch a forecast that is days old.
 
 ### Sync safeguards
 

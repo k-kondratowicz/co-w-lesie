@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DAY_MS, HOUR_MS } from '@/shared/lib/date/time';
-import { evaluateSyncFreshness, WATCHDOG_STALE_THRESHOLD_MS } from './sync-freshness';
+import { evaluateSyncFreshness, isFireForecastOutdated, WATCHDOG_STALE_THRESHOLD_MS } from './sync-freshness';
 
 const NOW = new Date('2026-06-23T12:00:00Z');
 const ago = (ms: number) => new Date(NOW.getTime() - ms);
@@ -73,5 +73,20 @@ describe('evaluateSyncFreshness', () => {
 
     expect(result.datasets.kmzb.stale).toBe(true);
     expect(result.criticalStale).toBe(false);
+  });
+});
+
+describe('isFireForecastOutdated', () => {
+  it('keeps the afternoon forecast current through the next morning', () => {
+    expect(isFireForecastOutdated(ago(20 * HOUR_MS), NOW)).toBe(false);
+  });
+
+  it('flags a forecast older than a day, even when the sync itself is fresh', () => {
+    expect(isFireForecastOutdated(ago(25 * HOUR_MS), NOW)).toBe(true);
+    expect(isFireForecastOutdated(ago(2 * DAY_MS), NOW)).toBe(true);
+  });
+
+  it('treats no forecast as missing, not outdated', () => {
+    expect(isFireForecastOutdated(null, NOW)).toBe(false);
   });
 });

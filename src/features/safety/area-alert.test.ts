@@ -6,8 +6,8 @@ function signals(overrides: Partial<RiskResult['signals']>): Pick<RiskResult, 's
   return {
     signals: {
       reports: { count: 0, score: 0 },
-      fire: { degree: null, score: 0 },
-      entryBan: { active: false },
+      fire: { degree: null, score: 0, state: 'NO_DATA' },
+      entryBan: { active: false, state: 'CURRENT' },
       inForest: 'IN',
       ...overrides,
     },
@@ -16,15 +16,22 @@ function signals(overrides: Partial<RiskResult['signals']>): Pick<RiskResult, 's
 
 describe('activeHazards', () => {
   it('reports a ban and fire degree III as hazards', () => {
-    expect(activeHazards(signals({ entryBan: { active: true }, fire: { degree: 3, score: 100 } }))).toEqual(['ban', 'fire:3']);
+    expect(
+      activeHazards(signals({ entryBan: { active: true, state: 'CURRENT' }, fire: { degree: 3, score: 100, state: 'CURRENT' } })),
+    ).toEqual(['ban', 'fire:3']);
   });
 
   it('ignores fire below degree III', () => {
-    expect(activeHazards(signals({ fire: { degree: 2, score: 50 } }))).toEqual([]);
+    expect(activeHazards(signals({ fire: { degree: 2, score: 50, state: 'CURRENT' } }))).toEqual([]);
+  });
+
+  // A failed sync must not silence a push: the last good data still shows the ban.
+  it('still alerts on a ban from a stale sync', () => {
+    expect(activeHazards(signals({ entryBan: { active: true, state: 'STALE' } }))).toEqual(['ban']);
   });
 
   it('treats unknown fire degree as no hazard', () => {
-    expect(activeHazards(signals({ fire: { degree: null, score: 0 } }))).toEqual([]);
+    expect(activeHazards(signals({ fire: { degree: null, score: 0, state: 'NO_DATA' } }))).toEqual([]);
   });
 });
 

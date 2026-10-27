@@ -50,6 +50,8 @@ gathers the signals, the engine scores them.
   - `< 0.25` → **GREEN** ("no known hazards nearby")
   - `< 0.6` → **YELLOW** ("stay cautious")
   - `≥ 0.6` → **RED** ("we advise against going")
+- A would-be **GREEN** becomes **UNKNOWN** ("data outdated - stay cautious") when either nationwide
+  signal is `STALE` - see Freshness below. YELLOW and RED are never softened.
 
 The score is also returned as 0-100 for display.
 
@@ -59,11 +61,20 @@ Fire and bans refresh on different cadences, so freshness is reported **per sign
 collapsed to the oldest: `fireAsOf` (the intersecting zone's forecast time) and `bansAsOf` (the
 last ban sync). Either may be `null` (unknown) - see the safety rule.
 
-**Stale data is not confirmed data.** When the last successful sync of a safety-critical dataset is
-older than its user-facing threshold, the assessment treats that signal as unconfirmed: the message
-switches to the "could not confirm all conditions - stay cautious" wording, and the app-wide banner
-shows. Staleness never removes a hazard the data still shows - a stale ban or fire degree III keeps
-the result RED.
+**Stale data is not confirmed data.** Each nationwide signal (fire, bans) carries a state:
+
+| State | Meaning | Effect |
+|---|---|---|
+| `CURRENT` | synced within the threshold, BDL has data for the point | none |
+| `NO_DATA` | synced, but BDL publishes nothing here (fire `-1`/`-2`, outside Poland) | cautious message, level unchanged |
+| `STALE` | our last successful sync is older than the threshold, or never ran | cautious message, GREEN becomes UNKNOWN |
+
+Only `STALE` changes the level, because it is our pipeline failing - the data may be wrong. `NO_DATA`
+is BDL telling us nothing is forecast (most of Poland outside the fire season), so the result keeps
+its level and the message carries the caution. The result rows say "Brak aktualnych danych" for a
+stale signal instead of a misleading "Nie". Staleness never removes a hazard the data still shows -
+a stale ban or fire degree III keeps the result RED. A stale critical dataset also shows the app-wide
+banner.
 
 | Dataset | Sync cadence | Stale for users after | Watchdog alerts after |
 |---|---|---|---|

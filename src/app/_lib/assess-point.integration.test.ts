@@ -58,6 +58,18 @@ describe('assessPoint - sync freshness', () => {
 
     expect(assessment.level).toBe('GREEN');
     expect(assessment.message).toMatch(NO_KNOWN_HAZARDS);
+    expect(assessment.signals.fire.state).toBe('CURRENT');
+    expect(assessment.signals.entryBan.state).toBe('CURRENT');
+  });
+
+  it('keeps GREEN but cautious when BDL publishes no forecast for the point', async () => {
+    await setSyncedAt(hoursAgo(1), hoursAgo(1));
+
+    const assessment = await assessHere();
+
+    expect(assessment.level).toBe('GREEN');
+    expect(assessment.signals.fire.state).toBe('NO_DATA');
+    expect(assessment.message).toMatch(COULD_NOT_CONFIRM);
   });
 
   // BDL issues no forecast overnight, so a sync from 16:00 UTC is still current the next morning.
@@ -76,6 +88,8 @@ describe('assessPoint - sync freshness', () => {
 
     const assessment = await assessHere();
 
+    expect(assessment.level).toBe('UNKNOWN');
+    expect(assessment.signals.fire.state).toBe('STALE');
     expect(assessment.message).toMatch(COULD_NOT_CONFIRM);
     expect(assessment.fireAsOf).not.toBeNull();
   });
@@ -87,6 +101,8 @@ describe('assessPoint - sync freshness', () => {
 
     const assessment = await assessHere();
 
+    expect(assessment.level).toBe('UNKNOWN');
+    expect(assessment.signals.entryBan).toEqual({ active: false, state: 'STALE' });
     expect(assessment.message).toMatch(COULD_NOT_CONFIRM);
     expect(assessment.bansAsOf).toBe(staleBanSync.toISOString());
   });
@@ -97,6 +113,7 @@ describe('assessPoint - sync freshness', () => {
 
     const assessment = await assessHere();
 
+    expect(assessment.level).toBe('UNKNOWN');
     expect(assessment.message).toMatch(COULD_NOT_CONFIRM);
     expect(assessment.bansAsOf).toBeNull();
   });

@@ -32,7 +32,7 @@ export function buildRiskMessage(result: RiskResult, context: RiskMessageContext
   }
 
   // Safety rule: never imply "safe" when we could not confirm the nationwide signals.
-  if (level !== 'RED' && (!context.fireKnown || !context.banKnown)) {
+  if (level === 'UNKNOWN' || (level !== 'RED' && (!context.fireKnown || !context.banKnown))) {
     return `Nie udało się potwierdzić wszystkich warunków w tym miejscu - zachowaj ostrożność. ${DISCLAIMER}`;
   }
 

@@ -42,9 +42,19 @@ function levelFromScore(score01: number): RiskLevel {
   return 'RED';
 }
 
+/** STALE wins: once our sync has failed, a missing row no longer proves BDL published nothing. */
+export function signalState(hasData: boolean, syncStale: boolean): RiskInput['fireState'] {
+  if (syncStale) {
+    return 'STALE';
+  }
+
+  return hasData ? 'CURRENT' : 'NO_DATA';
+}
+
 /**
  * Combines signals into a level. Safety rule: an active entry ban or fire-hazard degree III
- * is a hard RED regardless of everything else - we never average those away.
+ * is a hard RED regardless of everything else - we never average those away. A stale signal turns
+ * GREEN into UNKNOWN; it can only make the answer more cautious, never soften YELLOW or RED.
  */
 export function assessRisk(input: RiskInput): RiskResult {
   const reportScore = reportDensityScore(input.reports);
@@ -52,7 +62,9 @@ export function assessRisk(input: RiskInput): RiskResult {
 
   const hardRed = input.entryBan || input.fireDegree === 3;
   const score01 = hardRed ? 1 : clamp01(SCORE_WEIGHTS.report * reportScore + SCORE_WEIGHTS.fire * fScore);
-  const level = hardRed ? 'RED' : levelFromScore(score01);
+  const scoredLevel = hardRed ? 'RED' : levelFromScore(score01);
+  const anyStale = input.fireState === 'STALE' || input.entryBanState === 'STALE';
+  const level = scoredLevel === 'GREEN' && anyStale ? 'UNKNOWN' : scoredLevel;
 
   return {
     score: Math.round(score01 * 100),
@@ -60,8 +72,8 @@ export function assessRisk(input: RiskInput): RiskResult {
     radiusMeters: input.radiusMeters,
     signals: {
       reports: { count: input.reports.length, score: reportScore },
-      fire: { degree: input.fireDegree, score: fScore },
-      entryBan: { active: input.entryBan },
+      fire: { degree: input.fireDegree, score: fScore, state: input.fireState },
+      entryBan: { active: input.entryBan, state: input.entryBanState },
       inForest: input.inForest,
     },
   };

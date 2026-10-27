@@ -59,6 +59,37 @@ Fire and bans refresh on different cadences, so freshness is reported **per sign
 collapsed to the oldest: `fireAsOf` (the intersecting zone's forecast time) and `bansAsOf` (the
 last ban sync). Either may be `null` (unknown) - see the safety rule.
 
+**Stale data is not confirmed data.** When the last successful sync of a safety-critical dataset is
+older than its user-facing threshold, the assessment treats that signal as unconfirmed: the message
+switches to the "could not confirm all conditions - stay cautious" wording, and the app-wide banner
+shows. Staleness never removes a hazard the data still shows - a stale ban or fire degree III keeps
+the result RED.
+
+| Dataset | Sync cadence | Stale for users after | Watchdog alerts after |
+|---|---|---|---|
+| Fire hazard | hourly, 06:00-16:00 UTC | **18 h** | **6 h** |
+| Entry bans | daily, 03:30 UTC | **2 days** | **2 days** |
+
+The two fire thresholds answer different questions. BDL issues no new forecast overnight, so the
+16:00 UTC sync stays current until the next morning: a user-facing threshold must span that 14 h
+gap or every assessment would turn cautious at night. The watchdog runs only inside the sync
+window, where 6 h without a sync already means a dead cron.
+
+### Sync safeguards
+
+A sync replaces its table only with a plausible result; otherwise it fails, keeps the last good
+data, and leaves the freshness timestamp to go visibly stale (so the rule above takes over).
+
+- **Fire hazard** - BDL publishes every zone (~60) year-round, outside the season as code `-2`
+  ("no data"). An empty response is refused. A response with no usable zone is accepted only when
+  every zone carries an explicit "nothing forecast" code (`-1` not covered, `-2` no data); otherwise
+  the codes or timestamps changed format and the run is refused.
+- **Entry bans** - a result with no active ban is refused. Nationwide that is implausible: in late
+  October 2026, outside the fire season, BDL still published 789 bans, all coded "inne przyczyny"
+  (non-fire). Zero signals a broken fetch or date-format drift, not every ban being lifted.
+- **Paging** - the client keeps paging while the server reports `exceededTransferLimit`, and fails
+  instead of storing a partial set when the page cap is hit. Each page request times out after 60 s.
+
 ## Reports
 
 ### Creating a report

@@ -34,12 +34,16 @@ export const fireHazardProps = z.object({
   godz: z.string(),
 });
 
+// The ban layer's dates were strings until BDL retyped them to esriFieldTypeDate (epoch ms) in Oct 2026.
+// GeoJSON drops a date it can't represent (BDL's 0001-01-01 "no end" sentinel), so the key can be missing.
+const bdlDate = z.union([z.number(), z.string()]).nullish();
+
 export const entryBanProps = z.object({
   objectid: z.number(),
   kod: z.string().nullable(),
   opis: z.string().nullable(),
-  data: z.string().nullable(),
-  data_koncowa: z.string().nullable(),
+  data: bdlDate,
+  data_koncowa: bdlDate,
   nazwa_nadl: z.string().nullable(),
 });
 

@@ -22,7 +22,7 @@ const KRAKOW_SQUARE = {
 const KRAKOW_WKT = 'MULTIPOLYGON(((19.9 50.0, 20.0 50.0, 20.0 50.1, 19.9 50.1, 19.9 50.0)))';
 const LAST_GOOD_SYNC = new Date('2026-06-01T12:00:00Z');
 
-function banFeature(objectid: number, dataKoncowa: string | null) {
+function banFeature(objectid: number, dataKoncowa: EntryBanProps['data_koncowa']) {
   const properties: EntryBanProps = {
     objectid,
     kod: 'zagrożenie pożarowe',
@@ -118,6 +118,25 @@ describe('syncEntryBans', () => {
     expect(result).toEqual({ fetched: 2, inserted: 1, skipped: 1 });
     expect(await ids('forest_entry_ban')).toEqual(['7']);
     expect((await syncedAt('bans'))?.getTime()).toBeGreaterThan(LAST_GOOD_SYNC.getTime());
+  });
+
+  it('accepts epoch end dates, as BDL serves the date fields since Oct 2026', async () => {
+    vi.mocked(fetchAllFeatures).mockResolvedValue([banFeature(7, Date.UTC(2099, 11, 31)), banFeature(8, Date.UTC(2020, 0, 1))]);
+
+    const result = await syncEntryBans(prisma);
+    const rows = await prisma.$queryRaw<{ id: string; until: Date }[]>`SELECT "id", "until" FROM "forest_entry_ban"`;
+
+    expect(result).toEqual({ fetched: 2, inserted: 1, skipped: 1 });
+    expect(rows).toEqual([{ id: '7', until: new Date('2099-12-30T23:00:00.000Z') }]);
+  });
+
+  it('keeps a ban whose end date GeoJSON omitted as an open-ended ban', async () => {
+    vi.mocked(fetchAllFeatures).mockResolvedValue([banFeature(7, undefined)]);
+
+    await syncEntryBans(prisma);
+    const rows = await prisma.$queryRaw<{ id: string; until: Date | null }[]>`SELECT "id", "until" FROM "forest_entry_ban"`;
+
+    expect(rows).toEqual([{ id: '7', until: null }]);
   });
 });
 

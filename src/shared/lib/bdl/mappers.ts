@@ -23,13 +23,18 @@ export function isNoForecastCode(code: string): boolean {
 }
 
 /**
- * BDL serializes timestamps as strings in two inconsistent formats:
- *   - "YYYY-MM-DD HH:MM:SS" (e.g. the fire/ban `data` field)
- *   - "DD-MM-YYYY HH:MM:SS" (e.g. the ban `data_koncowa` field)
+ * BDL serializes timestamps inconsistently:
+ *   - "YYYY-MM-DD HH:MM:SS" (e.g. the fire `data` field)
+ *   - "DD-MM-YYYY HH:MM:SS" (the ban `data_koncowa` field before Oct 2026)
+ *   - epoch milliseconds (ban `data` / `data_koncowa` since BDL made them date fields)
  * The clock is Polish local time (no zone marker), so we interpret it as Europe/Warsaw.
  * Returns null on anything unparseable.
  */
-export function parseBdlDateTime(value: string | null | undefined): Date | null {
+export function parseBdlDateTime(value: string | number | null | undefined): Date | null {
+  if (typeof value === 'number') {
+    return parseBdlEpoch(value);
+  }
+
   if (!value) {
     return null;
   }
@@ -48,6 +53,24 @@ export function parseBdlDateTime(value: string | null | undefined): Date | null 
   }
 
   return null;
+}
+
+// The layer sets no dateFieldsTimeReference, so ArcGIS emits the stored Polish wall clock as UTC (bans arrive
+// as 00:00Z). Reading the UTC fields as Warsaw time keeps a ban ending when the old "DD-MM-YYYY" string did.
+function parseBdlEpoch(epochMs: number): Date | null {
+  const wallClock = new Date(epochMs);
+  if (Number.isNaN(wallClock.getTime())) {
+    return null;
+  }
+
+  return makeWarsawDate(
+    wallClock.getUTCFullYear(),
+    wallClock.getUTCMonth() + 1,
+    wallClock.getUTCDate(),
+    wallClock.getUTCHours(),
+    wallClock.getUTCMinutes(),
+    wallClock.getUTCSeconds(),
+  );
 }
 
 const warsawWallClockParts = new Intl.DateTimeFormat('en-US', {

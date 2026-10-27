@@ -58,6 +58,20 @@ describe('parseBdlDateTime', () => {
     expect(parseBdlDateTime('31-12-2026 00:00:00')?.toISOString()).toBe('2026-12-30T23:00:00.000Z');
   });
 
+  it('reads an epoch date as the Warsaw wall clock, matching the old string format', () => {
+    expect(parseBdlDateTime(Date.UTC(2026, 11, 31))?.toISOString()).toBe('2026-12-30T23:00:00.000Z');
+    expect(parseBdlDateTime(Date.UTC(2026, 6, 15))?.toISOString()).toBe('2026-07-14T22:00:00.000Z');
+  });
+
+  it('returns null for an epoch outside the representable date range', () => {
+    expect(parseBdlDateTime(1e20)).toBeNull();
+  });
+
+  // Read as a real date, the sentinel would end an indefinite ban in year 1 and drop it from the map.
+  it('returns null for the 0001-01-01 "no end date" sentinel', () => {
+    expect(parseBdlDateTime(-62135596800000)).toBeNull();
+  });
+
   it('returns null for empty or unparseable input', () => {
     expect(parseBdlDateTime(null)).toBeNull();
     expect(parseBdlDateTime(undefined)).toBeNull();

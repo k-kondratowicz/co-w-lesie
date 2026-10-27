@@ -7,6 +7,7 @@ import { queryKmzbAdvisory } from '@/shared/lib/geo/queries/kmzb-advisory';
 import { queryNearbyBans } from '@/shared/lib/geo/queries/nearby-bans';
 import { buildPointContext, queryPointContext } from '@/shared/lib/geo/queries/point-context';
 import { queryVaccinationAdvisory } from '@/shared/lib/geo/queries/vaccination-advisory';
+import { evaluateSyncFreshness, getSyncTimestamps } from '@/shared/lib/sync-freshness';
 
 export type PointAssessment = RiskResult & {
   message: string;
@@ -23,19 +24,17 @@ export type PointAssessment = RiskResult & {
 // Single orchestration of "how risky is this point" against our local PostGIS - shared by the
 // user-facing /api/risk route and the saved-area notification cron so both read identical signals.
 export async function assessPoint(prisma: PrismaClient, lat: number, lng: number, radius: number): Promise<PointAssessment> {
-  const [nearbyReports, contextRow, nearbyBans, banSync, kmzbAdvisory, kmzbSync, vaccinationAdvisory, vaccinationSync] =
-    await Promise.all([
-      queryReportsInRadius(prisma, lng, lat, radius, RECENCY_WINDOW_DAYS),
-      queryPointContext(prisma, lng, lat),
-      queryNearbyBans(prisma, lng, lat, radius),
-      prisma.bdlSync.findUnique({ where: { dataset: 'bans' } }),
-      queryKmzbAdvisory(prisma, lng, lat, radius),
-      prisma.bdlSync.findUnique({ where: { dataset: 'kmzb' } }),
-      queryVaccinationAdvisory(prisma, lng, lat),
-      prisma.bdlSync.findUnique({ where: { dataset: 'vaccination' } }),
-    ]);
+  const [nearbyReports, contextRow, nearbyBans, kmzbAdvisory, vaccinationAdvisory, syncTimestamps] = await Promise.all([
+    queryReportsInRadius(prisma, lng, lat, radius, RECENCY_WINDOW_DAYS),
+    queryPointContext(prisma, lng, lat),
+    queryNearbyBans(prisma, lng, lat, radius),
+    queryKmzbAdvisory(prisma, lng, lat, radius),
+    queryVaccinationAdvisory(prisma, lng, lat),
+    getSyncTimestamps(prisma),
+  ]);
 
   const context = buildPointContext(contextRow, lng, lat);
+  const freshness = evaluateSyncFreshness(syncTimestamps);
 
   const now = Date.now();
   const result = assessRisk({
@@ -49,17 +48,18 @@ export async function assessPoint(prisma: PrismaClient, lat: number, lng: number
     radiusMeters: radius,
   });
 
+  // Stale data keeps a ban or fire III RED - buildRiskMessage checks those before the known flags.
   const message = buildRiskMessage(result, {
-    fireKnown: context.fire.status === 'OK',
-    banKnown: context.entryBan.status !== 'UNKNOWN',
+    fireKnown: context.fire.status === 'OK' && !freshness.datasets.fire.stale,
+    banKnown: context.entryBan.status !== 'UNKNOWN' && !freshness.datasets.bans.stale,
   });
 
   // Honest freshness, reported per signal: fire and bans refresh on different cadences, so we
   // surface each separately instead of collapsing to the oldest (which hid fresh fire data).
   const fireAsOf = contextRow.fire_updated_at ? contextRow.fire_updated_at.toISOString() : null;
-  const bansAsOf = banSync?.syncedAt ? banSync.syncedAt.toISOString() : null;
-  const kmzbAsOf = kmzbSync?.syncedAt ? kmzbSync.syncedAt.toISOString() : null;
-  const vaccinationAsOf = vaccinationSync?.syncedAt ? vaccinationSync.syncedAt.toISOString() : null;
+  const bansAsOf = freshness.datasets.bans.syncedAt;
+  const kmzbAsOf = freshness.datasets.kmzb.syncedAt;
+  const vaccinationAsOf = freshness.datasets.vaccination.syncedAt;
 
   const ban =
     context.entryBan.status === 'BAN' ? { reason: context.entryBan.reason ?? null, until: context.entryBan.until ?? null } : null;

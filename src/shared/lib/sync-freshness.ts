@@ -17,15 +17,22 @@ export function recordSync(prisma: PrismaClient, dataset: SyncDataset) {
   });
 }
 
-// Past these ages a dataset is "stale" - sync cadence is fire ~3h, bans/kmzb ~daily, so each
-// threshold is a few cadences out, loose enough not to cry wolf on a single missed run.
-const STALE_THRESHOLD_MS: Record<SyncDataset, number> = {
-  fire: 6 * HOUR_MS,
+export type StaleThresholds = Record<SyncDataset, number>;
+
+// User-facing: fire spans the overnight sync gap (docs/business-rules.md, "Freshness").
+export const STALE_THRESHOLD_MS: StaleThresholds = {
+  fire: 18 * HOUR_MS,
   bans: 2 * DAY_MS,
   kmzb: 2 * DAY_MS,
   forest: 90 * DAY_MS, // effectively static; monitored only against a long-dead pipeline
   vaccination: 45 * DAY_MS, // scraped monthly; a couple of cadences out, not safety-critical
   tourism: 45 * DAY_MS, // BDL tourism infrastructure changes with the season, synced monthly
+};
+
+// The watchdog runs only inside the hourly fire-sync window, where 6h without a sync is a dead cron.
+export const WATCHDOG_STALE_THRESHOLD_MS: StaleThresholds = {
+  ...STALE_THRESHOLD_MS,
+  fire: 6 * HOUR_MS,
 };
 
 // Datasets that can flip the assessment to RED (fire degree III, entry ban). When these go stale
@@ -46,14 +53,18 @@ export function getSyncTimestamps(prisma: PrismaClient): Promise<{ dataset: stri
 
 // Pure: turn raw sync timestamps into per-dataset staleness. A dataset with no row has never
 // synced - treated as stale (unknown is not fresh). criticalStale drives the banner and alert.
-export function evaluateSyncFreshness(rows: { dataset: string; syncedAt: Date }[], now: Date = new Date()): SyncFreshness {
+export function evaluateSyncFreshness(
+  rows: { dataset: string; syncedAt: Date }[],
+  now: Date = new Date(),
+  thresholds: StaleThresholds = STALE_THRESHOLD_MS,
+): SyncFreshness {
   const byDataset = new Map(rows.map((row) => [row.dataset, row.syncedAt]));
 
   const datasets: Record<string, DatasetFreshness> = {};
   for (const dataset of MONITORED_DATASETS) {
     const syncedAt = byDataset.get(dataset) ?? null;
     const ageMs = syncedAt ? now.getTime() - syncedAt.getTime() : null;
-    const stale = ageMs === null || ageMs > STALE_THRESHOLD_MS[dataset];
+    const stale = ageMs === null || ageMs > thresholds[dataset];
 
     datasets[dataset] = {
       syncedAt: syncedAt ? syncedAt.toISOString() : null,

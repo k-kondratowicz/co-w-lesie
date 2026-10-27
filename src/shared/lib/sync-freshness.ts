@@ -35,6 +35,15 @@ export const WATCHDOG_STALE_THRESHOLD_MS: StaleThresholds = {
   fire: 6 * HOUR_MS,
 };
 
+// A fresh sync can still carry an old forecast (BDL stops issuing off-season). 24h spans the ~20h
+// from BDL's 13:00 issue to the next morning's (docs/business-rules.md, "Freshness").
+export const FIRE_FORECAST_MAX_AGE_MS = 24 * HOUR_MS;
+
+/** No forecast at all is NO_DATA, not an outdated one - only a dated forecast can be too old. */
+export function isFireForecastOutdated(issuedAt: Date | null, now: Date = new Date()): boolean {
+  return issuedAt !== null && now.getTime() - issuedAt.getTime() > FIRE_FORECAST_MAX_AGE_MS;
+}
+
 // Datasets that can flip the assessment to RED (fire degree III, entry ban). When these go stale
 // we warn loudly and page ourselves - the safety rule means missing/old here is never "safe".
 export const CRITICAL_DATASETS: SyncDataset[] = ['fire', 'bans'];

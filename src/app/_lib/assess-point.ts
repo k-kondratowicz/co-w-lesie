@@ -7,7 +7,7 @@ import { queryKmzbAdvisory } from '@/shared/lib/geo/queries/kmzb-advisory';
 import { queryNearbyBans } from '@/shared/lib/geo/queries/nearby-bans';
 import { buildPointContext, queryPointContext } from '@/shared/lib/geo/queries/point-context';
 import { queryVaccinationAdvisory } from '@/shared/lib/geo/queries/vaccination-advisory';
-import { evaluateSyncFreshness, getSyncTimestamps } from '@/shared/lib/sync-freshness';
+import { evaluateSyncFreshness, getSyncTimestamps, isFireForecastOutdated } from '@/shared/lib/sync-freshness';
 
 export type PointAssessment = RiskResult & {
   message: string;
@@ -35,6 +35,7 @@ export async function assessPoint(prisma: PrismaClient, lat: number, lng: number
 
   const context = buildPointContext(contextRow, lng, lat);
   const freshness = evaluateSyncFreshness(syncTimestamps);
+  const fireStale = freshness.datasets.fire.stale || isFireForecastOutdated(contextRow.fire_updated_at);
 
   const now = Date.now();
   const result = assessRisk({
@@ -44,7 +45,7 @@ export async function assessPoint(prisma: PrismaClient, lat: number, lng: number
     })),
     fireDegree: context.fire.status === 'OK' ? context.fire.degree : null,
     entryBan: context.entryBan.status === 'BAN',
-    fireState: signalState(context.fire.status === 'OK', freshness.datasets.fire.stale),
+    fireState: signalState(context.fire.status === 'OK', fireStale),
     entryBanState: signalState(context.entryBan.status !== 'UNKNOWN', freshness.datasets.bans.stale),
     inForest: context.inForest.status,
     radiusMeters: radius,

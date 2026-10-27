@@ -50,7 +50,7 @@ gathers the signals, the engine scores them.
   - `< 0.25` → **GREEN** ("no known hazards nearby")
   - `< 0.6` → **YELLOW** ("stay cautious")
   - `≥ 0.6` → **RED** ("we advise against going")
-- A would-be **GREEN** becomes **UNKNOWN** ("data outdated - stay cautious") when either nationwide
+- A would-be **GREEN** becomes **UNKNOWN** ("incomplete data - stay cautious") when either nationwide
   signal is `STALE` - see Freshness below. YELLOW and RED are never softened.
 
 The score is also returned as 0-100 for display.

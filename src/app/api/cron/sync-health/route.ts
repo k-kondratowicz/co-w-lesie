@@ -2,7 +2,12 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { isAuthorizedCron } from '@/shared/lib/security/cron-auth';
-import { CRITICAL_DATASETS, evaluateSyncFreshness, getSyncTimestamps } from '@/shared/lib/sync-freshness';
+import {
+  CRITICAL_DATASETS,
+  evaluateSyncFreshness,
+  getSyncTimestamps,
+  WATCHDOG_STALE_THRESHOLD_MS,
+} from '@/shared/lib/sync-freshness';
 
 // Watchdog: a dead sync cron never runs, so it can't report its own failure. This separate
 // scheduled check evaluates freshness and, when a safety-critical dataset (fire/bans) is stale,
@@ -16,7 +21,7 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const freshness = evaluateSyncFreshness(await getSyncTimestamps(prisma));
+  const freshness = evaluateSyncFreshness(await getSyncTimestamps(prisma), new Date(), WATCHDOG_STALE_THRESHOLD_MS);
 
   if (freshness.criticalStale) {
     const staleList = CRITICAL_DATASETS.filter((dataset) => freshness.datasets[dataset]?.stale).join(', ');

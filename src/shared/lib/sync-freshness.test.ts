@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DAY_MS, HOUR_MS } from '@/shared/lib/date/time';
-import { evaluateSyncFreshness } from './sync-freshness';
+import { evaluateSyncFreshness, WATCHDOG_STALE_THRESHOLD_MS } from './sync-freshness';
 
 const NOW = new Date('2026-06-23T12:00:00Z');
 const ago = (ms: number) => new Date(NOW.getTime() - ms);
@@ -23,7 +23,7 @@ describe('evaluateSyncFreshness', () => {
   it('flags a critical dataset past its threshold and sets criticalStale', () => {
     const result = evaluateSyncFreshness(
       [
-        { dataset: 'fire', syncedAt: ago(8 * HOUR_MS) },
+        { dataset: 'fire', syncedAt: ago(20 * HOUR_MS) },
         { dataset: 'bans', syncedAt: ago(6 * HOUR_MS) },
       ],
       NOW,
@@ -31,6 +31,27 @@ describe('evaluateSyncFreshness', () => {
 
     expect(result.datasets.fire.stale).toBe(true);
     expect(result.criticalStale).toBe(true);
+  });
+
+  // 14h is the normal overnight gap of the 06-16 UTC fire sync - fine for users, dead for the watchdog.
+  it('keeps fire fresh for users across the overnight gap while the watchdog flags it', () => {
+    const rows = [
+      { dataset: 'fire', syncedAt: ago(14 * HOUR_MS) },
+      { dataset: 'bans', syncedAt: ago(6 * HOUR_MS) },
+    ];
+
+    expect(evaluateSyncFreshness(rows, NOW).datasets.fire.stale).toBe(false);
+    expect(evaluateSyncFreshness(rows, NOW, WATCHDOG_STALE_THRESHOLD_MS).datasets.fire.stale).toBe(true);
+  });
+
+  it('applies the same bans threshold for users and the watchdog', () => {
+    const rows = [
+      { dataset: 'fire', syncedAt: ago(1 * HOUR_MS) },
+      { dataset: 'bans', syncedAt: ago(3 * DAY_MS) },
+    ];
+
+    expect(evaluateSyncFreshness(rows, NOW).datasets.bans.stale).toBe(true);
+    expect(evaluateSyncFreshness(rows, NOW, WATCHDOG_STALE_THRESHOLD_MS).datasets.bans.stale).toBe(true);
   });
 
   it('treats a never-synced critical dataset as stale (missing is not fresh)', () => {

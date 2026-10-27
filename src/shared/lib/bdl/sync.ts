@@ -25,6 +25,7 @@ export async function syncFireHazard(prisma: PrismaClient): Promise<SyncResult> 
     outFields: ['strefa', 'kod', 'data', 'godz'],
     orderByField: 'objectid',
     maxAllowableOffset: 0.0005,
+    nullGeometry: 'reject',
   });
 
   // BDL lists every zone even off-season (as "-2"); see docs/business-rules.md, "Sync safeguards".
@@ -83,6 +84,7 @@ export async function syncEntryBans(prisma: PrismaClient): Promise<SyncResult> {
     outFields: ['objectid', 'kod', 'opis', 'data', 'data_koncowa', 'nazwa_nadl'],
     orderByField: 'objectid',
     maxAllowableOffset: 0.0005,
+    nullGeometry: 'reject',
   });
 
   const now = Date.now();
@@ -152,6 +154,7 @@ export async function syncForestArea(
       orderByField: 'compartment_id',
       maxAllowableOffset: 0.0001,
       bbox,
+      nullGeometry: 'skip',
     })) {
       fetched += page.length;
 

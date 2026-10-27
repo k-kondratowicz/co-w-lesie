@@ -107,6 +107,9 @@ data, and leaves the freshness timestamp to go visibly stale (so the rule above 
 - **Paging** - the client keeps paging while the server reports `exceededTransferLimit`, and fails
   instead of storing a partial set when the page cap is hit or an empty page still reports more
   results. Each page request times out after 60 s.
+- **Missing geometry** - a fire zone or ban without geometry fails the run instead of being dropped:
+  skipping it would silently remove that hazard. Non-safety layers (forest seed, tourism) skip such
+  rows, since nothing is assessed against them.
 
 ## Reports
 

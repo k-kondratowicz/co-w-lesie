@@ -23,6 +23,11 @@ export type QueryOptions = {
    * 0.0005 ≈ 55 m, plenty for point-in-polygon checks and required to page at all.
    */
   maxAllowableOffset?: number;
+  /**
+   * A row without geometry is unusable either way. Hazard layers must `reject` it: skipping would
+   * quietly drop that hazard from a table the sync then marks fresh.
+   */
+  nullGeometry: 'skip' | 'reject';
 };
 
 export type ValidatedFeature<P> = { properties: P; geometry: { type: string; coordinates: unknown[] } };
@@ -30,8 +35,8 @@ export type ValidatedFeature<P> = { properties: P; geometry: { type: string; coo
 /**
  * Pages through an ArcGIS feature layer as GeoJSON (EPSG:4326), yielding one page of
  * features at a time. Properties are validated with `propsSchema`; features without
- * geometry are dropped (a polygon-layer row with null geometry is unusable). Streaming
- * keeps memory bounded to a single page, which matters for large layers (~455k features).
+ * geometry are skipped or rejected per `nullGeometry`. Streaming keeps memory bounded to a
+ * single page, which matters for large layers (~455k features).
  */
 export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
   layerUrl: string,
@@ -91,6 +96,14 @@ export async function* fetchFeaturePages<T extends z.ZodTypeAny>(
         validFeatures.push({ properties: feature.properties, geometry: feature.geometry });
       }
     }
+
+    const missingGeometry = parsed.features.length - validFeatures.length;
+    if (missingGeometry > 0 && options.nullGeometry === 'reject') {
+      throw new Error(
+        `BDL returned ${missingGeometry} feature(s) without geometry at offset ${offset} - refusing a partial layer (${layerUrl})`,
+      );
+    }
+
     yield validFeatures;
 
     offset += parsed.features.length;

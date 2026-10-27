@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { fetchAllFeatures } from './client';
+import { fetchAllFeatures, type QueryOptions } from './client';
 
 const props = z.object({ objectid: z.number() });
-const options = { outFields: ['objectid'], orderByField: 'objectid' };
+const options: QueryOptions = { outFields: ['objectid'], orderByField: 'objectid', nullGeometry: 'reject' };
 
 function feature(objectid: number) {
   return { type: 'Feature', properties: { objectid }, geometry: { type: 'Point', coordinates: [20, 50] } };
@@ -96,5 +96,34 @@ describe('fetchAllFeatures paging', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ ok: false, status: 503, statusText: 'Service Unavailable' }));
 
     await expect(fetchAllFeatures('https://example.test/layer', props, options)).rejects.toThrow('BDL query failed (503');
+  });
+});
+
+describe('fetchAllFeatures null geometry', () => {
+  function mixedPage() {
+    return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({
+        type: 'FeatureCollection',
+        features: [feature(1), { type: 'Feature', properties: { objectid: 2 }, geometry: null }],
+        exceededTransferLimit: false,
+      }),
+    };
+  }
+
+  it('rejects a layer mixing valid and null-geometry rows when it must be complete', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(mixedPage()));
+
+    await expect(fetchAllFeatures('https://example.test/layer', props, options)).rejects.toThrow('1 feature(s) without geometry');
+  });
+
+  it('skips null-geometry rows for layers that opt in', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(mixedPage()));
+
+    const features = await fetchAllFeatures('https://example.test/layer', props, { ...options, nullGeometry: 'skip' });
+
+    expect(features.map((item) => item.properties.objectid)).toEqual([1]);
   });
 });

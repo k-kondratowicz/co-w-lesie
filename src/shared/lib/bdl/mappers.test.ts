@@ -1,22 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { banReason, fireKodToDegree, fireUpdatedAt, parseBdlDateTime } from './mappers';
+import { banReason, fireCodeToDegree, fireUpdatedAt, isNoForecastCode, parseBdlDateTime } from './mappers';
 
-describe('fireKodToDegree', () => {
+describe('fireCodeToDegree', () => {
   it('maps valid hazard codes 0..3 to their degree', () => {
-    expect(fireKodToDegree('0')).toBe(0);
-    expect(fireKodToDegree('1')).toBe(1);
-    expect(fireKodToDegree('2')).toBe(2);
-    expect(fireKodToDegree('3')).toBe(3);
+    expect(fireCodeToDegree('0')).toBe(0);
+    expect(fireCodeToDegree('1')).toBe(1);
+    expect(fireCodeToDegree('2')).toBe(2);
+    expect(fireCodeToDegree('3')).toBe(3);
   });
 
-  it('returns null for the not-forecast code so the area reads UNKNOWN, not safe', () => {
-    expect(fireKodToDegree('-1')).toBeNull();
+  it('returns null for the not-forecast codes so the area reads UNKNOWN, not safe', () => {
+    expect(fireCodeToDegree('-1')).toBeNull();
+    expect(fireCodeToDegree('-2')).toBeNull();
   });
 
   it('returns null for out-of-range and non-numeric codes', () => {
-    expect(fireKodToDegree('4')).toBeNull();
-    expect(fireKodToDegree('')).toBeNull();
-    expect(fireKodToDegree('abc')).toBeNull();
+    expect(fireCodeToDegree('4')).toBeNull();
+    expect(fireCodeToDegree('')).toBeNull();
+    expect(fireCodeToDegree('abc')).toBeNull();
+  });
+});
+
+describe('isNoForecastCode', () => {
+  it('accepts the explicit not-covered and no-data codes', () => {
+    expect(isNoForecastCode('-1')).toBe(true);
+    expect(isNoForecastCode('-2')).toBe(true);
+    expect(isNoForecastCode(' -2 ')).toBe(true);
+  });
+
+  it('rejects hazard degrees and unrecognised codes', () => {
+    expect(isNoForecastCode('0')).toBe(false);
+    expect(isNoForecastCode('3')).toBe(false);
+    expect(isNoForecastCode('-3')).toBe(false);
+    expect(isNoForecastCode('III')).toBe(false);
+    expect(isNoForecastCode('')).toBe(false);
   });
 });
 

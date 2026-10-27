@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { recordSync } from '@/shared/lib/sync-freshness';
 import { fetchAllFeatures, fetchFeaturePages } from './client';
 import { ENTRY_BAN_LAYER, FIRE_HAZARD_LAYER, FOREST_LAYERS } from './config';
-import { banReason, fireKodToDegree, fireUpdatedAt, parseBdlDateTime } from './mappers';
+import { banReason, fireCodeToDegree, fireUpdatedAt, isNoForecastCode, parseBdlDateTime } from './mappers';
 import { entryBanProps, fireHazardProps, forestCompartmentProps } from './schemas';
 
 // Background sync: pull from BDL, validate, and refresh our local PostGIS tables.
@@ -27,11 +27,16 @@ export async function syncFireHazard(prisma: PrismaClient): Promise<SyncResult> 
     maxAllowableOffset: 0.0005,
   });
 
+  // BDL lists every zone even off-season (as "-2"); see docs/business-rules.md, "Sync safeguards".
+  if (features.length === 0) {
+    throw new Error('BDL fire-hazard fetch returned no zones - refusing to wipe the table');
+  }
+
   let skipped = 0;
   const rows: Prisma.Sql[] = [];
 
   for (const { properties, geometry } of features) {
-    const degree = fireKodToDegree(properties.kod);
+    const degree = fireCodeToDegree(properties.kod);
     const updatedAt = fireUpdatedAt(properties.data, properties.godz);
     // Skip areas not covered by the forecast (degree null) so they read as UNKNOWN.
     if (degree === null || !updatedAt) {
@@ -40,6 +45,11 @@ export async function syncFireHazard(prisma: PrismaClient): Promise<SyncResult> 
     }
 
     rows.push(Prisma.sql`(${properties.strefa}, ${degree}, ${updatedAt}, ${geomFromGeoJson(geometry)})`);
+  }
+
+  // Anything else means the code or timestamp format changed and every zone was dropped as unknown.
+  if (rows.length === 0 && !features.every(({ properties }) => isNoForecastCode(properties.kod))) {
+    throw new Error(`BDL fire-hazard zones unrecognised (${features.length} fetched, none usable) - refusing to wipe the table`);
   }
 
   await prisma.$transaction(async (tx) => {
@@ -85,19 +95,21 @@ export async function syncEntryBans(prisma: PrismaClient): Promise<SyncResult> {
     );
   }
 
+  // Non-fire bans run all year, so zero nationwide means a broken fetch or date drift, not "no bans".
+  if (rows.length === 0) {
+    throw new Error(`BDL entry-ban fetch yielded no active bans (${features.length} fetched) - refusing to wipe the table`);
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe('TRUNCATE TABLE "forest_entry_ban"');
-
-    if (rows.length > 0) {
-      await tx.$executeRaw`
-        INSERT INTO "forest_entry_ban" ("id", "reason", "until", "geom")
-        VALUES ${Prisma.join(rows)}
-        ON CONFLICT ("id") DO UPDATE
-          SET "reason" = EXCLUDED."reason",
-              "until" = EXCLUDED."until",
-              "geom" = EXCLUDED."geom"
-      `;
-    }
+    await tx.$executeRaw`
+      INSERT INTO "forest_entry_ban" ("id", "reason", "until", "geom")
+      VALUES ${Prisma.join(rows)}
+      ON CONFLICT ("id") DO UPDATE
+        SET "reason" = EXCLUDED."reason",
+            "until" = EXCLUDED."until",
+            "geom" = EXCLUDED."geom"
+    `;
   }, TX_OPTIONS);
 
   await recordSync(prisma, 'bans');

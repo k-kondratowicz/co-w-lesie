@@ -48,22 +48,20 @@ export function ActionDialog({
         </ResponsiveDialogHeader>
 
         <ResponsiveDialogScrollArea>
-          <>
-            {children}
+          {children}
 
-            <ResponsiveDialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                {cancelLabel ?? 'Anuluj'}
+          <ResponsiveDialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              {cancelLabel ?? 'Anuluj'}
+            </Button>
+
+            {!isSaveHidden && (
+              <Button onClick={onConfirm} disabled={isDisabled || isSaveDisabled || loading}>
+                {!!loading && <Spinner />}
+                {confirmLabel ?? 'Zapisz'}
               </Button>
-
-              {!isSaveHidden && (
-                <Button onClick={onConfirm} disabled={isDisabled || isSaveDisabled || loading}>
-                  {!!loading && <Spinner />}
-                  {confirmLabel ?? 'Zapisz'}
-                </Button>
-              )}
-            </ResponsiveDialogFooter>
-          </>
+            )}
+          </ResponsiveDialogFooter>
         </ResponsiveDialogScrollArea>
       </ResponsiveDialogContent>
     </ResponsiveDialog>

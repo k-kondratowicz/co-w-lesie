@@ -9,6 +9,7 @@
     "lint": "biome check",
     "lint:arch": "depcruise src --config .dependency-cruiser.cjs",
     "format": "biome format --write",
+    "typecheck": "tsc --noEmit",
     "sync:bdl": "tsx scripts/sync-bdl.ts",
     "sync:kmzb": "tsx scripts/sync-kmzb.ts",
     "seed:forest": "tsx scripts/seed-forest.ts",

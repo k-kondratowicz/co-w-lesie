@@ -75,7 +75,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.12"
   },
   "optionalDependencies": {
     "@img/sharp-linux-x64": "0.35.1"

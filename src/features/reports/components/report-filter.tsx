@@ -15,7 +15,7 @@ export function ReportFilter() {
     <Button variant="secondary" size="icon-xxl" rounded="full" aria-label="Filtruj zgłoszenia" className="relative shadow-lg">
       <SlidersHorizontal />
       {/* A dot so an active (non-default) filter is visible while the panel is closed. */}
-      {hasActiveFilter && <span className="absolute top-0.5 right-0.5 size-2.5 rounded-full bg-primary ring-2 ring-background" />}
+      {hasActiveFilter && <span className="bg-primary ring-background absolute top-0.5 right-0.5 size-2.5 rounded-full ring-2" />}
     </Button>
   );
 

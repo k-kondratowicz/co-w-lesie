@@ -321,7 +321,7 @@ export function MapLayers({
       {/* Highlight the tapped report location while its details overlay is open. */}
       {selectedPoint ? (
         <Marker longitude={selectedPoint.lng} latitude={selectedPoint.lat}>
-          <div className="size-5 rounded-full border-2 border-primary bg-primary/25" />
+          <div className="border-primary bg-primary/25 size-5 rounded-full border-2" />
         </Marker>
       ) : null}
     </>

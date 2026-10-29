@@ -49,3 +49,6 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:integration
+      # vercel.json skips preview deploys for Dependabot branches (Hobby build quota), so this is the
+      # only place their bumps get a production build before auto-merge.
+      - run: npm run build

@@ -23,11 +23,16 @@ updates:
       tanstack-query:
         patterns: ['@tanstack/*query*']
       # Group order did not keep the prisma CLI out of here (it shipped at 7.10.1 while @prisma/client
-      # stayed at 7.8.0), so the lockstep packages are excluded explicitly.
+      # stayed at 7.8.0), so the lockstep packages are excluded explicitly from both catch-all groups.
+      # Majors stay one PR each: they tend to need a code migration, and one would block the rest.
       dev-tooling:
         dependency-type: development
         update-types: [minor, patch]
         exclude-patterns: [prisma, '@prisma/*', '@types/react', '@types/react-dom']
+      production:
+        dependency-type: production
+        update-types: [minor, patch]
+        exclude-patterns: ['@prisma/*', react, react-dom, '@tanstack/*query*']
     ignore:
       # Types follow the Node 22 runtime from .nvmrc and Vercel, not the newest Node.
       - dependency-name: '@types/node'
@@ -43,3 +48,7 @@ updates:
     labels: [dependencies]
     commit-message:
       prefix: ci(deps)
+    groups:
+      actions:
+        patterns: ['*']
+        update-types: [minor, patch]

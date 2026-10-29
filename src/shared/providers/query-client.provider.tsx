@@ -39,7 +39,17 @@ const storage =
   typeof window === 'undefined'
     ? undefined
     : {
-        getItem: async (key: string) => (await get<string>(key)) ?? window.localStorage.getItem(key),
+        getItem: async (key: string) => {
+          let value: string | undefined;
+
+          try {
+            value = await get<string>(key);
+          } catch {
+            return window.localStorage.getItem(key);
+          }
+
+          return value ?? window.localStorage.getItem(key);
+        },
         setItem: async (key: string, value: string) => {
           await set(key, value);
           window.localStorage.removeItem(key);

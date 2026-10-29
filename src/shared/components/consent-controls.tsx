@@ -28,7 +28,7 @@ export function ConsentControls() {
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="bg-muted/30 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm">
         Analityka i monitorowanie błędów: <span className="font-medium">{STATUS_LABEL[consent]}</span>
       </p>

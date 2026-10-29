@@ -50,7 +50,7 @@ export function MapLayerControl() {
           <span className="sr-only">Warstwy mapy</span>
           {/* A dot so an enabled layer is visible while the dialog is closed. */}
           {activeCount > 0 && (
-            <span className="absolute top-0.5 right-0.5 size-2.5 rounded-full bg-primary ring-2 ring-background" />
+            <span className="bg-primary ring-background absolute top-0.5 right-0.5 size-2.5 rounded-full ring-2" />
           )}
         </Button>
       </ResponsiveDialogTrigger>
@@ -68,7 +68,7 @@ export function MapLayerControl() {
           {LAYER_OPTIONS.map((option) => (
             <div key={option.id} className="flex items-start justify-between gap-3">
               <Label htmlFor={`layer-${option.id}`} className="flex flex-col items-start gap-0.5 font-normal">
-                <span className="font-medium text-sm">{option.label}</span>
+                <span className="text-sm font-medium">{option.label}</span>
                 <span className="text-muted-foreground text-xs">{option.hint}</span>
               </Label>
               <Switch id={`layer-${option.id}`} checked={visible[option.id]} onCheckedChange={() => toggle(option.id)} />

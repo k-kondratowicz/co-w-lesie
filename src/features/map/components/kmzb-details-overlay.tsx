@@ -21,7 +21,7 @@ export type KmzbPopupInfo = {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-border/60 border-b py-2 text-sm last:border-0">
+    <div className="border-border/60 flex items-baseline justify-between gap-4 border-b py-2 text-sm last:border-0">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value}</span>
     </div>
@@ -46,7 +46,7 @@ export function KmzbDetailsOverlay({ info, onClose }: { info: KmzbPopupInfo | nu
         {info ? (
           <ResponsiveDialogScrollArea>
             <div className="space-y-3 max-sm:pb-4">
-              <div className="rounded-lg border border-border/60 px-3">
+              <div className="border-border/60 rounded-lg border px-3">
                 <Row label="Status" value={info.status} />
                 {info.eventAt ? (
                   <Row label="Data zdarzenia" value={formatDate(info.eventAt)} />
@@ -55,7 +55,7 @@ export function KmzbDetailsOverlay({ info, onClose }: { info: KmzbPopupInfo | nu
                 )}
               </div>
 
-              <div className="rounded-lg bg-amber-50 p-3 text-amber-800 text-sm dark:bg-amber-950 dark:text-amber-200">
+              <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                 W przypadku pilnej interwencji należy zgłosić dane zdarzenie korzystając z numeru alarmowego (tel. 112).
               </div>
 

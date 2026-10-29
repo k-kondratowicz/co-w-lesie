@@ -239,8 +239,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
 
 function MapLoading() {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-1 bg-background">
-      <Spinner className="size-5 text-muted-foreground" />
+    <div className="bg-background fixed inset-0 z-50 flex flex-col items-center justify-center gap-1">
+      <Spinner className="text-muted-foreground size-5" />
       <p className="text-muted-foreground text-sm">Ładowanie mapy...</p>
     </div>
   );
@@ -249,9 +249,9 @@ function MapLoading() {
 // Sits under the header and action buttons (z-20/z-30) so the safety assistant stays usable without the map.
 function MapUnavailable() {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-background px-6 text-center">
-      <p className="font-medium text-sm">Nie można wyświetlić mapy</p>
-      <p className="max-w-sm text-muted-foreground text-sm">
+    <div className="bg-background absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 px-6 text-center">
+      <p className="text-sm font-medium">Nie można wyświetlić mapy</p>
+      <p className="text-muted-foreground max-w-sm text-sm">
         Twoja przeglądarka lub urządzenie nie obsługuje WebGL2, którego wymaga mapa. Zaktualizuj przeglądarkę lub włącz
         akcelerację sprzętową w jej ustawieniach.
       </p>

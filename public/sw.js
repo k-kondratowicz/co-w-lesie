@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (new URL(request.url).hostname.endsWith('cartocdn.com')) {
+  if (new URL(request.url).hostname.endsWith('.cartocdn.com')) {
     event.respondWith(cacheFirstTile(request));
     return;
   }

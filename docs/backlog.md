@@ -29,7 +29,8 @@ Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
 ## Privacy / legal
 - **Privacy policy + consent (GDPR).** Done: `/polityka-prywatnosci` page plus a non-blocking
   consent banner. Vercel Analytics + Speed Insights and Sentry load only after opt-in
-  (`AnalyticsConsent` / `initSentryClient`), Sentry runs with `sendDefaultPii: false`, and consent
+  (`AnalyticsConsent` / `initSentryClient`), Sentry runs with a no-PII `dataCollection` baseline
+  (`SENTRY_DATA_COLLECTION`), and consent
   can be withdrawn from the policy page (`ConsentControls`). **Remaining:** set a real
   `NEXT_PUBLIC_SITE_CONTACT_EMAIL` in prod - a working data-protection contact is legally required
   (defaults to kontakt@co-w-lesie.pl, which must actually receive mail).

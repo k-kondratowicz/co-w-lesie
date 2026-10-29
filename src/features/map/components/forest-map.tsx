@@ -2,8 +2,8 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { Map as MapGL, type MapLayerMouseEvent, type MapRef } from '@vis.gl/react-maplibre';
-import maplibregl from 'maplibre-gl';
+import { type ErrorEvent as MapErrorEvent, Map as MapGL, type MapLayerMouseEvent, type MapRef } from '@vis.gl/react-maplibre';
+import { addProtocol, GPUInitializationError, type MapLibreMap, setWorkerUrl } from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { KmzbDetailsOverlay, type KmzbPopupInfo } from '@/features/map/components/kmzb-details-overlay';
@@ -41,6 +41,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const mapRef = useRef<MapRef | null>(null);
   const [mounted, setMounted] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [gpuUnavailable, setGpuUnavailable] = useState(false);
   const [bbox, setBbox] = useState<string | null>(null);
   const debouncedBbox = useDebouncedValue(bbox, 300);
   const setMapView = useMapViewStore((state) => state.setView);
@@ -87,12 +88,16 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const { sharedReportActive, reportShown } = useSharedReport(mapRef, loaded, popup, setPopup);
   const { userPosition, permissionDenied, locationError, permissionDialog } = useLocationPrompt(
     mapRef,
+    loaded,
     restoredView !== null || reportShown,
     sharedReportActive,
   );
 
   useEffect(() => {
-    maplibregl.addProtocol('pmtiles', new Protocol().tile);
+    // v6 resolves its module worker next to the loaded bundle by default, which a bundler breaks;
+    // this new URL() form lets Turbopack emit the worker as a same-origin static asset.
+    setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).toString());
+    addProtocol('pmtiles', new Protocol().tile);
     setMounted(true);
   }, []);
 
@@ -108,7 +113,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
 
   // The parking marker is a canvas-drawn rounded square (no sprite in the Carto style provides one),
   // so it has to be registered on the map instance before its symbol layer can draw.
-  const registerParkingMarker = (map: maplibregl.Map) => {
+  const registerParkingMarker = (map: MapLibreMap) => {
     if (map.hasImage(PARKING_MARKER_IMAGE)) {
       return;
     }
@@ -119,7 +124,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
     }
   };
 
-  const syncViewport = (map: maplibregl.Map) => {
+  const syncViewport = (map: MapLibreMap) => {
     const center = map.getCenter();
     const nextZoom = map.getZoom();
 
@@ -149,6 +154,18 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
     handleClick(event);
   };
 
+  // Passing onError replaces react-maplibre's own console.error, so every other map error still
+  // gets logged here. MapLibre 6 needs WebGL2; without it the map never loads, so the spinner
+  // would hang instead of telling the user why.
+  const handleMapError = (event: MapErrorEvent) => {
+    if (event.error instanceof GPUInitializationError) {
+      setGpuUnavailable(true);
+      return;
+    }
+
+    console.error(event.error);
+  };
+
   return (
     <>
       <MapGL
@@ -168,6 +185,7 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
         }}
         onMoveEnd={(event) => syncViewport(event.target)}
         onClick={handleMapClick}
+        onError={handleMapError}
       >
         <MapLayers
           pmtilesUrl={pmtilesUrl}
@@ -184,7 +202,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
         />
       </MapGL>
 
-      {loaded ? null : <MapLoading />}
+      {gpuUnavailable ? <MapUnavailable /> : null}
+      {loaded || gpuUnavailable ? null : <MapLoading />}
 
       <KmzbDetailsOverlay info={kmzbPopup} onClose={() => setKmzbPopup(null)} />
 
@@ -223,6 +242,19 @@ function MapLoading() {
     <div className="bg-background fixed inset-0 z-50 flex flex-col items-center justify-center gap-1">
       <Spinner className="text-muted-foreground size-5" />
       <p className="text-muted-foreground text-sm">Ładowanie mapy...</p>
+    </div>
+  );
+}
+
+// Sits under the header and action buttons (z-20/z-30) so the safety assistant stays usable without the map.
+function MapUnavailable() {
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-background px-6 text-center">
+      <p className="font-medium text-sm">Nie można wyświetlić mapy</p>
+      <p className="max-w-sm text-muted-foreground text-sm">
+        Twoja przeglądarka lub urządzenie nie obsługuje WebGL2, którego wymaga mapa. Zaktualizuj przeglądarkę lub włącz
+        akcelerację sprzętową w jej ustawieniach.
+      </p>
     </div>
   );
 }

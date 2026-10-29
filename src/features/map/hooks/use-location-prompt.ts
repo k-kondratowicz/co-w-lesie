@@ -5,7 +5,12 @@ import { type RefObject, useCallback, useEffect, useRef } from 'react';
 import { useActionDialog } from '@/shared/components/dialog';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 
-export function useLocationPrompt(mapRef: RefObject<MapRef | null>, skipInitialRecenter: boolean, defer: boolean) {
+export function useLocationPrompt(
+  mapRef: RefObject<MapRef | null>,
+  loaded: boolean,
+  skipInitialRecenter: boolean,
+  defer: boolean,
+) {
   const {
     position: userPosition,
     status: locationStatus,
@@ -36,8 +41,10 @@ export function useLocationPrompt(mapRef: RefObject<MapRef | null>, skipInitialR
     }
   }, [skipInitialRecenter]);
 
+  // react-maplibre attaches the ref asynchronously, so a cached GPS fix can arrive while it's still
+  // null and this would never retry. While a shared report link is active its own flyTo wins.
   useEffect(() => {
-    if (!userPosition) {
+    if (!userPosition || !loaded || defer) {
       return;
     }
 
@@ -48,7 +55,7 @@ export function useLocationPrompt(mapRef: RefObject<MapRef | null>, skipInitialR
     }
 
     mapRef.current?.flyTo({ center: [userPosition.longitude, userPosition.latitude], zoom: 14 });
-  }, [userPosition, mapRef]);
+  }, [userPosition, loaded, defer, mapRef]);
 
   useEffect(() => {
     if (locationPromptHandled.current || userPosition || locationStatus !== 'idle') {

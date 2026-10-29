@@ -15,16 +15,19 @@ updates:
       prefix: fix(deps)
       prefix-development: chore(deps)
     groups:
-      # Packages that must move in lockstep; listed before dev-tooling because the first matching group wins.
+      # Packages that must move in lockstep.
       prisma:
         patterns: [prisma, '@prisma/*']
       react:
         patterns: [react, react-dom, '@types/react', '@types/react-dom']
       tanstack-query:
         patterns: ['@tanstack/*query*']
+      # Group order did not keep the prisma CLI out of here (it shipped at 7.10.1 while @prisma/client
+      # stayed at 7.8.0), so the lockstep packages are excluded explicitly.
       dev-tooling:
         dependency-type: development
         update-types: [minor, patch]
+        exclude-patterns: [prisma, '@prisma/*', '@types/react', '@types/react-dom']
     ignore:
       # Types follow the Node 22 runtime from .nvmrc and Vercel, not the newest Node.
       - dependency-name: '@types/node'

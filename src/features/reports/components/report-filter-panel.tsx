@@ -10,7 +10,7 @@ export function ReportFilterPanel({ sections }: { sections: FilterSection[] }) {
           <AccordionTrigger>
             <span className="flex flex-col">
               {section.label}
-              <span className="font-normal text-muted-foreground text-xs">{section.summary}</span>
+              <span className="text-muted-foreground text-xs font-normal">{section.summary}</span>
             </span>
           </AccordionTrigger>
           <AccordionContent className="flex flex-col gap-0.5 pt-1">

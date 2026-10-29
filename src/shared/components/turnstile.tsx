@@ -91,13 +91,13 @@ export function Turnstile({ className }: { className?: string }) {
       <div ref={containerRef} className="flex justify-center empty:hidden" />
 
       {online && rendering && (
-        <p className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+        <p className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
           <Spinner /> Sprawdzamy, czy nie jesteś robotem...
         </p>
       )}
 
       {online && failed && (
-        <p className="text-center text-destructive text-sm">Nie udało się zweryfikować. Odśwież stronę i spróbuj ponownie.</p>
+        <p className="text-destructive text-center text-sm">Nie udało się zweryfikować. Odśwież stronę i spróbuj ponownie.</p>
       )}
     </div>
   );

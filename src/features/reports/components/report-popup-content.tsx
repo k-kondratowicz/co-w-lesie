@@ -25,11 +25,11 @@ export function ReportPopupContent({ reports }: { reports: PopupReport[] }) {
         const voted = votedKind(report.id);
 
         return (
-          <div key={report.id} className="space-y-1.5 border-border/60 border-b pb-3 last:border-0 last:pb-0">
+          <div key={report.id} className="border-border/60 space-y-1.5 border-b pb-3 last:border-0 last:pb-0">
             <div className="flex items-baseline justify-between gap-2">
               <p className="font-medium">{reportTypeLabel(report.type)}</p>
               {report.createdAt ? (
-                <span className="shrink-0 text-muted-foreground text-xs">{formatRelativeTime(report.createdAt)}</span>
+                <span className="text-muted-foreground shrink-0 text-xs">{formatRelativeTime(report.createdAt)}</span>
               ) : null}
             </div>
 

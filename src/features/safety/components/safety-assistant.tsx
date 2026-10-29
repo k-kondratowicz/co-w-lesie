@@ -117,7 +117,7 @@ export function SafetyAssistant({ savedAreas }: { savedAreas?: ReactNode }) {
 
     if (isFetching && !data) {
       return (
-        <div className="flex items-center gap-2 pt-2 pb-4 text-muted-foreground text-sm md:pb-2">
+        <div className="text-muted-foreground flex items-center gap-2 pt-2 pb-4 text-sm md:pb-2">
           <Spinner /> Sprawdzam warunki w okolicy...
         </div>
       );
@@ -147,7 +147,7 @@ export function SafetyAssistant({ savedAreas }: { savedAreas?: ReactNode }) {
       <span className="flex size-12 items-center justify-center">
         <ShieldQuestion className="size-5" />
       </span>
-      <span className="max-w-0 overflow-hidden whitespace-nowrap pr-0 text-left opacity-0 transition-all duration-300 ease-out group-hover/fab:max-w-[16rem] group-hover/fab:pr-5 group-hover/fab:opacity-100 group-focus-visible/fab:max-w-[16rem] group-focus-visible/fab:pr-5 group-focus-visible/fab:opacity-100">
+      <span className="max-w-0 overflow-hidden pr-0 text-left whitespace-nowrap opacity-0 transition-all duration-300 ease-out group-hover/fab:max-w-[16rem] group-hover/fab:pr-5 group-hover/fab:opacity-100 group-focus-visible/fab:max-w-[16rem] group-focus-visible/fab:pr-5 group-focus-visible/fab:opacity-100">
         Czy mogę iść do lasu?
       </span>
     </Button>

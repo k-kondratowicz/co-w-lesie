@@ -1,101 +1,119 @@
 {
-	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true
-	},
-	"files": {
-		"ignoreUnknown": true,
-		"includes": [
-			"**",
-			"!node_modules",
-			"!.next",
-			"!dist",
-			"!build",
-			"!.claude",
-			"!.dependency-cruiser.cjs"
-		]
-	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "space",
-		"lineWidth": 130,
-		"bracketSameLine": false,
-		"bracketSpacing": true
-	},
-	"html": {
-		"formatter": {
-			"enabled": true
-		}
-	},
-	"css": {
-		"formatter": {
-			"enabled": true,
-			"quoteStyle": "single"
-		},
-		"parser": {
-			"tailwindDirectives": true
-		}
-	},
-	"javascript": {
-		"formatter": {
-			"enabled": true,
-			"quoteProperties": "preserve",
-			"quoteStyle": "single",
-			"jsxQuoteStyle": "double"
-		},
-		"parser": {
-			"unsafeParameterDecoratorsEnabled": true
-		}
-	},
-	"linter": {
-		"enabled": true,
-		"rules": {
-			"preset": "recommended",
-			"suspicious": {
-				"noUnknownAtRules": "off",
-				"useIterableCallbackReturn": "off",
-				"noExplicitAny": "warn"
-			},
-			"style": {
-				"useImportType": "warn",
-				"useNodejsImportProtocol": "info",
-				"noNonNullAssertion": "info"
-			},
-			"complexity": {
-				"noStaticOnlyClass": "info",
-				"noThisInStatic": "info",
-				"noBannedTypes": "info"
-			},
-			"correctness": {
-				"useExhaustiveDependencies": {
-					"level": "warn",
-					"options": {}
-				},
-				"noUnusedVariables": "info",
-				"noUnusedImports": "info",
-				"noUnusedFunctionParameters": "info",
-				"useParseIntRadix": "off"
-			},
-			"nursery": {
-				"useTailwindSortedClasses": {
-					"fix": "safe",
-					"level": "warn",
-					"options": {}
-				}
-			}
-		},
-		"domains": {
-			"next": "recommended",
-			"react": "recommended"
-		}
-	},
-	"assist": {
-		"actions": {
-			"source": {
-				"organizeImports": "on"
-			}
-		}
-	}
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!node_modules",
+      "!.next",
+      "!dist",
+      "!build",
+      "!.claude",
+      "!.dependency-cruiser.cjs",
+      "!**/*.md",
+      "!**/*.yml",
+      "!**/*.yaml"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "lineWidth": 130,
+    "bracketSameLine": false,
+    "bracketSpacing": true
+  },
+  "html": {
+    "formatter": {
+      "enabled": true
+    }
+  },
+  "css": {
+    "formatter": {
+      "enabled": true,
+      "quoteStyle": "single"
+    },
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "enabled": true,
+      "quoteProperties": "preserve",
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        "noUnknownAtRules": "off",
+        "useIterableCallbackReturn": "off",
+        "noExplicitAny": "warn"
+      },
+      "style": {
+        "useImportType": "warn",
+        "useNodejsImportProtocol": "info",
+        "noNonNullAssertion": "info"
+      },
+      "complexity": {
+        "noStaticOnlyClass": "info",
+        "noThisInStatic": "info",
+        "noBannedTypes": "info"
+      },
+      "correctness": {
+        "useExhaustiveDependencies": {
+          "level": "warn",
+          "options": {}
+        },
+        "noUnusedVariables": "info",
+        "noUnusedImports": "info",
+        "noUnusedFunctionParameters": "info",
+        "useParseIntRadix": "off"
+      },
+      "nursery": {
+        "useTailwindSortedClasses": {
+          "fix": "safe",
+          "level": "warn",
+          "options": {}
+        }
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "info"
+      }
+    },
+    "domains": {
+      "next": "recommended",
+      "react": "recommended"
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/shared/components/ui/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "useTailwindSortedClasses": "off"
+          }
+        }
+      }
+    }
+  ]
 }

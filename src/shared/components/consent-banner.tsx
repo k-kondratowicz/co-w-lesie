@@ -31,11 +31,11 @@ export function ConsentBanner() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-60 p-3 sm:p-4">
-      <div className="pointer-events-auto mx-auto flex max-w-lg flex-col items-center gap-3 rounded-xl border bg-background/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:gap-4">
+      <div className="bg-background/95 pointer-events-auto mx-auto flex max-w-lg flex-col items-center gap-3 rounded-xl border p-4 shadow-lg backdrop-blur sm:flex-row sm:gap-4">
         <p className="text-muted-foreground text-sm">
           Dane niezbędne do działania aplikacji (np. Twoja lokalizacja i zgłoszenia) przetwarzamy zawsze. Za Twoją zgodą włączymy
           też anonimową analitykę i monitorowanie błędów.{' '}
-          <Link href="/polityka-prywatnosci" className="font-medium text-foreground underline underline-offset-4">
+          <Link href="/polityka-prywatnosci" className="text-foreground font-medium underline underline-offset-4">
             Polityka prywatności
           </Link>
           .

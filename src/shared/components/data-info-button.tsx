@@ -17,7 +17,7 @@ import { REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-fores
 function InfoItem({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <p className="font-medium text-sm">{title}</p>
+      <p className="text-sm font-medium">{title}</p>
       <p className="text-muted-foreground text-sm">{children}</p>
     </div>
   );

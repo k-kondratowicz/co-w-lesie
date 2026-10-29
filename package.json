@@ -59,7 +59,7 @@
     "zustand": "^5.0.16"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.6.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
@@ -70,10 +70,10 @@
     "dependency-cruiser": "^17.4.3",
     "dotenv": "^18.0.9",
     "pg": "^8.23.1",
-    "prisma": "^7.8.0",
+    "prisma": "^7.10.1",
     "shadcn": "^4.23.0",
     "tailwindcss": "^4",
-    "tsx": "^4.22.4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^4.1.12"
   },

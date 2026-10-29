@@ -16,7 +16,8 @@ output has real-world consequences. The caution rule (below) overrides convenien
   (route handlers, caching/revalidate, cron, server actions) follow the nextjs-agent-rules
   block above: read `node_modules/next/dist/docs/` first. Do not invent signatures from memory.
 - Prisma 7 with `@prisma/adapter-pg`, multi-file schema (`prisma/*.prisma`).
-- PostgreSQL + **PostGIS** (local Docker image must be `postgis/postgis`, not plain `postgres`).
+- PostgreSQL + **PostGIS** (local Docker image must be a PostGIS build - `imresamu/postgis` for arm64/Apple Silicon, `postgis/postgis` in CI on amd64 - never plain `postgres`).
+
 - zod 4 for all input validation. TanStack Form + TanStack Query. Zustand for client state.
 - MapLibre GL + PMTiles (NOT Mapbox). shadcn/ui (radix-nova, olive). Biome for lint/format.
 

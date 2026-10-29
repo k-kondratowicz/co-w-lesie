@@ -1,0 +1,42 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Warsaw
+    versioning-strategy: increase
+    open-pull-requests-limit: 10
+    labels: [dependencies]
+    commit-message:
+      prefix: fix(deps)
+      prefix-development: chore(deps)
+    groups:
+      # Packages that must move in lockstep; listed before dev-tooling because the first matching group wins.
+      prisma:
+        patterns: [prisma, '@prisma/*']
+      react:
+        patterns: [react, react-dom, '@types/react', '@types/react-dom']
+      tanstack-query:
+        patterns: ['@tanstack/*query*']
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # Types follow the Node 22 runtime from .nvmrc and Vercel, not the newest Node.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Warsaw
+    labels: [dependencies]
+    commit-message:
+      prefix: ci(deps)

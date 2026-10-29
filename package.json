@@ -78,6 +78,6 @@
     "vitest": "^4.1.12"
   },
   "optionalDependencies": {
-    "@img/sharp-linux-x64": "0.35.1"
+    "@img/sharp-linux-x64": "0.35.5"
   }
 }

@@ -12,6 +12,24 @@ export const bboxParamSchema = z
   .pipe(z.tuple([z.number(), z.number(), z.number(), z.number()]))
   .refine(([minLng, minLat, maxLng, maxLat]) => minLng < maxLng && minLat < maxLat, 'Nieprawidłowy bbox');
 
+/** The query-param form bboxParamSchema parses back. */
+export function formatBbox(bbox: Bbox): string {
+  return bbox.join(',');
+}
+
+/**
+ * Snaps a map viewport outward to a grid a quarter of a map tile wide at this zoom, so small moves,
+ * GPS jitter and returning to a spot reuse one query key - and its offline cache - while fetching at
+ * most one extra cell per edge. 360 / 2^n is exact in binary, so an edge already on the grid stays put.
+ */
+export function snapBboxToGrid([minLng, minLat, maxLng, maxLat]: Bbox, zoom: number): Bbox {
+  const cellDegrees = 360 / 2 ** (Math.floor(zoom) + 2);
+  const snapDown = (degrees: number) => Math.floor(degrees / cellDegrees) * cellDegrees;
+  const snapUp = (degrees: number) => Math.ceil(degrees / cellDegrees) * cellDegrees;
+
+  return [snapDown(minLng), snapDown(minLat), snapUp(maxLng), snapUp(maxLat)];
+}
+
 export const POLAND_BBOX: Bbox = [14.07, 49.0, 24.16, 54.9];
 
 export const MALOPOLSKA_BBOX: Bbox = [19.08, 49.07, 21.55, 50.59];

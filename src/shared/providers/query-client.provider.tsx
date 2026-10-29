@@ -2,7 +2,8 @@
 
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { environmentManager, QueryClient } from '@tanstack/react-query';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { PersistQueryClientProvider, removeOldestQuery } from '@tanstack/react-query-persist-client';
+import { del, get, set } from 'idb-keyval';
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
@@ -31,11 +32,39 @@ function getQueryClient(): QueryClient {
   return browserQueryClient;
 }
 
-// Persist the query cache to localStorage so the last-seen reports/bans render offline. Guarded
-// so it no-ops during SSR (no window) - the provider itself is a client component.
+// IndexedDB, not localStorage: the snapshot runs to several MB, and a localStorage write blocks the
+// main thread and stops at ~5 MB. The old localStorage snapshot is read until the first IndexedDB
+// write replaces it, so results cached before the switch still work offline.
+const storage =
+  typeof window === 'undefined'
+    ? undefined
+    : {
+        getItem: async (key: string) => {
+          let value: string | undefined;
+
+          try {
+            value = await get<string>(key);
+          } catch {
+            return window.localStorage.getItem(key);
+          }
+
+          return value ?? window.localStorage.getItem(key);
+        },
+        setItem: async (key: string, value: string) => {
+          await set(key, value);
+          window.localStorage.removeItem(key);
+        },
+        removeItem: async (key: string) => {
+          await del(key);
+          window.localStorage.removeItem(key);
+        },
+      };
+
 const persister = createAsyncStoragePersister({
-  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  storage,
   key: 'cwl-query-cache',
+  // Over quota, drop the oldest query and retry rather than keep an ever older snapshot.
+  retry: removeOldestQuery,
 });
 
 export function QueryClientProvider({ children }: { children: React.ReactNode }) {

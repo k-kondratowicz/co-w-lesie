@@ -16,6 +16,9 @@ on:
     - cron: '30 4 2 * *' # BDL tourism layers (parking, camping, "Zanocuj w lesie"), monthly - infrastructure changes slowly
   workflow_dispatch: {} # manual "run now" → syncs everything
 
+# Every step only curls our own API with CRON_SECRET; the GITHUB_TOKEN is never used, so it gets no scopes.
+permissions: {}
+
 jobs:
   sync:
     runs-on: ubuntu-latest

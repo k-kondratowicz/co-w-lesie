@@ -32,7 +32,8 @@ const contentSecurityPolicy = [
   `img-src 'self' data: blob: ${pmtilesOrigin} ${photosOrigin} https://*.cartocdn.com`,
   // Photo uploads go to our own /api (same-origin), so R2 needs no connect-src entry here.
   `connect-src 'self' ${pmtilesOrigin} https://*.cartocdn.com`,
-  "worker-src 'self' blob:", // MapLibre runs its renderer in a blob worker
+  // MapLibre 6 loads its module worker as a bundled same-origin asset (see forest-map.tsx), so no blob:.
+  "worker-src 'self'",
   "font-src 'self' data:",
   'upgrade-insecure-requests',
 ].join('; ');

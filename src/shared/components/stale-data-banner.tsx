@@ -46,7 +46,7 @@ export function StaleDataBanner() {
   return (
     <Alert
       variant="destructive"
-      className="absolute! pointer-events-auto top-20 left-1/2 z-30 w-[min(92%,32rem)] -translate-x-1/2"
+      className="pointer-events-auto absolute! top-20 left-1/2 z-30 w-[min(92%,32rem)] -translate-x-1/2"
     >
       <TriangleAlert />
       <AlertTitle>Dane mogą być nieaktualne</AlertTitle>

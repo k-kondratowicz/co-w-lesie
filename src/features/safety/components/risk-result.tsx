@@ -43,7 +43,7 @@ const IN_FOREST_LABEL = { IN: 'Tak', OUT: 'Nie', UNKNOWN: 'Nie wiadomo' } as con
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-border/60 border-b py-2 text-sm last:border-0">
+    <div className="border-border/60 flex items-center justify-between gap-4 border-b py-2 text-sm last:border-0">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value}</span>
     </div>
@@ -101,7 +101,7 @@ export function RiskResult({
   return (
     <div className="space-y-4">
       {isOffline ? (
-        <div className="flex items-start gap-2 rounded-lg bg-amber-100 p-3 text-amber-900 text-sm dark:bg-amber-950 dark:text-amber-200">
+        <div className="flex items-start gap-2 rounded-lg bg-amber-100 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
           <CloudOff className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
             Jesteś offline - to ostatnia zapamiętana ocena
@@ -118,7 +118,7 @@ export function RiskResult({
 
       <p className="text-sm">{message}</p>
 
-      <div className="rounded-lg border border-border/60 px-3">
+      <div className="border-border/60 rounded-lg border px-3">
         <Row label="Zgłoszenia w pobliżu" value={String(signals.reports.count)} />
         <Row label="Zagrożenie pożarowe" value={fireLabel(signals.fire)} />
         <Row label="Zakaz wstępu" value={entryBanLabel(signals.entryBan)} />
@@ -126,7 +126,7 @@ export function RiskResult({
       </div>
 
       {ban ? (
-        <div className="space-y-1 rounded-lg bg-red-50 p-3 text-red-800 text-sm dark:bg-red-950 dark:text-red-200">
+        <div className="space-y-1 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
           <p className="font-medium">Obowiązuje zakaz wstępu do lasu</p>
           <p>Powód: {ban.reason ?? 'nie podano'}</p>
           {banUntil ? <p>Obowiązuje do: {banUntil}</p> : null}
@@ -134,7 +134,7 @@ export function RiskResult({
       ) : null}
 
       {nearbyBans.count > 0 ? (
-        <div className="rounded-lg bg-amber-50 p-3 text-amber-800 text-sm dark:bg-amber-950 dark:text-amber-200">
+        <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
           W pobliżu obowiązują zakazy wstępu do lasu
           {nearbyBans.nearestMeters !== null ? ` (najbliższy ~${formatDistance(nearbyBans.nearestMeters)})` : ''}. Sprawdź
           czerwone obszary na mapie.
@@ -142,7 +142,7 @@ export function RiskResult({
       ) : null}
 
       {kmzbItems.length > 0 ? (
-        <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-amber-800 text-sm dark:bg-amber-950 dark:text-amber-200">
+        <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
           <p className="font-medium">Zgłoszenia policyjne w okolicy (ostatni tydzień)</p>
           <p>W pobliżu odnotowano: {kmzbItems.join(', ')}. Zachowaj ostrożność.</p>
           <p>
@@ -153,7 +153,7 @@ export function RiskResult({
       ) : null}
 
       {vaccinationAdvisory.active ? (
-        <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-amber-800 text-sm dark:bg-amber-950 dark:text-amber-200">
+        <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
           <p className="font-medium">Akcja szczepienia lisów przeciw wściekliźnie</p>
           <p>
             W województwie {vaccinationAdvisory.voivodeship} trwa wykładanie przynęt ze szczepionką
@@ -165,12 +165,12 @@ export function RiskResult({
 
       <div className="space-y-2">
         {freshnessSources.length > 0 ? (
-          <Accordion type="single" collapsible className="rounded-lg border border-border/60 px-3">
+          <Accordion type="single" collapsible className="border-border/60 rounded-lg border px-3">
             <AccordionItem value="freshness">
-              <AccordionTrigger className="font-normal text-muted-foreground text-xs">
+              <AccordionTrigger className="text-muted-foreground text-xs font-normal">
                 Źródła danych - najstarsze: {formatDateTime(oldestSyncAt)} ({formatRelativeTime(oldestSyncAt)})
               </AccordionTrigger>
-              <AccordionContent className="space-y-0.5 text-muted-foreground text-xs">
+              <AccordionContent className="text-muted-foreground space-y-0.5 text-xs">
                 {freshnessSources.map((source) => (
                   <p key={source.label}>
                     {source.label} - dane z: {formatDateTime(source.asOf)}.

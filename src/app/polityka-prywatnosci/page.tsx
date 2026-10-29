@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2">
-      <h2 className="font-semibold text-lg">{title}</h2>
-      <div className="space-y-2 text-muted-foreground text-sm leading-relaxed">{children}</div>
+      <h2 className="text-lg font-semibold">{title}</h2>
+      <div className="text-muted-foreground space-y-2 text-sm leading-relaxed">{children}</div>
     </section>
   );
 }
@@ -22,11 +22,11 @@ export default function PrivacyPolicyPage() {
   return (
     <main className="mx-auto w-full max-w-2xl space-y-8 px-4 py-10">
       <div className="space-y-2">
-        <Link href="/" className="inline-block text-muted-foreground text-sm underline underline-offset-4">
+        <Link href="/" className="text-muted-foreground inline-block text-sm underline underline-offset-4">
           ← Powrót do mapy
         </Link>
 
-        <h1 className="font-bold text-2xl">Polityka prywatności</h1>
+        <h1 className="text-2xl font-bold">Polityka prywatności</h1>
         <p className="text-muted-foreground text-sm">
           {SITE_TITLE} to pomocnicza mapa zgłoszeń i bezpieczeństwa w lasach. Poniżej wyjaśniamy, jakie dane przetwarzamy i na
           jakiej podstawie.

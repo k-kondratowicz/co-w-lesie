@@ -20,7 +20,7 @@ export function SavedAreasList({ onSelect, emptyMessage }: { onSelect: (area: Sa
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
         <Spinner /> Wczytuję zapisane obszary...
       </div>
     );

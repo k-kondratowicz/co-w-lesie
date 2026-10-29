@@ -220,8 +220,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
 
 function MapLoading() {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-1 bg-background">
-      <Spinner className="size-5 text-muted-foreground" />
+    <div className="bg-background fixed inset-0 z-50 flex flex-col items-center justify-center gap-1">
+      <Spinner className="text-muted-foreground size-5" />
       <p className="text-muted-foreground text-sm">Ładowanie mapy...</p>
     </div>
   );

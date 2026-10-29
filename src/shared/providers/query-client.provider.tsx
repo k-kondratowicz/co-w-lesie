@@ -14,7 +14,6 @@ function makeQueryClient(): QueryClient {
         staleTime: 1000 * 60,
         // Keep cached data long enough to survive an offline reload (must be >= persist maxAge).
         gcTime: DAY_MS,
-        experimental_prefetchInRender: true,
       },
     },
   });

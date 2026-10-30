@@ -1,6 +1,7 @@
 // Pure geodesic circle as a GeoJSON Polygon, for drawing the risk radius on the map.
 // Uses the spherical destination-point formula so it stays accurate at Polish latitudes.
 
+import type { GeoJSON } from 'geojson';
 import { EARTH_RADIUS_M, toDegrees, toRadians } from './units';
 
 export function circlePolygon(lng: number, lat: number, radiusMeters: number, steps = 64): GeoJSON.Polygon {

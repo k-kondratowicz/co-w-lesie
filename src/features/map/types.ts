@@ -1,3 +1,4 @@
+import type { GeoJSON } from 'geojson';
 import type { TourismPoiKind } from '@/shared/lib/tourism/types';
 
 export type BanFeatureProperties = {

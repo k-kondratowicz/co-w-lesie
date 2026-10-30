@@ -1,6 +1,7 @@
 'use client';
 
 import { Layer, Marker, Source } from '@vis.gl/react-maplibre';
+import type { GeoJSON } from 'geojson';
 import type { DataDrivenPropertyValueSpecification } from 'maplibre-gl';
 import { PARKING_MARKER_IMAGE } from '@/features/map/utils/parking-marker';
 import { circlePolygon } from '@/shared/lib/geo/circle';

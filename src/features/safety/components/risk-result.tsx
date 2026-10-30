@@ -1,6 +1,7 @@
 import { CloudOff } from 'lucide-react';
 import type { RiskAssessment } from '@/features/core/risk';
 import { fireDegreeRoman, RISK_LEVEL_PRESENTATION } from '@/features/core/risk';
+import { freshnessLines } from '@/features/safety/freshness';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/shared/components/ui/accordion';
 import { formatDate, formatDateTime } from '@/shared/lib/date/format-date';
 import { formatRelativeTime } from '@/shared/lib/date/format-relative-time';
@@ -67,30 +68,11 @@ export function RiskResult({
   isOffline?: boolean;
   lastUpdatedAt?: number;
 }) {
-  const {
-    level,
-    message,
-    signals,
-    fireAsOf,
-    bansAsOf,
-    kmzbAsOf,
-    vaccinationAsOf,
-    ban,
-    nearbyBans,
-    kmzbAdvisory,
-    vaccinationAdvisory,
-  } = assessment;
+  const { level, message, signals, fireAsOf, bansAsOf, ban, nearbyBans, kmzbAdvisory, vaccinationAdvisory } = assessment;
   const style = RISK_LEVEL_PRESENTATION[level];
   const fireUpdatedAt = fireAsOf ? formatDateTime(fireAsOf) : null;
   const bansUpdatedAt = bansAsOf ? formatDateTime(bansAsOf) : null;
-  const freshnessSources = [
-    { label: 'Zagrożenie pożarowe', asOf: fireAsOf },
-    { label: 'Zakazy wstępu', asOf: bansAsOf },
-    { label: 'Zgłoszenia policyjne (KMZB)', asOf: kmzbAsOf },
-    { label: 'Szczepienia lisów', asOf: vaccinationAsOf },
-  ].filter((source): source is { label: string; asOf: string } => source.asOf !== null);
-  // The weakest link decides how stale the whole assessment is, so the collapsed summary shows the oldest sync.
-  const oldestSyncAt = Math.min(...freshnessSources.map((source) => new Date(source.asOf).getTime()));
+  const { critical: freshnessSourcesCritical, other: freshnessSourcesOther } = freshnessLines(assessment);
   const banUntil = ban?.until ? formatDate(ban.until) : null;
   const kmzbItems = kmzbAdvisoryItems(kmzbAdvisory);
   const vaccinationWindow =
@@ -164,16 +146,23 @@ export function RiskResult({
       ) : null}
 
       <div className="space-y-2">
-        {freshnessSources.length > 0 ? (
+        <div className="space-y-0.5 text-xs">
+          {freshnessSourcesCritical.map((source) => (
+            <p key={source.label} className={source.stale ? 'text-destructive' : 'text-muted-foreground'}>
+              {source.label}:&nbsp;
+              {source.asOf ? `${formatDateTime(source.asOf)} (${formatRelativeTime(source.asOf)})` : 'brak danych'}
+              {source.stale ? ' - dane nieaktualne' : ''}.
+            </p>
+          ))}
+        </div>
+        {freshnessSourcesOther.length > 0 ? (
           <Accordion type="single" collapsible className="border-border/60 rounded-lg border px-3">
             <AccordionItem value="freshness">
-              <AccordionTrigger className="text-muted-foreground text-xs font-normal">
-                Źródła danych - najstarsze: {formatDateTime(oldestSyncAt)} ({formatRelativeTime(oldestSyncAt)})
-              </AccordionTrigger>
+              <AccordionTrigger className="text-muted-foreground text-xs font-normal">Pozostałe źródła</AccordionTrigger>
               <AccordionContent className="text-muted-foreground space-y-0.5 text-xs">
-                {freshnessSources.map((source) => (
+                {freshnessSourcesOther.map((source) => (
                   <p key={source.label}>
-                    {source.label} - dane z: {formatDateTime(source.asOf)}.
+                    {source.label} - dane z: {source.asOf ? formatDateTime(source.asOf) : 'data nieznana'}.
                   </p>
                 ))}
               </AccordionContent>

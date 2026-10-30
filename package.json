@@ -41,6 +41,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "idb-keyval": "^6.3.0",
+    "lodash": "^4.17.20",
     "lucide-react": "^1.62.0",
     "maplibre-gl": "^6.16.0",
     "next": "16.4.3",

@@ -16,8 +16,10 @@ export function OfflineIndicator() {
   return (
     <div className="absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-amber-500/95 px-3 py-1.5 text-xs text-white shadow-lg sm:bottom-8 sm:text-sm">
       <CloudOff className="size-4" />
-      <span>{online ? 'Wysyłanie zgłoszeń...' : 'Tryb offline'}</span>
-      {pending > 0 ? <span className="font-medium">· {pending} w kolejce</span> : null}
+      <span>
+        {online ? 'Wysyłanie zgłoszeń...' : 'Tryb offline'}
+        {pending > 0 ? <span className="font-medium"> ({pending} w kolejce)</span> : null}
+      </span>
     </div>
   );
 }

@@ -4,9 +4,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { reportsApi } from '@/features/core/report';
+import { queueOutcomeForStatus } from '@/features/reports/offline-queue';
 import { ApiError } from '@/shared/lib/api/fetch';
 import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/security/turnstile-client';
 import { type QueuedReport, useOfflineReportStore } from '@/shared/store/use-offline-report-store';
+
+const RETRY_DELAY_MS = 65_000;
 
 async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | 'retry'> {
   // Re-solve Turnstile at replay time (the original submit's token is long expired). If it can't be
@@ -22,8 +25,7 @@ async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | '
     return 'sent';
   } catch (error) {
     if (error instanceof ApiError) {
-      // 4xx is permanent (validation / rate limit) - drop it; 5xx is transient - keep and retry.
-      return error.status >= 400 && error.status < 500 ? 'rejected' : 'retry';
+      return queueOutcomeForStatus(error instanceof ApiError ? error.status : null);
     }
 
     return 'retry'; // still offline
@@ -35,8 +37,14 @@ async function sendQueued(report: QueuedReport): Promise<'sent' | 'rejected' | '
 export function OfflineReportSync() {
   const queryClient = useQueryClient();
   const flushing = useRef(false);
+  const retryTimer = useRef<number | null>(null);
 
   const flush = useCallback(async () => {
+    if (retryTimer.current !== null) {
+      clearTimeout(retryTimer.current);
+      retryTimer.current = null;
+    }
+
     if (flushing.current || useOfflineReportStore.getState().pending.length === 0) {
       return;
     }
@@ -58,6 +66,10 @@ export function OfflineReportSync() {
         } else {
           rejected += 1;
         }
+      }
+
+      if (useOfflineReportStore.getState().pending.length > 0) {
+        retryTimer.current = window.setTimeout(flush, RETRY_DELAY_MS);
       }
     } finally {
       flushing.current = false;
@@ -87,6 +99,8 @@ export function OfflineReportSync() {
     document.addEventListener('visibilitychange', onVisible);
 
     return () => {
+      clearTimeout(retryTimer.current ?? undefined);
+
       window.removeEventListener('online', onOnline);
       document.removeEventListener('visibilitychange', onVisible);
     };

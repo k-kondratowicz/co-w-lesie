@@ -53,7 +53,7 @@ export function SavedAreasList({ onSelect, emptyMessage }: { onSelect: (area: Sa
               <span className={`size-2.5 shrink-0 rounded-full ${status.dot}`} aria-hidden />
               <span className="flex min-w-0 flex-col items-start">
                 <span className="truncate">{areaLabel(area)}</span>
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground text-left text-xs text-wrap">
                   {status.label} · {freshness}
                 </span>
               </span>

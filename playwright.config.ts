@@ -12,7 +12,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   timeout: 90_000,
   expect: { timeout: 10_000 },
-  globalSetup: './e2e/global-setup.ts',
+  globalSetup: './e2e/setup.ts',
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {

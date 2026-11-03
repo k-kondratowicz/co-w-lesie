@@ -10,12 +10,22 @@ const DISCLAIMER = 'To ocena pomocnicza i nie zastępuje komunikatów Lasów Pa�
 
 /** Whether each nationwide signal was actually known (vs UNKNOWN: outside coverage / sync down). */
 export type RiskMessageContext = { fireKnown: boolean; banKnown: boolean };
+
 function reportsWord(n: number): string {
   return plPlural(n, { one: 'zgłoszenie', few: 'zgłoszenia', many: 'zgłoszeń' });
 }
 
-function fireClause(degree: 0 | 1 | 2 | 3 | null): string {
-  return degree && degree > 0 ? `, stopień zagrożenia pożarowego ${fireDegreeRoman(degree)}` : '';
+// Only signals that actually raise the risk - "0 zgłoszeń" next to a fire degree reads as a cause.
+function riskDrivers(reportCount: number, radius: string, degree: 0 | 1 | 2 | 3 | null): string {
+  const drivers: string[] = [];
+  if (reportCount > 0) {
+    drivers.push(`${reportCount} ${reportsWord(reportCount)} w promieniu ${radius}`);
+  }
+  if (degree && degree > 0) {
+    drivers.push(`stopień zagrożenia pożarowego ${fireDegreeRoman(degree)}`);
+  }
+
+  return drivers.join(', ');
 }
 
 export function buildRiskMessage(result: RiskResult, context: RiskMessageContext): string {
@@ -37,10 +47,10 @@ export function buildRiskMessage(result: RiskResult, context: RiskMessageContext
   }
 
   if (level === 'RED') {
-    return `Wysokie ryzyko w pobliżu: ${n} ${reportsWord(n)} w promieniu ${radius}${fireClause(degree)}. Zachowaj szczególną ostrożność.`;
+    return `Wysokie ryzyko w pobliżu: ${riskDrivers(n, radius, degree)}. Zachowaj szczególną ostrożność.`;
   }
   if (level === 'YELLOW') {
-    return `Zachowaj ostrożność: ${n} ${reportsWord(n)} w promieniu ${radius}${fireClause(degree)}.`;
+    return `Podwyższone ryzyko: ${riskDrivers(n, radius, degree)}.`;
   }
   // GREEN. Never imply "nothing here" when there are nearby reports - acknowledge them.
   if (n > 0) {

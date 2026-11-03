@@ -7,7 +7,12 @@ const BLANK_STYLE = { version: 8, sources: {}, layers: [{ id: 'background', type
 // Every spec starts as a returning visitor who already answered the consent banner, so the
 // banner never covers the thumb-zone buttons.
 export const test = base.extend({
-  page: async ({ page, context }, use) => {
+  page: async ({ page, context }, use, testInfo) => {
+    // The reports API allows 5 posts a minute per IP and every test comes from localhost, so a
+    // full run trips it. Each test acts as its own visitor, like real users would.
+    await context.route('/api/**', (route) =>
+      route.continue({ headers: { ...route.request().headers(), 'x-forwarded-for': `e2e-${testInfo.testId}` } }),
+    );
     await context.route('https://basemaps.cartocdn.com/gl/**/style.json', (route) => route.fulfill({ json: BLANK_STYLE }));
     await context.route(/basemaps\.cartocdn\.com\/(?!gl\/)|\.pmtiles/, (route) => route.abort());
     await page.addInitScript(() => window.localStorage.setItem('cwl-consent', 'rejected'));
@@ -40,20 +45,6 @@ export async function assessMyLocation(page: Page) {
   }
 
   await expect(result).toBeVisible();
-
-  return dialog;
-}
-
-export async function fillReport(page: Page, description: string) {
-  await page.getByRole('button', { name: 'Dodaj zgłoszenie' }).click();
-  const dialog = page.getByRole('dialog');
-
-  await dialog.getByLabel('Opis sytuacji').fill(description);
-  // The field fills itself once the map has a GPS fix; refreshing it is harmless either way.
-  await dialog.getByRole('button', { name: /^(Pobierz|Odśwież) lokalizację$/ }).click();
-  await expect(dialog.getByLabel('Szerokość geograficzna')).not.toHaveValue('');
-  await dialog.getByRole('combobox').click();
-  await page.getByRole('option', { name: 'Strzały', exact: true }).click();
 
   return dialog;
 }

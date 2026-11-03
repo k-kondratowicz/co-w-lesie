@@ -38,6 +38,24 @@ describe('buildRiskMessage', () => {
     expect(msg).not.toMatch(/Brak znanych zagrożeń/);
   });
 
+  it('names only the fire degree when YELLOW comes from fire alone', () => {
+    const msg = buildRiskMessage(assessRisk({ ...base, fireDegree: 2, fireState: 'CURRENT' }), known);
+    expect(msg).toBe('Podwyższone ryzyko: stopień zagrożenia pożarowego II.');
+  });
+
+  it('lists both reports and fire degree when both drive the level', () => {
+    const msg = buildRiskMessage(
+      assessRisk({ ...base, fireDegree: 2, fireState: 'CURRENT', reports: [{ type: 'SHOTS', ageDays: 0 }] }),
+      known,
+    );
+    expect(msg).toBe('Podwyższone ryzyko: 1 zgłoszenie w promieniu 5 km, stopień zagrożenia pożarowego II.');
+  });
+
+  it('does not repeat the YELLOW level label in the message', () => {
+    const msg = buildRiskMessage(assessRisk({ ...base, fireDegree: 2, fireState: 'CURRENT' }), known);
+    expect(msg).not.toMatch(/Zachowaj ostrożność/);
+  });
+
   it('stays cautious instead of GREEN when signals are unknown', () => {
     const msg = buildRiskMessage(assessRisk(base), { fireKnown: false, banKnown: false });
     expect(msg).toMatch(/Nie udało się potwierdzić/);

@@ -37,8 +37,9 @@ export async function assessMyLocation(page: Page) {
 
   // The dialog assesses the GPS fix on its own once the map has one; before that it asks.
   const useMyLocation = dialog.getByRole('button', { name: 'Użyj mojej lokalizacji' });
+  // Offline with nothing cached there is no result, only the warning - that is where it ends too.
   const result = dialog.getByText(
-    /^(Niskie ryzyko|Zachowaj ostrożność|Odradzamy wyjście do lasu|Brak pełnych danych - zachowaj ostrożność)$/,
+    /^(Niskie ryzyko|Zachowaj ostrożność|Odradzamy wyjście do lasu|Brak pełnych danych - zachowaj ostrożność)$|^Jesteś offline i nie ma zapamiętanej oceny/,
   );
   await expect(useMyLocation.or(result).first()).toBeVisible();
   if (await useMyLocation.isVisible()) {

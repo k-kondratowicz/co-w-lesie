@@ -86,8 +86,7 @@ test('offline with nothing cached asks for caution instead of showing a result',
   await openApp(page);
   await context.setOffline(true);
 
-  await page.getByRole('button', { name: 'Czy mogę iść do lasu?' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = await assessMyLocation(page);
 
   await expect(dialog.getByText(/^Jesteś offline i nie ma zapamiętanej oceny/)).toBeVisible();
   await expect(dialog.getByText(DISCLAIMER, { exact: true })).toBeVisible();

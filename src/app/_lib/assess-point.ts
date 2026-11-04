@@ -12,6 +12,7 @@ import { evaluateSyncFreshness, getSyncTimestamps, isFireForecastOutdated } from
 export type PointAssessment = RiskResult & {
   message: string;
   fireAsOf: string | null;
+  fireSyncedAt: string | null;
   bansAsOf: string | null;
   kmzbAsOf: string | null;
   vaccinationAsOf: string | null;
@@ -59,6 +60,7 @@ export async function assessPoint(prisma: PrismaClient, lat: number, lng: number
   // Honest freshness, reported per signal: fire and bans refresh on different cadences, so we
   // surface each separately instead of collapsing to the oldest (which hid fresh fire data).
   const fireAsOf = contextRow.fire_updated_at ? contextRow.fire_updated_at.toISOString() : null;
+  const fireSyncedAt = freshness.datasets.fire.syncedAt;
   const bansAsOf = freshness.datasets.bans.syncedAt;
   const kmzbAsOf = freshness.datasets.kmzb.syncedAt;
   const vaccinationAsOf = freshness.datasets.vaccination.syncedAt;
@@ -70,6 +72,7 @@ export async function assessPoint(prisma: PrismaClient, lat: number, lng: number
     ...result,
     message,
     fireAsOf,
+    fireSyncedAt,
     bansAsOf,
     kmzbAsOf,
     vaccinationAsOf,

@@ -152,6 +152,7 @@ export function RiskResult({
               {source.label}:&nbsp;
               {source.asOf ? `${formatDateTime(source.asOf)} (${formatRelativeTime(source.asOf)})` : 'brak danych'}
               {source.stale ? ' - dane nieaktualne' : ''}.
+              {source.checkedAt ? ` Sprawdzono ${formatRelativeTime(source.checkedAt)}.` : ''}
             </p>
           ))}
         </div>

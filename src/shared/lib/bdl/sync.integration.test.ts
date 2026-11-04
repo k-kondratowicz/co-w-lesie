@@ -204,6 +204,67 @@ describe('syncFireHazard', () => {
     expect(result).toEqual({ fetched: 2, inserted: 1, skipped: 1 });
     expect(await ids('fire_hazard_zone')).toEqual(['A']);
   });
+
+  describe('after BDL closes the season', () => {
+    const LAST_ISSUE = '2026-10-22';
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-11-04T20:00:00Z'));
+    });
+
+    // The zone would otherwise read STALE (UNKNOWN) while the -2 zones around it read NO_DATA.
+    it('skips a zone left on an old degree 0, like the -2 zones around it', async () => {
+      vi.mocked(fetchAllFeatures).mockResolvedValue([
+        fireFeature('A', '-2', LAST_ISSUE),
+        fireFeature('B', '-2', LAST_ISSUE),
+        fireFeature('s_2_c', '0', LAST_ISSUE),
+      ]);
+
+      const result = await syncFireHazard(prisma);
+
+      expect(result).toEqual({ fetched: 3, inserted: 0, skipped: 3 });
+      expect(await ids('fire_hazard_zone')).toEqual([]);
+    });
+
+    it('keeps an old degree 1-3 so the hazard is never erased', async () => {
+      vi.mocked(fetchAllFeatures).mockResolvedValue([
+        fireFeature('A', '-2', LAST_ISSUE),
+        fireFeature('B', '-2', LAST_ISSUE),
+        fireFeature('C', '-2', LAST_ISSUE),
+        fireFeature('D', '1', LAST_ISSUE),
+        fireFeature('E', '3', LAST_ISSUE),
+      ]);
+
+      const result = await syncFireHazard(prisma);
+
+      expect(result).toEqual({ fetched: 5, inserted: 2, skipped: 3 });
+      expect(await ids('fire_hazard_zone')).toEqual(['D', 'E']);
+    });
+
+    it('keeps a degree 0 issued within the last day', async () => {
+      vi.mocked(fetchAllFeatures).mockResolvedValue([
+        fireFeature('A', '-2', '2026-11-04'),
+        fireFeature('B', '-2', '2026-11-04'),
+        fireFeature('C', '0', '2026-11-04'),
+      ]);
+
+      const result = await syncFireHazard(prisma);
+
+      expect(result).toEqual({ fetched: 3, inserted: 1, skipped: 2 });
+      expect(await ids('fire_hazard_zone')).toEqual(['C']);
+    });
+  });
+
+  // Mid-season a stuck BDL keeps real degrees everywhere, so an old 0 must stay and read STALE.
+  it('keeps an old degree 0 while the season is open', async () => {
+    vi.mocked(fetchAllFeatures).mockResolvedValue([fireFeature('A', '0'), fireFeature('B', '2'), fireFeature('C', '-1')]);
+
+    const result = await syncFireHazard(prisma);
+
+    expect(result).toEqual({ fetched: 3, inserted: 2, skipped: 1 });
+    expect(await ids('fire_hazard_zone')).toEqual(['A', 'B']);
+  });
 });
 
 describe('null geometry from BDL', () => {

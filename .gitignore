@@ -50,3 +50,10 @@ public/poland_forests.pmtiles
 /wojewodztwa/
 /wojewodztwa.*
 /scripts/seed-voivodeships.ts
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

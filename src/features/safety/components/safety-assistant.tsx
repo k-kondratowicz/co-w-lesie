@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldQuestion, Star, StarPlus } from 'lucide-react';
+import { CloudOff, ShieldQuestion, Star, StarPlus } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { findDuplicateSavedArea } from '@/features/core/saved-area';
 import { useSavedAreas } from '@/features/core/saved-area/index.client';
@@ -111,6 +111,26 @@ export function SafetyAssistant({ savedAreas }: { savedAreas?: ReactNode }) {
           </Button>
           {!permissionDenied && locationError ? <p className="text-destructive text-sm">{locationError}</p> : null}
           {savedAreas}
+        </div>
+      );
+    }
+
+    // The risk query pauses its retries offline, so with nothing cached no other branch renders -
+    // and an empty dialog must not pass for "nothing to worry about".
+    if (!data && !online) {
+      return (
+        <div className="space-y-3 pb-4 md:pb-0">
+          <div className="flex items-start gap-2 rounded-lg bg-amber-100 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            <CloudOff className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <p>
+              Jesteś offline i nie ma zapamiętanej oceny dla tego miejsca - nie możemy sprawdzić warunków. Zachowaj ostrożność.
+            </p>
+          </div>
+          <div className="text-muted-foreground space-y-0.5 text-xs">
+            <p>Zagrożenie pożarowe: brak danych.</p>
+            <p>Zakazy wstępu: brak danych.</p>
+            <p>To ocena pomocnicza i nie zastępuje komunikatów Lasów Państwowych.</p>
+          </div>
         </div>
       );
     }

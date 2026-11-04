@@ -1,4 +1,5 @@
 import { test as base, expect, type Page } from '@playwright/test';
+import { FOREST_SPOT } from './utils/db';
 
 // A blank base map: the specs check our data and wording, and Carto's CDN (or the R2 forest
 // tiles) being slow must not fail them. The map still fires load and runs every app layer.
@@ -45,6 +46,21 @@ export async function assessMyLocation(page: Page) {
   }
 
   await expect(result).toBeVisible();
+
+  return dialog;
+}
+
+export async function fillReport(page: Page, description: string) {
+  await page.getByRole('button', { name: 'Dodaj zgłoszenie' }).click();
+  const dialog = page.getByRole('dialog', { name: /^Zgłoś sytuację w lesie/ });
+
+  // The map may already have a GPS fix that pre-fills the field ("Odśwież") or not yet ("Pobierz").
+  await dialog.getByRole('button', { name: /^(Pobierz|Odśwież) lokalizację$/ }).click();
+  await expect(dialog.getByLabel('Szerokość geograficzna')).toHaveValue(String(FOREST_SPOT.latitude));
+
+  await dialog.getByLabel('Opis sytuacji').fill(description);
+  await dialog.getByLabel('Typ sytuacji').click();
+  await page.getByRole('option', { name: 'Strzały', exact: true }).click();
 
   return dialog;
 }

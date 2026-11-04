@@ -63,13 +63,16 @@ describe('assessPoint - sync freshness', () => {
   });
 
   it('keeps GREEN but cautious when BDL publishes no forecast for the point', async () => {
-    await setSyncedAt(hoursAgo(1), hoursAgo(1));
+    const fireSync = hoursAgo(1);
+    await setSyncedAt(fireSync, hoursAgo(1));
 
     const assessment = await assessHere();
 
     expect(assessment.level).toBe('GREEN');
     expect(assessment.signals.fire.state).toBe('NO_DATA');
     expect(assessment.message).toMatch(COULD_NOT_CONFIRM);
+    expect(assessment.fireAsOf).toBeNull();
+    expect(assessment.fireSyncedAt).toBe(fireSync.toISOString());
   });
 
   // BDL issues no forecast overnight, so a sync from 16:00 UTC is still current the next morning.

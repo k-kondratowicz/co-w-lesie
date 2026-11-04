@@ -4,6 +4,7 @@ import { freshnessLines } from './freshness';
 
 type FixtureOverrides = {
   fireAsOf?: string | null;
+  fireSyncedAt?: string | null;
   bansAsOf?: string | null;
   kmzbAsOf?: string | null;
   vaccinationAsOf?: string | null;
@@ -15,6 +16,7 @@ type FixtureOverrides = {
 function assessmentFixture(overrides: FixtureOverrides = {}): RiskAssessment {
   return {
     fireAsOf: '2026-10-30T08:00:00Z',
+    fireSyncedAt: '2026-10-30T09:00:00Z',
     bansAsOf: '2026-10-30T07:00:00Z',
     kmzbAsOf: '2026-10-29T12:00:00Z',
     vaccinationAsOf: '2026-10-01T00:00:00Z',
@@ -32,6 +34,14 @@ describe('freshnessLines', () => {
 
     expect(critical[0]).toMatchObject({ label: 'Zagrożenie pożarowe', stale: true });
     expect(critical[1].stale).toBe(false);
+  });
+
+  // Off-season BDL's forecast is weeks old while our sync is not; showing both keeps that visible.
+  it('carries the fire sync time next to the forecast time, but not for bans', () => {
+    const { critical } = freshnessLines(assessmentFixture({ fireSyncedAt: '2026-11-04T20:39:00Z' }));
+
+    expect(critical[0]).toMatchObject({ asOf: '2026-10-30T08:00:00Z', checkedAt: '2026-11-04T20:39:00Z' });
+    expect(critical[1].checkedAt).toBeUndefined();
   });
 
   it('marks bans stale independently of fire', () => {

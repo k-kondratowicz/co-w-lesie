@@ -7,6 +7,8 @@ export type RiskAssessment = RiskResult & {
   message: string;
   /** Freshness of the fire-hazard forecast for this point, or null if unknown. */
   fireAsOf: string | null;
+  /** When we last fetched the fire layer from BDL - off-season far newer than `fireAsOf`. */
+  fireSyncedAt: string | null;
   /** When entry bans were last synced, or null if unknown. */
   bansAsOf: string | null;
   /** When KMZB police incidents were last synced, or null if unknown. */

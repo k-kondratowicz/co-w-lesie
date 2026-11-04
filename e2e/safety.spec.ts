@@ -5,6 +5,8 @@ const DISCLAIMER = 'To ocena pomocnicza i nie zastępuje komunikatów Lasów Pa�
 
 // "3 lis 2026, 09:05 (5 minut temu)." - a line reading "brak danych" would still pass toBeVisible.
 const SYNCED_AT = /:\s\d+\s\S+\s\d{4},\s\d{2}:\d{2}\s\(.+\)\.$/;
+// Fire adds when we last checked BDL: "... (5 minut temu). Sprawdzono 5 minut temu."
+const FIRE_SYNCED_AT = /:\s\d+\s\S+\s\d{4},\s\d{2}:\d{2}\s\(.+\)\.\sSprawdzono\s.+\.$/;
 
 test.beforeEach(async ({ page }) => {
   await resetData();
@@ -20,7 +22,7 @@ test('shows low risk with source freshness and the disclaimer when nothing is ne
 
   await expect(dialog.getByText('Niskie ryzyko', { exact: true })).toBeVisible();
   await expect(dialog.getByText(/^Brak znanych zagrożeń w pobliżu\./)).toBeVisible();
-  await expect(dialog.getByText(/^Zagrożenie pożarowe:/)).toHaveText(SYNCED_AT);
+  await expect(dialog.getByText(/^Zagrożenie pożarowe:/)).toHaveText(FIRE_SYNCED_AT);
   await expect(dialog.getByText(/^Zakazy wstępu:/)).toHaveText(SYNCED_AT);
   await expect(dialog.getByText(/dane nieaktualne/)).toBeHidden();
   await expect(dialog.getByText(DISCLAIMER, { exact: true })).toBeVisible();

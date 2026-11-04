@@ -22,6 +22,13 @@ export function isNoForecastCode(code: string): boolean {
   return NO_FORECAST_CODES.has(code.trim());
 }
 
+/** Mostly "-1"/"-2" nationwide = BDL closed the season (docs/business-rules.md, "Sync safeguards"). */
+export function isFireSeasonClosed(codes: string[]): boolean {
+  const noForecastCount = codes.filter(isNoForecastCode).length;
+
+  return noForecastCount > codes.length / 2;
+}
+
 /**
  * BDL serializes timestamps inconsistently:
  *   - "YYYY-MM-DD HH:MM:SS" (e.g. the fire `data` field)

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { banEndsAt, banReason, fireCodeToDegree, fireUpdatedAt, isNoForecastCode, parseBdlDateTime } from './mappers';
+import {
+  banEndsAt,
+  banReason,
+  fireCodeToDegree,
+  fireUpdatedAt,
+  isFireSeasonClosed,
+  isNoForecastCode,
+  parseBdlDateTime,
+} from './mappers';
 
 describe('fireCodeToDegree', () => {
   it('maps valid hazard codes 0..3 to their degree', () => {
@@ -46,6 +54,28 @@ describe('isNoForecastCode', () => {
     expect(isNoForecastCode('-3')).toBe(false);
     expect(isNoForecastCode('III')).toBe(false);
     expect(isNoForecastCode('')).toBe(false);
+  });
+});
+
+describe('isFireSeasonClosed', () => {
+  // Shape of BDL on 2026-11-04: 59 zones "-2", one "-1", one zone left on "0".
+  it('reads a mostly no-forecast layer as the season being over', () => {
+    const codes = [...Array(59).fill('-2'), '-1', '0'];
+
+    expect(isFireSeasonClosed(codes)).toBe(true);
+  });
+
+  it('keeps the season open while most zones carry a degree', () => {
+    expect(isFireSeasonClosed(['0', '1', '2', '3', '-1'])).toBe(false);
+    expect(isFireSeasonClosed(['0', '0', '0'])).toBe(false);
+  });
+
+  it('needs a strict majority, so a half-and-half layer stays open', () => {
+    expect(isFireSeasonClosed(['3', '-2'])).toBe(false);
+  });
+
+  it('does not count unrecognised codes as no forecast', () => {
+    expect(isFireSeasonClosed(['III', 'III', '-2'])).toBe(false);
   });
 });
 

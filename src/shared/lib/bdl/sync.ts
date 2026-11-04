@@ -1,9 +1,9 @@
 import type { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
-import { recordSync } from '@/shared/lib/sync-freshness';
+import { isFireForecastOutdated, recordSync } from '@/shared/lib/sync-freshness';
 import { fetchAllFeatures, fetchFeaturePages } from './client';
 import { ENTRY_BAN_LAYER, FIRE_HAZARD_LAYER, FOREST_LAYERS } from './config';
-import { banEndsAt, banReason, fireCodeToDegree, fireUpdatedAt, isNoForecastCode } from './mappers';
+import { banEndsAt, banReason, fireCodeToDegree, fireUpdatedAt, isFireSeasonClosed, isNoForecastCode } from './mappers';
 import { entryBanProps, fireHazardProps, forestCompartmentProps } from './schemas';
 
 // Background sync: pull from BDL, validate, and refresh our local PostGIS tables.
@@ -33,6 +33,7 @@ export async function syncFireHazard(prisma: PrismaClient): Promise<SyncResult> 
     throw new Error('BDL fire-hazard fetch returned no zones - refusing to wipe the table');
   }
 
+  const seasonClosed = isFireSeasonClosed(features.map(({ properties }) => properties.kod));
   let skipped = 0;
   const unrecognised: string[] = [];
   const rows: Prisma.Sql[] = [];
@@ -47,6 +48,13 @@ export async function syncFireHazard(prisma: PrismaClient): Promise<SyncResult> 
     const updatedAt = fireUpdatedAt(properties.data, properties.godz);
     if (degree === null || !updatedAt) {
       unrecognised.push(`${properties.strefa} (kod "${properties.kod}", data "${properties.data}")`);
+      continue;
+    }
+
+    // An old "0" left behind after the season closes means as little as the "-2" around it; skipping
+    // it drops no hazard, while an old 1-3 is kept so staleness can never erase it.
+    if (seasonClosed && degree === 0 && isFireForecastOutdated(updatedAt)) {
+      skipped++;
       continue;
     }
 

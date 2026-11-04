@@ -59,7 +59,9 @@ The score is also returned as 0-100 for display.
 
 Fire and bans refresh on different cadences, so freshness is reported **per signal**, never
 collapsed to the oldest: `fireAsOf` (the intersecting zone's forecast time) and `bansAsOf` (the
-last ban sync). Either may be `null` (unknown) - see the safety rule.
+last ban sync). Either may be `null` (unknown) - see the safety rule. Fire also carries
+`fireSyncedAt` (our last fire sync), shown as "Sprawdzono ...": the forecast time alone can't
+show that a sync succeeded - off-season it stays weeks old, or `null`, even right after one.
 
 **Stale data is not confirmed data.** Each nationwide signal (fire, bans) carries a state:
 
@@ -89,7 +91,9 @@ window, where 6 h without a sync already means a dead cron.
 A fresh sync does not make the forecast fresh: BDL keeps serving its last forecast after it stops
 issuing (e.g. at the end of the fire season). So fire is also `STALE` when the forecast's own issue
 time (`fireAsOf`) is older than **24 h** - long enough to carry the ~13:00 issue through to the
-next morning's (~20 h), short enough to catch a forecast that is days old.
+next morning's (~20 h), short enough to catch a forecast that is days old. Off-season, an old
+degree `0` is dropped by the sync instead and reads `NO_DATA`, the same as the `-2` zones around it
+(see "Fire season over" under Sync safeguards).
 
 ### Entry-ban end date
 
@@ -118,6 +122,14 @@ data, and leaves the freshness timestamp to go visibly stale (so the rule above 
   (`-1` not covered, `-2` no data) are skipped. Any other zone with an unrecognised code or an
   unparseable date fails the whole run: dropping it would read as "no forecast" there, which stays
   GREEN, and could silently erase a degree-III RED.
+- **Fire season over** - when BDL stops issuing it doesn't always reset every zone: on 2026-11-04 it
+  served 59 zones as `-2`, one as `-1`, and zone `s_2_c` still on degree `0` from the last forecast
+  (2026-10-22). That one old `0` read `STALE` (UNKNOWN) while the identical "season over" `-2`
+  zones read `NO_DATA`. So when more than half of all zones are `-1`/`-2` (season closed), a zone
+  on degree `0` whose forecast is past the 24 h limit is skipped like a `-2`. Only `0` is skipped,
+  because it shows no hazard. An old `1`-`3` is kept and stays `STALE`, since staleness never removes a
+  hazard. Mid-season, if BDL gets stuck, every zone keeps a real degree, so no majority of `-2`
+  appears and an old `0` stays `STALE`.
 - **Entry bans** - a result with no active ban is refused. Nationwide that is implausible: in late
   October 2026, outside the fire season, BDL still published 789 bans, all coded "inne przyczyny"
   (non-fire). Zero signals a broken fetch or date-format drift, not every ban being lifted.

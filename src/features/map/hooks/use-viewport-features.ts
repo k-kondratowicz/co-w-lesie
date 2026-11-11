@@ -4,10 +4,16 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { type ReportsGeoJSON, reportsApi } from '@/features/core/report';
 import { bansApi, kmzbApi, overnightZonesApi, tourismApi } from '@/features/map/api';
 import type { BansGeoJSON, KmzbGeoJSON, OvernightZonesGeoJSON, TourismGeoJSON } from '@/features/map/types';
+import { isLayerUnavailable } from '@/features/map/utils/layer-availability';
 
 type ViewportGeoJSON = ReportsGeoJSON | BansGeoJSON | KmzbGeoJSON | TourismGeoJSON | OvernightZonesGeoJSON;
 
 type EndpointKey = 'reports' | 'bans' | 'kmzb' | 'tourism' | 'overnight-zones';
+
+export type ViewportLayer = {
+  features: ViewportGeoJSON | null;
+  unavailable: boolean;
+};
 
 function fetchFeatures(
   endpoint: EndpointKey,
@@ -40,8 +46,9 @@ function fetchFeatures(
  * the bbox and updates it on load/moveend) and whenever something invalidates [`queryKey`, ...].
  * Keeps the previous result while refetching so the layer doesn't flicker on pan. `enabled` lets
  * callers skip the fetch (e.g. hide a heavy layer below a zoom threshold); disabling also returns
- * null right away, otherwise the cached collection would keep the layer drawn after a user
- * switches it off.
+ * no features right away, otherwise the cached collection would keep the layer drawn after a user
+ * switches it off. `unavailable` comes from `isLayerUnavailable`, so the map can warn instead of
+ * drawing an unknown layer as empty.
  */
 export function useViewportFeatures(
   endpoint: EndpointKey,
@@ -50,13 +57,23 @@ export function useViewportFeatures(
   enabled = true,
   since: string | null = null,
   types: string | null = null,
-): ViewportGeoJSON | null {
-  const { data } = useQuery({
+): ViewportLayer {
+  const query = useQuery({
     queryKey: [queryKey, endpoint, bbox, since, types],
     queryFn: () => fetchFeatures(endpoint, bbox as string, since, types),
     enabled: enabled && bbox !== null,
     placeholderData: keepPreviousData,
   });
 
-  return enabled ? (data ?? null) : null;
+  if (!enabled) {
+    return {
+      features: null,
+      unavailable: false,
+    };
+  }
+
+  return {
+    features: query.data ?? null,
+    unavailable: isLayerUnavailable(query),
+  };
 }

@@ -7,9 +7,7 @@ test.beforeEach(async () => {
   await seedBan();
 });
 
-// Known bug: offline, an area outside the cached data shows an empty map, which reads as "no hazards
-// here". Marked test.fail so CI goes red once it is fixed - then switch it to a plain test().
-test.fail('an offline area without cached data says so instead of looking empty', async ({ page, context }) => {
+test('an offline area without cached data says so instead of looking empty', async ({ page, context }) => {
   const bansLoaded = page.waitForResponse((response) => response.url().includes('/api/bans') && response.ok());
   await openApp(page);
   await bansLoaded;

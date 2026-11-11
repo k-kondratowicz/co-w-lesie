@@ -16,6 +16,11 @@ This overrides convenience everywhere (only correctness ranks higher):
 - **An active entry ban, or fire-hazard degree III, always yields `RED`** - regardless of any
   other signal. These are never averaged away.
 - Every assessment shows the **data source, freshness timestamp, and disclaimer**.
+- **An empty map layer is not "nothing here".** When the reports, entry-ban or police (KMZB) layer
+  has no data of its own for the current viewport, the map shows a notice instead of silently
+  drawing it empty (or still showing the previous viewport). Offline with no cached data:
+  "Brak danych offline dla tego obszaru."; a failed first fetch online: "Nie udało się pobrać danych
+  dla tego obszaru.". Both add that entry bans and reports may be missing from the map.
 
 ## Risk assessment
 

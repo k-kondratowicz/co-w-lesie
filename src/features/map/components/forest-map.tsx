@@ -7,6 +7,7 @@ import { addProtocol, GPUInitializationError, type MapLibreMap, setWorkerUrl } f
 import { Protocol } from 'pmtiles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { KmzbDetailsOverlay, type KmzbPopupInfo } from '@/features/map/components/kmzb-details-overlay';
+import { MapDataNotice } from '@/features/map/components/map-data-notice';
 import {
   BANS_MIN_ZOOM,
   KMZB_MIN_ZOOM,
@@ -189,12 +190,12 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
       >
         <MapLayers
           pmtilesUrl={pmtilesUrl}
-          reports={reports}
-          bans={bans}
-          kmzb={kmzb}
-          overnightZones={overnightZones}
-          parking={parking}
-          camping={camping}
+          reports={reports.features}
+          bans={bans.features}
+          kmzb={kmzb.features}
+          overnightZones={overnightZones.features}
+          parking={parking.features}
+          camping={camping.features}
           riskOverlay={riskOverlay}
           pickConstraint={pickConstraint}
           userPosition={userPosition}
@@ -208,6 +209,8 @@ export function ForestMap({ pmtilesUrl }: ForestMapProps) {
       <KmzbDetailsOverlay info={kmzbPopup} onClose={() => setKmzbPopup(null)} />
 
       <MapPickBanner />
+
+      <MapDataNotice visible={reports.unavailable || bans.unavailable || kmzb.unavailable} />
 
       <ActionDialog
         open={permissionDialog.open}

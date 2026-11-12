@@ -22,10 +22,18 @@ export async function putObject(key: string, body: Uint8Array, contentType: stri
     region: 'auto',
   });
 
-  const response = await client.fetch(r2Endpoint(key), {
+  const signed = await client.sign(r2Endpoint(key), {
     method: 'PUT',
     body: body as BodyInit,
     headers: { 'content-type': contentType },
+  });
+
+  // Not client.fetch: Next's patched fetch rebuilds a Request input around its body stream, the PUT
+  // goes out chunked without Content-Length, and R2 rejects it with 411. Raw bytes keep the length.
+  const response = await fetch(signed.url, {
+    method: 'PUT',
+    headers: signed.headers,
+    body: body as BodyInit,
   });
 
   if (!response.ok) {

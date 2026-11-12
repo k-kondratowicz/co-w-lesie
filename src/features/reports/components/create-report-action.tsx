@@ -1,13 +1,12 @@
 'use client';
 
 import { ReportType } from '@prisma/client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, PlusIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { type CreateReportInput, createReportSchema, REPORT_MAX_OFFSET_METERS, reportsApi } from '@/features/core/report';
-import { uploadReportPhoto } from '@/features/reports/upload-photo';
+import { createReportSchema, locationSchema, REPORT_MAX_OFFSET_METERS } from '@/features/core/report';
+import { useCreateReport } from '@/features/reports/hooks/use-create-report';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
 import { useAppForm } from '@/shared/components/form/form-hooks';
@@ -16,51 +15,27 @@ import { SelectItem } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/button';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 import { useOnlineStatus } from '@/shared/hooks/use-online-status';
-import { ApiError } from '@/shared/lib/api/fetch';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import { formatDistance } from '@/shared/lib/geo/format-distance';
 import { isTurnstileEnabled } from '@/shared/lib/security/turnstile-client';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
-import { useOfflineReportStore } from '@/shared/store/use-offline-report-store';
 import { useTurnstileStore } from '@/shared/store/use-turnstile-store';
 
-type CreateReportResult = { queued: true } | { queued: false; id: string };
-
-async function createReport(input: CreateReportInput, turnstileToken: string | null): Promise<CreateReportResult> {
-  try {
-    const { id } = await reportsApi.create(input, turnstileToken);
-
-    return { queued: false, id };
-  } catch (error) {
-    // Network failure (offline): queue it. GPS coordinates captured offline are still valid,
-    // so the report is sent - and validated - once connectivity returns.
-    if (!(error instanceof ApiError)) {
-      useOfflineReportStore.getState().enqueue(input);
-
-      return { queued: true };
-    }
-
-    throw error;
-  }
-}
-
-// Form-only schema: the API fields plus the in-progress photo File (uploaded on submit, not sent).
-const createReportFormSchema = createReportSchema.extend({ photo: z.custom<File>().nullable().optional() });
+// The form starts without a location; the schema still demands one before submit.
+const createReportFormSchema = createReportSchema.extend({
+  location: locationSchema.optional().refine((value) => value !== undefined, 'Pobierz lokalizację GPS'),
+  photo: z.custom<File>().nullable().optional(),
+});
 type CreateReportFormValues = z.infer<typeof createReportFormSchema>;
 
-export function CreateReportAction() {
-  const queryClient = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: ({ input, turnstileToken }: { input: CreateReportInput; turnstileToken: string | null }) =>
-      createReport(input, turnstileToken),
-    // Run even when offline so createReport can catch the failure and queue the report
-    // (default 'online' would pause the mutation instead of calling it).
-    networkMode: 'always',
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
-    },
-  });
+const defaultValues: CreateReportFormValues = {
+  description: '',
+  type: 'OTHER',
+  location: undefined,
+  photo: null,
+};
 
+export function CreateReportAction() {
   const online = useOnlineStatus();
   const turnstileToken = useTurnstileStore((state) => state.token);
 
@@ -81,58 +56,19 @@ export function CreateReportAction() {
   // previous one; the remount resets the shared Turnstile store back to 'verifying'.
   const [turnstileKey, setTurnstileKey] = useState(0);
   const resetTurnstile = () => setTurnstileKey((key) => key + 1);
+  const { submit: submitReport } = useCreateReport({ onSendFailed: resetTurnstile });
 
   const form = useAppForm({
     validators: {
       onChange: createReportFormSchema,
     },
-    defaultValues: {
-      description: '',
-      type: 'OTHER',
-      location: [],
-      photo: null,
-    } as unknown as CreateReportFormValues,
+    defaultValues,
     onSubmit: async ({ value }) => {
-      const { photo, ...report } = value;
-      let imageKey: string | undefined;
-
-      // Upload the photo first (online only - the presigned PUT needs a connection). Offline
-      // reports are queued without a photo.
-      if (photo) {
-        if (navigator.onLine) {
-          try {
-            imageKey = await uploadReportPhoto(photo);
-          } catch {
-            toast.error('Nie udało się przesłać zdjęcia. Spróbuj ponownie.');
-            return false;
-          }
-        } else {
-          toast.info('Brak internetu - zgłoszenie zapiszemy bez zdjęcia.');
-        }
-      }
-
-      // Token comes from the inline widget (in the dialog, so a challenge stays clickable). Offline
-      // reports queue without one and re-solve on replay.
-      const turnstileToken = useTurnstileStore.getState().token;
-      if (navigator.onLine && isTurnstileEnabled() && !turnstileToken) {
-        toast.error('Potwierdź, że nie jesteś robotem, i spróbuj ponownie.');
+      if (!value.location) {
         return false;
       }
 
-      try {
-        const result = await mutation.mutateAsync({ input: { ...report, imageKey }, turnstileToken });
-        toast.success(
-          result.queued
-            ? 'Brak internetu - zgłoszenie wyślemy automatycznie, gdy wróci połączenie.'
-            : 'Dziękujemy! Zgłoszenie zostało dodane.',
-        );
-
-        return true;
-      } catch (err) {
-        resetTurnstile();
-        toast.error(err instanceof Error ? err.message : 'Nie udało się dodać zgłoszenia. Spróbuj ponownie.');
-        return false;
-      }
+      return submitReport({ ...value, location: value.location });
     },
   });
 
@@ -204,7 +140,7 @@ export function CreateReportAction() {
       open={dialog.open}
       onOpenChange={dialog.setOpen}
       onConfirm={dialog.confirm}
-      loading={form.state.isSubmitting}
+      loading={dialog.loading}
       isSaveDisabled={turnstilePending}
       trigger={
         <Button size="icon-xxl" rounded="full" className="shadow-lg">
@@ -225,7 +161,7 @@ export function CreateReportAction() {
                   size="sm"
                   onClick={pickReportLocation}
                   className="w-full"
-                  disabled={form.state.values.location.length !== 2}
+                  disabled={!form.state.values.location}
                 >
                   <MapPin />
                   Wskaż miejsce na mapie (do {formatDistance(REPORT_MAX_OFFSET_METERS)})

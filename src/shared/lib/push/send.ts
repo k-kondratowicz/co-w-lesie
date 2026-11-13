@@ -1,4 +1,4 @@
-import webpush from 'web-push';
+import { sendNotification, setVapidDetails } from 'web-push';
 import type { StoredSubscription } from '@/features/push/queries/push-repo';
 
 export type PushPayload = {
@@ -24,7 +24,7 @@ function configure() {
     throw new Error('VAPID keys are not configured (VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT)');
   }
 
-  webpush.setVapidDetails(subject, publicKey, privateKey);
+  setVapidDetails(subject, publicKey, privateKey);
   configured = true;
 }
 
@@ -36,7 +36,7 @@ export async function sendPush(subscription: StoredSubscription, payload: PushPa
   configure();
 
   try {
-    await webpush.sendNotification(
+    await sendNotification(
       { endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } },
       JSON.stringify(payload),
     );

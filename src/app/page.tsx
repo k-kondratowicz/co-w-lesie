@@ -34,11 +34,7 @@ export default function Home() {
       <SavedAreasWarmer />
 
       <Suspense>
-        <ForestMap
-          pmtilesUrl={
-            process.env.NEXT_PUBLIC_FOREST_PMTILES_URL ?? 'https://pub-a4d0d7d33aad4567b65c357ab9677ce3.r2.dev/forests.pmtiles'
-          }
-        />
+        <ForestMap pmtilesUrl={process.env.NEXT_PUBLIC_FOREST_PMTILES_URL} />
       </Suspense>
 
       <ReportDetailsOverlay />

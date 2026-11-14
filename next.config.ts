@@ -1,5 +1,11 @@
 import { withSentryConfig } from '@sentry/nextjs/config';
 import type { NextConfig } from 'next';
+import { assertProductionEnv } from '@/shared/lib/env';
+
+// Fail the production build, not the running app: the previous deploy stays live.
+if (process.env.VERCEL_ENV === 'production') {
+  assertProductionEnv();
+}
 
 const isDev = process.env.NODE_ENV !== 'production';
 

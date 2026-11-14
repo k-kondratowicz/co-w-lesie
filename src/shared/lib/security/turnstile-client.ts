@@ -58,6 +58,8 @@ export function loadTurnstileScript(): Promise<void> {
 // without interaction or errors out). Managed widgets clear silently for legitimate visitors; if an
 // interactive challenge is required it appears centered (appearance: interaction-only). When no site
 // key is configured we resolve null and the server, also unconfigured, accepts the request.
+// For background work with no dialog open (offline queue replay). Inside a dialog use <Turnstile />:
+// a Radix modal blocks clicks on this body-level challenge.
 export async function getTurnstileToken(): Promise<string | null> {
   if (!TURNSTILE_SITE_KEY) {
     return null;

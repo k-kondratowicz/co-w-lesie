@@ -41,7 +41,7 @@ const PARKING_ICON_SIZE: DataDrivenPropertyValueSpecification<number> = [
 ];
 
 interface MapLayersProps {
-  pmtilesUrl: string;
+  pmtilesUrl?: string;
   reports: GeoJSON.FeatureCollection | null;
   bans: GeoJSON.FeatureCollection | null;
   kmzb: GeoJSON.FeatureCollection | null;
@@ -69,7 +69,7 @@ export function MapLayers({
   selectedPoint,
 }: MapLayersProps) {
   // Resolve a same-origin relative path to an absolute URL (no CORS, full URL for the PMTiles lib).
-  const resolvedUrl = pmtilesUrl.startsWith('/') ? `${window.location.origin}${pmtilesUrl}` : pmtilesUrl;
+  const resolvedUrl = pmtilesUrl?.startsWith('/') ? `${window.location.origin}${pmtilesUrl}` : pmtilesUrl;
   const circleData = riskOverlay ? circlePolygon(riskOverlay.lng, riskOverlay.lat, riskOverlay.radiusMeters) : EMPTY_FC;
   const circleColor = riskOverlay ? RISK_COLORS[riskOverlay.level] : RISK_COLORS.GREEN;
 
@@ -83,22 +83,24 @@ export function MapLayers({
   return (
     <>
       {/* Forests: deferred to higher zooms (low-zoom tiles are heavy). */}
-      <Source id="forests" type="vector" url={`pmtiles://${resolvedUrl}`}>
-        <Layer
-          id="forest-fill"
-          type="fill"
-          source-layer={FOREST_SOURCE_LAYER}
-          minzoom={8}
-          paint={{ 'fill-color': '#2e7d32', 'fill-opacity': 0.1 }}
-        />
-        <Layer
-          id="forest-outline"
-          type="line"
-          source-layer={FOREST_SOURCE_LAYER}
-          minzoom={11}
-          paint={{ 'line-color': '#1b5e20', 'line-width': 1, 'line-opacity': 0.1 }}
-        />
-      </Source>
+      {resolvedUrl ? (
+        <Source id="forests" type="vector" url={`pmtiles://${resolvedUrl}`}>
+          <Layer
+            id="forest-fill"
+            type="fill"
+            source-layer={FOREST_SOURCE_LAYER}
+            minzoom={8}
+            paint={{ 'fill-color': '#2e7d32', 'fill-opacity': 0.1 }}
+          />
+          <Layer
+            id="forest-outline"
+            type="line"
+            source-layer={FOREST_SOURCE_LAYER}
+            minzoom={11}
+            paint={{ 'line-color': '#1b5e20', 'line-width': 1, 'line-opacity': 0.1 }}
+          />
+        </Source>
+      ) : null}
 
       {/* Active forest-entry bans (live GeoJSON from /api/bans) - the actual closed areas. */}
       <Source id="bans" type="geojson" data={bans ?? EMPTY_FC}>

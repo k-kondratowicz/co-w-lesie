@@ -36,7 +36,7 @@ import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 const REPORT_LAYERS = ['report-clusters', 'report-cluster-dot', 'report-point'];
 
-type ForestMapProps = { pmtilesUrl: string };
+type ForestMapProps = { pmtilesUrl?: string };
 
 export function ForestMap({ pmtilesUrl }: ForestMapProps) {
   const mapRef = useRef<MapRef | null>(null);

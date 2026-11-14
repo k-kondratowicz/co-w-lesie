@@ -4,7 +4,7 @@ import type { CreateReportResponse, ReportsGeoJSON, SingleReportResponse, Upload
 
 export const reportsApi = {
   get(id: string) {
-    return get<SingleReportResponse>(`/api/reports/${id}`);
+    return get<SingleReportResponse>(`/api/reports/${encodeURIComponent(id)}`);
   },
 
   list(bbox: string, since?: string | null, types?: string | null) {
@@ -23,7 +23,7 @@ export const reportsApi = {
   },
 
   vote(id: string, kind: 'CONFIRM' | 'FLAG', lat: number, lng: number) {
-    return post<VoteResponse>(`/api/reports/${id}/vote`, {
+    return post<VoteResponse>(`/api/reports/${encodeURIComponent(id)}/vote`, {
       kind,
       lat,
       lng,

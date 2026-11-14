@@ -24,7 +24,7 @@ function lastCriticalUpdate(freshness: SyncFreshness): string | null {
 // Loud, app-wide warning when the safety-critical signals (fire hazard, entry bans) have gone
 // stale - so a dead sync never lets the assistant quietly imply "no known hazards" on old data.
 export function StaleDataBanner() {
-  const [dissmissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   const { data } = useQuery({
     queryKey: ['sync-status'],
@@ -37,7 +37,7 @@ export function StaleDataBanner() {
     return null;
   }
 
-  if (dissmissed) {
+  if (dismissed) {
     return null;
   }
 

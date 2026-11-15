@@ -1,3 +1,4 @@
+import 'server-only';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { recordSync } from '@/shared/lib/sync-freshness';
 import { fetchScheduleHtml } from './client';

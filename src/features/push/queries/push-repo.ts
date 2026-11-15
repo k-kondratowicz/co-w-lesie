@@ -1,3 +1,4 @@
+import 'server-only';
 import type { PrismaClient } from '@prisma/client';
 import type { PushSubscriptionInput } from '@/features/push/schemas/push-subscription.schema';
 

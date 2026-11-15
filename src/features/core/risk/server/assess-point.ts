@@ -1,3 +1,4 @@
+import 'server-only';
 import type { PrismaClient } from '@prisma/client';
 import { queryReportsInRadius } from '@/features/core/report/index.server';
 import { DAY_MS } from '@/shared/lib/date/time';

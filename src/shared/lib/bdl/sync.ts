@@ -1,3 +1,4 @@
+import 'server-only';
 import type { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { isFireForecastOutdated, recordSync } from '@/shared/lib/sync-freshness';

@@ -1,3 +1,4 @@
+import 'server-only';
 import type { z } from 'zod';
 import { BDL_FETCH_TIMEOUT_MS } from './config';
 import { featureCollectionSchema } from './schemas';

@@ -35,5 +35,9 @@ belong there, so single-feature state lands in `shared` too.
   The `core-public-api-only` rule already allows any `index.*` entry, so no new exception.
 - `core/report` now owns the report lifecycle (TTL, dispute thresholds, age fade), which is the
   same contract the API and the map both depend on.
+- Modules that hold Prisma, R2, web-push or secrets start with `import 'server-only'`, so a
+  client component importing one fails the build with a clear message. Outside Next that import
+  throws, so the `tsx` scripts that reach Prisma run with `--conditions=react-server` (the
+  package's empty export) and Vitest aliases it to `test/empty-module.ts`.
 - A route-local helper with a single consumer (`app/api/cron/notify-areas/_lib/`) is still fine:
   the rule only bans the shared `app/_lib/` folder.

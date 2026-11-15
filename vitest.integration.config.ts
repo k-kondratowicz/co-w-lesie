@@ -9,6 +9,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Tests run outside Next, where the real package throws on import.
+      'server-only': fileURLToPath(new URL('./test/empty-module.ts', import.meta.url)),
     },
   },
   test: {

@@ -1,3 +1,4 @@
+import 'server-only';
 import { sendNotification, setVapidDetails } from 'web-push';
 import type { StoredSubscription } from '@/features/push/queries/push-repo';
 

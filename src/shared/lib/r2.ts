@@ -1,3 +1,4 @@
+import 'server-only';
 import { AwsClient } from 'aws4fetch';
 
 // Server-only R2 object-storage transport. Credentials never reach the client - the browser

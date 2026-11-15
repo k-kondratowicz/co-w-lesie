@@ -1,3 +1,4 @@
+import 'server-only';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { fetchAllFeatures } from '@/shared/lib/bdl/client';
 import { recordSync } from '@/shared/lib/sync-freshness';

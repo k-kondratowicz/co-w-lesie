@@ -1,3 +1,4 @@
+import 'server-only';
 import { DAY_MS } from '@/shared/lib/date/time';
 import {
   KMZB_BASE_URL,

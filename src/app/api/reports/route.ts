@@ -1,7 +1,6 @@
-import { ReportType } from '@prisma/client';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { createReportSchema, expiryFrom } from '@/features/core/report';
+import { createReportSchema, expiryFrom, REPORT_TYPES } from '@/features/core/report';
 import { queryReportsInBbox } from '@/features/reports/queries/reports-in-bbox';
 import { bboxParamSchema } from '@/shared/lib/geo/bbox';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
@@ -76,7 +75,7 @@ const querySchema = z.object({
         .map((part) => part.trim())
         .filter(Boolean),
     )
-    .pipe(z.array(z.enum(ReportType)).nonempty())
+    .pipe(z.array(z.enum(REPORT_TYPES)).nonempty())
     .optional(),
 });
 

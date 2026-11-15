@@ -1,5 +1,5 @@
-import type { ReportType } from '@prisma/client';
 import { create } from 'zustand';
+import type { ReportType } from '@/features/core/report';
 import { DAY_MS } from '@/shared/lib/date/time';
 
 type ReportFilterState = {

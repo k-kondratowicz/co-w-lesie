@@ -1,4 +1,4 @@
-import type { ReportType } from '@prisma/client';
+import type { ReportType } from './types';
 
 export type PopupReport = {
   id: string;

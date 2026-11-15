@@ -1,11 +1,10 @@
 'use client';
 
-import { ReportType } from '@prisma/client';
 import { MapPin, PlusIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { createReportSchema, locationSchema, REPORT_MAX_OFFSET_METERS } from '@/features/core/report';
+import { createReportSchema, locationSchema, REPORT_MAX_OFFSET_METERS, REPORT_TYPES } from '@/features/core/report';
 import { useCreateReport } from '@/features/reports/hooks/use-create-report';
 import { reportTypeLabel } from '@/features/reports/utils/report-type-labels';
 import { ActionDialog, useActionDialog } from '@/shared/components/dialog';
@@ -172,7 +171,7 @@ export function CreateReportAction() {
           <form.AppField name="type">
             {(field) => (
               <field.Select label="Typ sytuacji">
-                {[...Object.values(ReportType)].map((type) => (
+                {REPORT_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
                     {reportTypeLabel(type)}
                   </SelectItem>

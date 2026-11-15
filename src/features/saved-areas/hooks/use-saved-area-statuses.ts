@@ -2,7 +2,7 @@
 
 import { useQueries } from '@tanstack/react-query';
 import type { RiskLevel } from '@/features/core/risk';
-import { riskQueryOptions } from '@/features/core/risk';
+import { riskQueryOptions } from '@/features/core/risk/index.client';
 import type { SavedArea } from '@/features/core/saved-area';
 import { useSavedAreas } from '@/features/core/saved-area/index.client';
 

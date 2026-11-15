@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { riskQueryOptions } from '@/features/core/risk';
+import { riskQueryOptions } from '@/features/core/risk/index.client';
 import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
 
 type Target = { lat: number; lng: number; radiusMeters?: number };

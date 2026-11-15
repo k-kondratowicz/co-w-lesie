@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { type CreateReportInput, reportsApi } from '@/features/core/report';
+import type { CreateReportInput } from '@/features/core/report';
+import { reportsApi } from '@/features/core/report/index.client';
 import { uploadReportPhoto } from '@/features/reports/upload-photo';
 import { ApiError } from '@/shared/lib/api/fetch';
 import { isTurnstileEnabled } from '@/shared/lib/security/turnstile-client';

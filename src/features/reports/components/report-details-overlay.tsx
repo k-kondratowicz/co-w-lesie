@@ -1,6 +1,6 @@
 'use client';
 
-import { useReportPopupStore } from '@/features/core/report';
+import { useReportPopupStore } from '@/features/core/report/index.client';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,

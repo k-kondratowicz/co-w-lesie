@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { reportsApi } from '@/features/core/report';
+import { reportsApi } from '@/features/core/report/index.client';
 import { queueOutcomeForStatus } from '@/features/reports/offline-queue';
 import { ApiError } from '@/shared/lib/api/fetch';
 import { getTurnstileToken, isTurnstileEnabled } from '@/shared/lib/security/turnstile-client';

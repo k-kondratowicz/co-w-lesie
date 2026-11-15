@@ -24,6 +24,10 @@ belong there, so single-feature state lands in `shared` too.
    used by one feature lives in that feature.
 3. **Data-source integrations stay in `shared/lib/<source>`** (`bdl`, `kmzb`, `lisy`,
    `tourism`), as in ADR 0006. Moving them buys nothing functionally.
+4. **A slice's client surface lives in `index.client.ts`**: the browser fetch client (`api.ts`,
+   relative `/api/...` URLs that mean nothing on the server), react-query options and zustand
+   stores. This replaces ADR 0006's "isomorphic api in index.ts". `server-no-client-surface`
+   fails when a route handler can reach any of them, even transitively through a barrel.
 
 ## Consequences
 

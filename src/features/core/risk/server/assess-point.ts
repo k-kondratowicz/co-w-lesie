@@ -1,13 +1,15 @@
 import type { PrismaClient } from '@prisma/client';
-import type { RiskResult } from '@/features/core/risk';
-import { assessRisk, buildRiskMessage, RECENCY_WINDOW_DAYS, signalState } from '@/features/core/risk';
-import { queryReportsInRadius } from '@/features/reports/queries/reports-in-radius';
+import { queryReportsInRadius } from '@/features/core/report/index.server';
 import { DAY_MS } from '@/shared/lib/date/time';
 import { queryKmzbAdvisory } from '@/shared/lib/geo/queries/kmzb-advisory';
 import { queryNearbyBans } from '@/shared/lib/geo/queries/nearby-bans';
 import { buildPointContext, queryPointContext } from '@/shared/lib/geo/queries/point-context';
 import { queryVaccinationAdvisory } from '@/shared/lib/geo/queries/vaccination-advisory';
 import { evaluateSyncFreshness, getSyncTimestamps, isFireForecastOutdated } from '@/shared/lib/sync-freshness';
+import { RECENCY_WINDOW_DAYS } from '../config';
+import { assessRisk, signalState } from '../engine';
+import { buildRiskMessage } from '../message';
+import type { RiskResult } from '../types';
 
 export type PointAssessment = RiskResult & {
   message: string;

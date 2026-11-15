@@ -1,7 +1,6 @@
 import { Prisma, type PrismaClient, type ReportType } from '@prisma/client';
 import type { ReportsGeoJSON } from '@/features/core/report';
-import { reportImageUrl } from '@/features/core/report';
-import { ageOpacity, disputeThresholdSql } from '@/features/reports/lifecycle';
+import { ageOpacity, disputeThresholdSql, reportImageUrl } from '@/features/core/report';
 
 const DISPUTE_CASE = Prisma.raw(disputeThresholdSql());
 

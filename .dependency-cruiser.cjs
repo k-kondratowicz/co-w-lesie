@@ -59,6 +59,14 @@ module.exports = {
       },
     },
     {
+      name: 'no-app-domain-lib',
+      severity: 'error',
+      comment:
+        'Domain services (queries + engine) live in features/core/<slice> behind index.server.ts, not in a shared app/_lib - ADR 0007.',
+      from: { path: '^src/app/_lib/' },
+      to: {},
+    },
+    {
       name: 'shared-no-upward',
       severity: 'error',
       comment:

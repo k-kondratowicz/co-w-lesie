@@ -1,5 +1,4 @@
-import { reportImageUrl } from '@/features/core/report';
-import { isReportVisible } from '@/features/reports/lifecycle';
+import { isReportVisible, reportImageUrl } from '@/features/core/report';
 import { prisma } from '@/shared/lib/prisma';
 
 export const runtime = 'nodejs';

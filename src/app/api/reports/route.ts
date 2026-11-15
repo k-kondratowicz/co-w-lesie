@@ -1,8 +1,7 @@
 import { ReportType } from '@prisma/client';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { createReportSchema } from '@/features/core/report';
-import { expiryFrom } from '@/features/reports/lifecycle';
+import { createReportSchema, expiryFrom } from '@/features/core/report';
 import { queryReportsInBbox } from '@/features/reports/queries/reports-in-bbox';
 import { bboxParamSchema } from '@/shared/lib/geo/bbox';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';

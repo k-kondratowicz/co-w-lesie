@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import { assessPoint } from '@/app/_lib/assess-point';
+import { assessPoint } from '@/features/core/risk/index.server';
 import { deleteSubscriptionByEndpoint, listSubscriptions } from '@/features/push/queries/push-repo';
 import { activeHazards, buildAreaAlert, newHazards, signatureOf } from '@/features/safety/area-alert';
 import { type AlertArea, listAreasForAlerts, updateAlertSignature } from '@/features/saved-areas/queries/saved-areas-repo';

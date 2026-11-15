@@ -2,7 +2,7 @@
 
 The authoritative description of the safety logic and report behaviour. Values here mirror the
 code; the source of truth for tunables is [`src/features/risk/config.ts`](../src/features/risk/config.ts)
-and [`src/features/reports/lifecycle.ts`](../src/features/reports/lifecycle.ts).
+and [`src/features/core/report/lifecycle.ts`](../src/features/core/report/lifecycle.ts).
 
 ## Safety rule
 

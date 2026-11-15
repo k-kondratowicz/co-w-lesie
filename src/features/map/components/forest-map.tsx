@@ -20,6 +20,8 @@ import { useLocationPrompt } from '@/features/map/hooks/use-location-prompt';
 import { useMapInteraction } from '@/features/map/hooks/use-map-interaction';
 import { useSharedReport } from '@/features/map/hooks/use-shared-report';
 import { useViewportFeatures } from '@/features/map/hooks/use-viewport-features';
+import { useMapLayerStore } from '@/features/map/store/use-map-layer-store';
+import { useMapViewStore } from '@/features/map/store/use-map-view-store';
 import { boundsToBbox } from '@/features/map/utils/bounds-to-bbox';
 import { createParkingMarkerImage, PARKING_MARKER_IMAGE, PARKING_MARKER_PIXEL_RATIO } from '@/features/map/utils/parking-marker';
 import { ActionDialog } from '@/shared/components/dialog';
@@ -27,9 +29,7 @@ import { LocationPermissionHelp } from '@/shared/components/location-permission-
 import { Spinner } from '@/shared/components/ui/spinner';
 import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
 import { CAMPING_KINDS, PARKING_KINDS } from '@/shared/lib/tourism/types';
-import { useMapLayerStore } from '@/shared/store/use-map-layer-store';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
-import { useMapViewStore } from '@/shared/store/use-map-view-store';
 import { reportsSinceIso, reportTypesParam, useReportFilterStore } from '@/shared/store/use-report-filter-store';
 import { useRiskOverlayStore } from '@/shared/store/use-risk-overlay-store';
 

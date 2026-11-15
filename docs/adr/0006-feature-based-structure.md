@@ -1,6 +1,6 @@
 # 0006 - Feature-based structure: isolation, public API, enforcement
 
-**Status:** accepted
+**Status:** accepted. The `app/_lib` placement of `assess-point` is superseded by ADR 0007.
 
 ## Context
 

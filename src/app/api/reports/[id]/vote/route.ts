@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
-import { expiryFrom } from '@/features/reports/lifecycle';
+import { expiryFrom } from '@/features/core/report';
 import { distanceMeters } from '@/shared/lib/geo/distance-meters';
 import { prisma } from '@/shared/lib/prisma';
 import { clientIp } from '@/shared/lib/security/client-ip';

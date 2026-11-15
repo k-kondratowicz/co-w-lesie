@@ -9,3 +9,4 @@ Add a new numbered file when making a decision that's expensive to reverse.
 - [0004 - Offline support scope](./0004-offline-support.md)
 - [0005 - Web push notifications](./0005-web-push-notifications.md)
 - [0006 - Feature-based structure: isolation, public API, enforcement](./0006-feature-based-structure.md)
+- [0007 - Domain services in core, coordination stores in shared](./0007-domain-services-and-coordination-stores.md)

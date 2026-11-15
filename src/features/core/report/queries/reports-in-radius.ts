@@ -1,5 +1,5 @@
 import { Prisma, type PrismaClient, type ReportType } from '@prisma/client';
-import { disputeThresholdSql } from '@/features/reports/lifecycle';
+import { disputeThresholdSql } from '../lifecycle';
 
 const DISPUTE_CASE = Prisma.raw(disputeThresholdSql());
 

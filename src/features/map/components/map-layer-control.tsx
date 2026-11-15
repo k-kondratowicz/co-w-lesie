@@ -2,6 +2,7 @@
 
 import { Layers } from 'lucide-react';
 import { useState } from 'react';
+import { type OptionalMapLayer, useMapLayerStore, visibleLayerCount } from '@/features/map/store/use-map-layer-store';
 import { Button } from '@/shared/components/ui/button';
 import { Label } from '@/shared/components/ui/label';
 import {
@@ -14,7 +15,6 @@ import {
   ResponsiveDialogTrigger,
 } from '@/shared/components/ui/responsive-dialog';
 import { Switch } from '@/shared/components/ui/switch';
-import { type OptionalMapLayer, useMapLayerStore, visibleLayerCount } from '@/shared/store/use-map-layer-store';
 
 const LAYER_OPTIONS: { id: OptionalMapLayer; label: string; hint: string }[] = [
   {

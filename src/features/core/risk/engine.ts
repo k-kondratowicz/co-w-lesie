@@ -1,4 +1,4 @@
-import type { ReportType } from '@prisma/client';
+import type { ReportType } from '@/features/core/report';
 import { clamp01 } from '@/shared/lib/math';
 import {
   FIRE_SCORE_BY_DEGREE,

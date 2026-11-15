@@ -1,4 +1,4 @@
-import type { ReportType } from '@prisma/client';
+import type { ReportType } from '@/features/core/report';
 import { REPORT_TYPE_LABELS } from '@/features/reports/utils/report-type-labels';
 import { useReportFilterStore } from '@/shared/store/use-report-filter-store';
 

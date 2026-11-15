@@ -78,6 +78,17 @@ module.exports = {
       },
     },
     {
+      name: 'no-prisma-in-client-code',
+      severity: 'error',
+      comment:
+        'Code that can end up in the browser takes ReportType/REPORT_TYPES from @/features/core/report, not from the generated Prisma client. Server code (queries, server/, app/api) may keep Prisma types.',
+      from: {
+        path: '^src/(features/(?!core/)[^/]+/(?!queries/)|features/core/[^/]+/[^/]+\\.tsx?$|shared/(store|components|hooks)/)',
+        pathNot: '\\.test\\.tsx?$',
+      },
+      to: { path: '^node_modules/@prisma/client/' },
+    },
+    {
       name: 'shared-no-upward',
       severity: 'error',
       comment:

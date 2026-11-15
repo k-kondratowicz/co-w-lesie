@@ -1,7 +1,7 @@
-import { ReportType } from '@prisma/client';
 import { z } from 'zod';
 import { isWithinBbox, POLAND_BBOX } from '@/shared/lib/geo/bbox';
 import { isReportImageKey } from './image';
+import { REPORT_TYPES } from './types';
 
 export const MAX_DESCRIPTION_LENGTH = 1000;
 
@@ -15,7 +15,7 @@ export const locationSchema = z
   .refine(([lng, lat]) => isWithinBbox(POLAND_BBOX, lng, lat), 'Lokalizacja znajduje się poza granicami Polski');
 
 export const createReportSchema = z.object({
-  type: z.enum(ReportType, 'Wybierz typ zgłoszenia'),
+  type: z.enum(REPORT_TYPES, 'Wybierz typ zgłoszenia'),
   location: locationSchema,
   description: z
     .string()

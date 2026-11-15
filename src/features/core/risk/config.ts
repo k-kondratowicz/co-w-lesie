@@ -1,4 +1,4 @@
-import type { ReportType } from '@prisma/client';
+import type { ReportType } from '@/features/core/report';
 
 // Risk-engine tunables - the product "knobs". Keep all magic numbers here, never inline in
 // the scoring logic, so they can be adjusted (and reasoned about) in one place.

@@ -1,4 +1,19 @@
-import type { ReportType } from '@prisma/client';
+// Mirrors the Prisma enum on purpose (see the parity test) so client code never imports @prisma/client.
+export const REPORT_TYPES = [
+  'BLOOD',
+  'FIRE',
+  'HUNTING',
+  'SHOTS',
+  'VACCINATION',
+  'DEAD_ANIMAL',
+  'AGGRESSIVE_ANIMAL',
+  'BLOCKED_PATH',
+  'ILLEGAL_DUMP',
+  'SHOTS_HEARD',
+  'OTHER',
+] as const;
+
+export type ReportType = (typeof REPORT_TYPES)[number];
 
 export type CreateReportResponse = { id: string };
 

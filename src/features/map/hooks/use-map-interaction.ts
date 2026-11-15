@@ -1,11 +1,10 @@
 'use client';
 
-import type { ReportType } from '@prisma/client';
 import type { MapLayerMouseEvent, MapRef } from '@vis.gl/react-maplibre';
 import type { GeoJSON } from 'geojson';
 import type { GeoJSONSource } from 'maplibre-gl';
 import { type RefObject, useCallback } from 'react';
-import type { PopupReport } from '@/features/core/report';
+import type { PopupReport, ReportType } from '@/features/core/report';
 import { useReportPopupStore } from '@/features/core/report/index.client';
 import { useMapPickStore } from '@/shared/store/use-map-pick-store';
 

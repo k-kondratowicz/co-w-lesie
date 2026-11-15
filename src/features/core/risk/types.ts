@@ -1,4 +1,4 @@
-import type { ReportType } from '@prisma/client';
+import type { ReportType } from '@/features/core/report';
 
 /** UNKNOWN replaces GREEN when our own sync of a nationwide signal is stale (see `SignalState`). */
 export type RiskLevel = 'GREEN' | 'YELLOW' | 'RED' | 'UNKNOWN';

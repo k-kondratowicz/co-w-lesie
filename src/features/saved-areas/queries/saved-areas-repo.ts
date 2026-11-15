@@ -1,3 +1,4 @@
+import 'server-only';
 import type { PrismaClient } from '@prisma/client';
 import type { CreateSavedAreaInput, SavedArea } from '@/features/core/saved-area';
 import { DUPLICATE_BUFFER_MIN_METERS, DUPLICATE_BUFFER_RADIUS_FRACTION } from '@/features/core/saved-area';

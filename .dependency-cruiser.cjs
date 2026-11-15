@@ -67,6 +67,17 @@ module.exports = {
       to: {},
     },
     {
+      name: 'server-no-client-surface',
+      severity: 'error',
+      comment:
+        'Route handlers must not reach the client surface of a core slice (browser fetch clients, react-query options, zustand stores). Client code imports it from index.client.ts.',
+      from: { path: '^src/app/api/' },
+      to: {
+        path: '^src/features/core/[^/]+/(index\\.client|api|query|popup-store|use-[^/]+)\\.ts$',
+        reachable: true,
+      },
+    },
+    {
       name: 'shared-no-upward',
       severity: 'error',
       comment:

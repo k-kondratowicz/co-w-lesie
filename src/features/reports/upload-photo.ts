@@ -1,4 +1,4 @@
-import { reportsApi } from '@/features/core/report';
+import { reportsApi } from '@/features/core/report/index.client';
 import { resizeImage } from '@/shared/lib/image/resize-image';
 
 export async function uploadReportPhoto(file: File): Promise<string> {

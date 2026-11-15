@@ -1,3 +1,4 @@
+import 'server-only';
 import { LISY_FETCH_TIMEOUT_MS, LISY_SOURCE_URL } from './config';
 
 // Network boundary: fetch the raw schedule HTML. Kept apart from parse.ts so the parser stays

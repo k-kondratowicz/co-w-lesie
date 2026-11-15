@@ -1,3 +1,5 @@
+import 'server-only';
+
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 // Verifies a Cloudflare Turnstile token. Returns true when no secret is configured, so local and

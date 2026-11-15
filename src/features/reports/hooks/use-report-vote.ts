@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { reportsApi } from '@/features/core/report';
+import { reportsApi } from '@/features/core/report/index.client';
 import { useGeolocation } from '@/shared/hooks/use-geolocation';
 
 export type VoteKind = 'CONFIRM' | 'FLAG';

@@ -1,7 +1,8 @@
 'use client';
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { type ReportsGeoJSON, reportsApi } from '@/features/core/report';
+import type { ReportsGeoJSON } from '@/features/core/report';
+import { reportsApi } from '@/features/core/report/index.client';
 import { bansApi, kmzbApi, overnightZonesApi, tourismApi } from '@/features/map/api';
 import type { BansGeoJSON, KmzbGeoJSON, OvernightZonesGeoJSON, TourismGeoJSON } from '@/features/map/types';
 import { isLayerUnavailable } from '@/features/map/utils/layer-availability';

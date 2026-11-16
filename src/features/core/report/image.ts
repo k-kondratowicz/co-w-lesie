@@ -3,9 +3,15 @@
 // only the report-specific policy, so it stays pure and testable.
 
 const ALLOWED_INPUT_TYPES = new Set(['image/webp', 'image/jpeg', 'image/png']);
+// sharp's names for the same three formats, sniffed from the bytes rather than trusted from the header.
+const DECODABLE_FORMATS = new Set(['jpeg', 'png', 'webp']);
 
 export function isAllowedImageType(contentType: string): boolean {
   return ALLOWED_INPUT_TYPES.has(contentType);
+}
+
+export function isAllowedImageFormat(format: string): boolean {
+  return DECODABLE_FORMATS.has(format);
 }
 
 export function isReportImageKey(key: string): boolean {

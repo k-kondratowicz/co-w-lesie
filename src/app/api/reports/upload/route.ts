@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { isAllowedImageType, reportImageKey } from '@/features/core/report';
+import { isAllowedImageFormat, isAllowedImageType, reportImageKey } from '@/features/core/report';
 import { isR2Configured, putObject } from '@/shared/lib/r2';
 import { clientIp } from '@/shared/lib/security/client-ip';
 import { checkRateLimit } from '@/shared/lib/security/rate-limit';
@@ -11,6 +11,7 @@ const UPLOAD_LIMIT = 10; // uploads per IP
 const UPLOAD_WINDOW_MS = 60_000; // per minute
 const MAX_UPLOAD_BYTES = 4_000_000; // raw bytes accepted before re-encoding (Vercel caps ~4.5 MB)
 const MAX_DIMENSION = 1600;
+const MAX_INPUT_PIXELS = 50_000_000; // a 4 MB PNG can decode to ~1 GB at sharp's 268 MP default
 
 // POST /api/reports/upload - accept one image, re-encode it to WebP (which strips EXIF/GPS and
 // caps dimensions server-side, so this can't be bypassed by a crafted client), store it on R2.
@@ -49,8 +50,16 @@ export async function POST(request: Request) {
   let webp: Buffer;
 
   try {
+    const image = sharp(input, { limitInputPixels: MAX_INPUT_PIXELS });
+    const { format } = await image.metadata();
+
+    // sharp sniffs the real format from the bytes, so the Content-Type check alone lets SVG or TIFF through
+    if (!format || !isAllowedImageFormat(format)) {
+      return Response.json({ error: 'Nieobsługiwany format zdjęcia.' }, { status: 400 });
+    }
+
     // rotate() applies the EXIF orientation, then the re-encode drops all metadata.
-    webp = await sharp(input)
+    webp = await image
       .rotate()
       .resize(MAX_DIMENSION, MAX_DIMENSION, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 80 })

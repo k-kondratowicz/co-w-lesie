@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { isAllowedImageType, isReportImageKey, reportImageKey, reportImageUrl } from './image';
+import { isAllowedImageFormat, isAllowedImageType, isReportImageKey, reportImageKey, reportImageUrl } from './image';
 
 describe('isAllowedImageType', () => {
   it('accepts jpeg/png/webp and rejects anything else', () => {
@@ -9,6 +9,22 @@ describe('isAllowedImageType', () => {
     expect(isAllowedImageType('image/gif')).toBe(false);
     expect(isAllowedImageType('image/svg+xml')).toBe(false);
     expect(isAllowedImageType('application/pdf')).toBe(false);
+  });
+});
+
+describe('isAllowedImageFormat', () => {
+  it('accepts the sharp names of jpeg/png/webp and rejects the rest', () => {
+    expect(isAllowedImageFormat('jpeg')).toBe(true);
+    expect(isAllowedImageFormat('png')).toBe(true);
+    expect(isAllowedImageFormat('webp')).toBe(true);
+    expect(isAllowedImageFormat('svg')).toBe(false);
+    expect(isAllowedImageFormat('tiff')).toBe(false);
+    expect(isAllowedImageFormat('gif')).toBe(false);
+  });
+
+  it('does not accept a sharp format name as a Content-Type, or the reverse', () => {
+    expect(isAllowedImageType('png')).toBe(false);
+    expect(isAllowedImageFormat('image/png')).toBe(false);
   });
 });
 

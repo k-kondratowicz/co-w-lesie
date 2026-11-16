@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { isReportImageKey } from '@/features/core/report';
+import { isPendingImageKey } from '@/features/core/report';
 import { POST } from './route';
 
 const ORIGINAL_ENV = { ...process.env };
@@ -40,7 +40,7 @@ vi.mock('@/shared/lib/r2', () => ({
 
 describe('POST /api/reports/upload', () => {
   it('returns 503 when R2 is not configured', async () => {
-    // Unset, not `= undefined` — process.env coerces values to the string "undefined" (truthy).
+    // Unset, not `= undefined` - process.env coerces values to the string "undefined" (truthy).
     delete process.env.R2_ACCOUNT_ID;
     delete process.env.R2_ACCESS_KEY_ID;
     delete process.env.R2_SECRET_ACCESS_KEY;
@@ -92,7 +92,7 @@ describe('POST /api/reports/upload', () => {
       const body = await response.json();
 
       expect(response.status).toBe(200);
-      expect(isReportImageKey(body.key)).toBe(true);
+      expect(isPendingImageKey(body.key)).toBe(true);
     });
 
     it('rejects an image above the pixel limit even when the file is small', async () => {

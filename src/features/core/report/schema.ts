@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { isWithinBbox, POLAND_BBOX } from '@/shared/lib/geo/bbox';
-import { isReportImageKey } from './image';
+import { isPendingImageKey, isReportImageKey } from './image';
 import { REPORT_TYPES } from './types';
 
 export const MAX_DESCRIPTION_LENGTH = 1000;
@@ -22,8 +22,12 @@ export const createReportSchema = z.object({
     .trim()
     .max(MAX_DESCRIPTION_LENGTH, `Opis może mieć maksymalnie ${MAX_DESCRIPTION_LENGTH} znaków`)
     .optional(),
-  // R2 object key of an already-uploaded photo, in our reports/ namespace (always re-encoded to webp).
-  imageKey: z.string().refine(isReportImageKey, 'Nieprawidłowy klucz zdjęcia').optional(),
+  // Staged pending/ key from the upload route. A reports/ key still comes from offline queues filled
+  // before photos were staged - see docs/backlog.md for when to drop it.
+  imageKey: z
+    .string()
+    .refine((key) => isPendingImageKey(key) || isReportImageKey(key), 'Nieprawidłowy klucz zdjęcia')
+    .optional(),
 });
 
 export type CreateReportInput = z.infer<typeof createReportSchema>;

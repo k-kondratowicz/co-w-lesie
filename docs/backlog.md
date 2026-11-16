@@ -12,8 +12,14 @@ Known, deliberately-deferred items. Not blockers; captured so they aren't lost.
 > `[survey]` where this validates or re-ranks them.
 
 ## Report photos
-- **Verify `imageKey` references a real object** on report create (a HEAD to R2). Today a
-  missing/foreign valid-format key just renders as a broken image - low impact, so deferred.
+- ~~**Verify `imageKey` references a real object** on report create.~~ Done for new uploads: the
+  staged `pending/` photo is copied to `reports/` on create, and a missing one saves the report
+  without a photo (see [deployment](./deployment.md#staged-uploads-pending)).
+- **Drop the legacy `reports/` key in `createReportSchema`.** It is still accepted (and stored
+  unverified) so offline queues filled before staging don't lose their reports. Remove it once
+  those queues have drained, e.g. a release or two after the `pending/` change.
+- **Orphan copy when the report insert fails.** The photo is copied to `reports/` before
+  `prisma.report.create`; if the insert throws, the copy stays without a report. Cheap, so left as is.
 - **Photo moderation.** Only the flag/dispute mechanism hides a report (and its photo); there's
   no dedicated abuse-report or review queue.
 

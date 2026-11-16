@@ -93,3 +93,15 @@ it to run on Vercel's linux runtime, both already in place - **keep them in sync
    libvips at runtime, which file tracing misses, so the `.so` must be force-included in the function.
 
 Symptom if either is missing: `ERR_DLOPEN_FAILED: libvips-cpp.so... cannot open shared object file`.
+
+### Staged uploads (`pending/`)
+
+The upload route stores a photo under `pending/<uuid>.webp`. Only when its report is saved does
+`POST /api/reports` copy it to `reports/<uuid>.webp` and store that key, so photos that never got
+a report stay under `pending/`. The bucket needs an **R2 object lifecycle rule** (Cloudflare
+dashboard → R2 → bucket → Settings → Object lifecycle rules): prefix `pending/`, delete objects
+30 days after upload.
+
+Keep the expiry well above how long a report can sit in the offline queue. If a queued report
+replays after its staged photo expired, the report is still saved, just without the photo
+(a 5xx there would make the queue retry it forever and hold back every report behind it).

@@ -1,10 +1,11 @@
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { createReportSchema, expiryFrom, REPORT_TYPES } from '@/features/core/report';
+import { createReportSchema, expiryFrom, isReportImageKey, promotedImageKey, REPORT_TYPES } from '@/features/core/report';
 import { queryReportsInBbox } from '@/features/reports/queries/reports-in-bbox';
 import { bboxParamSchema } from '@/shared/lib/geo/bbox';
 import { isPointNearForest, REPORT_FOREST_BUFFER_METERS } from '@/shared/lib/geo/queries/near-forest';
 import { prisma } from '@/shared/lib/prisma';
+import { copyObject, isR2Configured } from '@/shared/lib/r2';
 import { clientIp } from '@/shared/lib/security/client-ip';
 import { checkRateLimit } from '@/shared/lib/security/rate-limit';
 import { verifyTurnstile } from '@/shared/lib/security/turnstile';
@@ -14,6 +15,28 @@ export const dynamic = 'force-dynamic';
 
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 60_000;
+
+// A report replayed from the offline queue can arrive after its staged photo expired. Saving it
+// without the photo beats a 500, which the queue retries forever, holding back every report behind it.
+async function storeReportPhoto(imageKey: string): Promise<string | null> {
+  if (isReportImageKey(imageKey)) {
+    return imageKey;
+  }
+
+  if (!isR2Configured()) {
+    return null;
+  }
+
+  const storedKey = promotedImageKey(imageKey);
+
+  if (!(await copyObject(imageKey, storedKey))) {
+    console.warn('[POST /api/reports] staged photo missing, saving the report without it', imageKey);
+
+    return null;
+  }
+
+  return storedKey;
+}
 
 export async function POST(request: Request) {
   const limit = await checkRateLimit(`report:${clientIp(request)}`, RATE_LIMIT, RATE_WINDOW_MS);
@@ -51,8 +74,17 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Zgłoszenia można dodawać tylko w lesie lub w jego pobliżu.' }, { status: 422 });
     }
 
+    const storedImageKey = imageKey ? await storeReportPhoto(imageKey) : null;
+
     const report = await prisma.report.create({
-      data: { type, lat, lng, description: description?.trim() || null, imageKey: imageKey ?? null, expiresAt: expiryFrom(type) },
+      data: {
+        type,
+        lat,
+        lng,
+        description: description?.trim() || null,
+        imageKey: storedImageKey,
+        expiresAt: expiryFrom(type),
+      },
       select: { id: true },
     });
 

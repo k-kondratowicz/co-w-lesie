@@ -18,13 +18,22 @@ export function isReportImageKey(key: string): boolean {
   return /^reports\/[a-f0-9-]+\.webp$/.test(key);
 }
 
-// We always re-encode to WebP server-side, so stored keys are always .webp.
-export function reportImageKey(): string {
-  return `reports/${crypto.randomUUID()}.webp`;
-}
-
 export function reportImageUrl(key: string | null): string | null {
   const base = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
 
   return key && base ? `${base.replace(/\/$/, '')}/${key}` : null;
+}
+
+// We always re-encode to WebP server-side, so stored keys are always .webp.
+export function pendingImageKey(): string {
+  return `pending/${crypto.randomUUID()}.webp`;
+}
+
+export function isPendingImageKey(key: string): boolean {
+  return /^pending\/[a-f0-9-]+\.webp$/.test(key);
+}
+
+/** The key a staged photo gets once its report is saved. */
+export function promotedImageKey(pendingKey: string): string {
+  return pendingKey.replace(/^pending\//, 'reports/');
 }

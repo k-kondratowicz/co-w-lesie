@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { isAllowedImageFormat, isAllowedImageType, reportImageKey } from '@/features/core/report';
+import { isAllowedImageFormat, isAllowedImageType, pendingImageKey } from '@/features/core/report';
 import { isR2Configured, putObject } from '@/shared/lib/r2';
 import { clientIp } from '@/shared/lib/security/client-ip';
 import { checkRateLimit } from '@/shared/lib/security/rate-limit';
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Nieprawidłowy plik zdjęcia.' }, { status: 400 });
   }
 
-  const key = reportImageKey();
+  const key = pendingImageKey();
 
   try {
     await putObject(key, webp, 'image/webp');

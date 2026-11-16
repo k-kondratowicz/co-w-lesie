@@ -15,29 +15,50 @@ export function isR2Configured(): boolean {
   );
 }
 
-export async function putObject(key: string, body: Uint8Array, contentType: string): Promise<void> {
-  const client = new AwsClient({
+function r2Client(): AwsClient {
+  return new AwsClient({
     accessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',
     service: 's3',
     region: 'auto',
+    retries: 2,
   });
+}
 
-  const signed = await client.sign(r2Endpoint(key), {
+export async function putObject(key: string, body: Uint8Array, contentType: string): Promise<void> {
+  const response = await r2Client().fetch(r2Endpoint(key), {
     method: 'PUT',
-    body: body as BodyInit,
-    headers: { 'content-type': contentType },
-  });
-
-  // Not client.fetch: Next's patched fetch rebuilds a Request input around its body stream, the PUT
-  // goes out chunked without Content-Length, and R2 rejects it with 411. Raw bytes keep the length.
-  const response = await fetch(signed.url, {
-    method: 'PUT',
-    headers: signed.headers,
+    headers: {
+      'content-type': contentType,
+      // Next's patched fetch rebuilds the signed Request around its body stream, which loses the
+      // length: without this header the PUT goes out chunked and R2 rejects it with 411.
+      'content-length': String(body.byteLength),
+    },
     body: body as BodyInit,
   });
 
   if (!response.ok) {
     throw new Error(`R2 upload failed (${response.status})`);
   }
+}
+
+/** Server-side copy inside the bucket. Resolves false when the source object does not exist. */
+export async function copyObject(fromKey: string, toKey: string): Promise<boolean> {
+  const source = `${process.env.R2_BUCKET}/${fromKey}`.split('/').map(encodeURIComponent).join('/');
+  const response = await r2Client().fetch(r2Endpoint(toKey), {
+    method: 'PUT',
+    headers: {
+      'x-amz-copy-source': `/${source}`,
+    },
+  });
+
+  if (response.status === 404) {
+    return false;
+  }
+
+  if (!response.ok) {
+    throw new Error(`R2 copy failed (${response.status})`);
+  }
+
+  return true;
 }

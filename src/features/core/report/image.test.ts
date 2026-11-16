@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { isAllowedImageFormat, isAllowedImageType, isReportImageKey, reportImageKey, reportImageUrl } from './image';
+import {
+  isAllowedImageFormat,
+  isAllowedImageType,
+  isPendingImageKey,
+  isReportImageKey,
+  pendingImageKey,
+  promotedImageKey,
+  reportImageUrl,
+} from './image';
 
 describe('isAllowedImageType', () => {
   it('accepts jpeg/png/webp and rejects anything else', () => {
@@ -28,14 +36,33 @@ describe('isAllowedImageFormat', () => {
   });
 });
 
-describe('reportImageKey / isReportImageKey', () => {
-  it('generates a namespaced .webp key that validates', () => {
-    const key = reportImageKey();
+describe('pendingImageKey / isPendingImageKey', () => {
+  it('generates a staged .webp key that validates', () => {
+    const key = pendingImageKey();
 
-    expect(key).toMatch(/^reports\/[a-f0-9-]+\.webp$/);
-    expect(isReportImageKey(key)).toBe(true);
+    expect(key).toMatch(/^pending\/[a-f0-9-]+\.webp$/);
+    expect(isPendingImageKey(key)).toBe(true);
   });
 
+  it('rejects stored keys, a non-webp extension, or path traversal', () => {
+    expect(isPendingImageKey('reports/abc.webp')).toBe(false);
+    expect(isPendingImageKey('pending/abc.jpg')).toBe(false);
+    expect(isPendingImageKey('../pending/abc.webp')).toBe(false);
+    expect(isPendingImageKey('pending/../x.webp')).toBe(false);
+  });
+});
+
+describe('promotedImageKey', () => {
+  it('moves a staged key into reports/ and keeps its id', () => {
+    expect(promotedImageKey('pending/0f2c-91ab.webp')).toBe('reports/0f2c-91ab.webp');
+  });
+
+  it('produces a stored key that validates', () => {
+    expect(isReportImageKey(promotedImageKey(pendingImageKey()))).toBe(true);
+  });
+});
+
+describe('isReportImageKey', () => {
   it('rejects keys outside the namespace, with a non-webp extension, or path traversal', () => {
     expect(isReportImageKey('reports/abc.gif')).toBe(false);
     expect(isReportImageKey('reports/abc.jpg')).toBe(false);
